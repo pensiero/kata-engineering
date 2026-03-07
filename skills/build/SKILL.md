@@ -140,6 +140,7 @@ When upgrading from a lower tier (e.g., light → standard):
 
 - Read `ARCHITECTURE.md` — understand the system, boundaries, ownership
 - Read `CONTRACTS.md` — understand invariants and quality gates
+- If `PLAN.md` exists — check what's been completed and what's next. This tells you where the project stands
 - If a task contract exists (`{TASK}_CONTRACT.md`), read it — it defines completion
 - Scope your reading: for a small change, you don't need to internalize the entire architecture. Read the sections relevant to the area you're changing.
 
@@ -262,6 +263,7 @@ If a task contract exists (`{TASK}_CONTRACT.md`):
 - If architecture changed → update `ARCHITECTURE.md`
 - If invariants were added/changed/removed → update `CONTRACTS.md`
 - If schemas changed → update schema definitions
+- If `PLAN.md` exists → check off completed items, update "Up Next" if scope changed
 - All doc updates in the same commit as the code change
 
 ### Step 2: Final commit
