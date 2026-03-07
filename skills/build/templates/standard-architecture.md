@@ -1,6 +1,8 @@
 # Standard Tier — Architecture Template
 
-Use this as a guide when bootstrapping a standard-tier project. Every section below should exist in the project's `ARCHITECTURE.md`, adapted to the specific domain.
+Use this as a guide when bootstrapping a standard-tier project. The sections below demonstrate the narrative principle: each builds on what came before. Adapt the structure to your project's natural story — the reading order matters more than the specific headings.
+
+**Principle:** order by understanding dependency. A reader should never encounter something that requires context they haven't been given yet.
 
 ---
 
@@ -9,60 +11,65 @@ Use this as a guide when bootstrapping a standard-tier project. Every section be
 project_tier: standard
 ---
 
-# Architecture
+# [Project Name]
 
-## System Purpose
+## What This Is
 
-[What is this system? What problem does it solve? Who is it for?]
-[Keep this to 2-4 sentences. If you need more, the system might be too complex for its goal.]
+[The premise. Two to four sentences of prose — not bullet points — explaining what this system is and why it exists. Write it so someone with no context understands the purpose and cares about the system's integrity.]
 
-## Boundaries
+[This section sets the frame for everything that follows. Every architectural decision should make sense in light of what's written here.]
 
-### Layer Model
+## The Concepts
 
-[Define the layers/modules and what each owns. Every piece of code should belong to exactly one layer.]
+[Now that the reader knows what the system is, introduce what exists inside it. The entities, abstractions, or components that a newcomer needs to know before understanding how they interact.]
 
-| Layer | Owns | Location |
-|-------|------|----------|
-| [Layer 1] | [What it's responsible for] | `src/[path]` |
-| [Layer 2] | [What it's responsible for] | `src/[path]` |
+[For each concept: what is it, what does it mean, what is its role. Not how it's implemented — what it IS.]
+
+- **[Concept 1]** — [what it represents and why it exists]
+- **[Concept 2]** — [what it represents and why it exists]
+- **[Concept 3]** — [what it represents and why it exists]
+
+[If core data structures have schemas, reference them here: "defined in `schemas/[file]`"]
+
+## The Boundaries
+
+[Now that the reader knows what exists, explain how these things are allowed to interact. What owns what. What must never depend on what.]
+
+### Ownership
+
+| Component | Owns | Location |
+|-----------|------|----------|
+| [Component 1] | [its responsibilities] | `src/[path]` |
+| [Component 2] | [its responsibilities] | `src/[path]` |
 
 ### Forbidden Dependencies
 
-[What CANNOT depend on what. This is the most important section — it defines the boundaries that keep the system clean.]
+[These are the walls. Crossing them is an architectural violation.]
 
-- [Layer A] must not import from [Layer B]
-- [Module X] must not directly access [resource Y]
+- [Component A] must not import from [Component B] — [why]
+- [Component C] must not directly access [resource D] — [why]
 
-### Data Ownership
+## How Things Flow
 
-[Where does canonical state live? What module owns writes to what data?]
+[Now that the reader knows the concepts and the boundaries, show how data/control actually moves through the system. This should feel like a natural consequence of the structure described above.]
 
-## Data Model
+[Describe the primary paths: what triggers what, how data transforms, where state lives. If the system has a lifecycle or pipeline, describe it here.]
 
-[Core entities, their relationships, and their schemas. Reference schema files if they exist.]
-
-### [Entity 1]
-- [Key fields and their meaning]
-- Schema: `schemas/[entity].ts` (or equivalent)
-
-### [Entity 2]
-- [Key fields and their meaning]
-- Schema: `schemas/[entity].ts`
+[Keep it concrete. "A request arrives at X, which validates it against Y, then passes it to Z for processing" — not abstract descriptions of possible flows.]
 
 ## Key Decisions
 
-[Record architectural decisions with rationale. This is how new contributors understand WHY the system is shaped this way.]
+[Now that the reader understands the system, explain why it has this particular shape. Decisions only make sense in context — that's why this section comes after the structure, not before.]
 
 ### [Decision 1]
 **Choice:** [what was chosen]
-**Rationale:** [why — including what alternatives were considered and rejected]
+**Why:** [rationale, including what alternatives were considered]
 
 ### [Decision 2]
 **Choice:** [what was chosen]
-**Rationale:** [why]
+**Why:** [rationale]
 
-## Running
+## Working With This Project
 
 ```bash
 # How to run
@@ -71,11 +78,11 @@ project_tier: standard
 # How to test
 [command]
 
-# How to verify contracts
+# How to verify contracts hold
 [command, or "see CONTRACTS.md"]
 ```
 
-## Change Discipline
+### Change Discipline
 
 Every meaningful change updates:
 1. Code
@@ -87,10 +94,11 @@ Code and docs ship together. No silent drift.
 
 ---
 
-## Standard tier expectations
+## Notes for the agent
 
-- Architecture doc describes the real system (layers, boundaries, data model, decisions)
-- Contracts doc defines named invariants and quality gates
-- Core data structures have schema definitions
-- Test baseline: schema validation, boundary invariants, happy path, error paths
-- Docs co-evolve with code
+- The sections above are ONE example of the narrative principle for a typical multi-module project. Your project's natural story may be different.
+- Ask: "what does a reader need to understand first? what depends on that?" — and build the reading order accordingly.
+- A library might flow: What This Is → The Interface → The Contracts → The Internals → Usage.
+- A data pipeline might flow: What This Is → Sources → Transformations → Destinations → Failure Modes.
+- A CLI tool might flow: What This Is → Commands → Configuration → Extension.
+- The principle is constant. The sections adapt.

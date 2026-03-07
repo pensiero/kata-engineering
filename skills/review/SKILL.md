@@ -44,6 +44,8 @@ Read the project's `CONTRACTS.md` (or equivalent). For each invariant relevant t
 
 ### Step 3: Simplify
 
+A well-built system has a natural shape. Every part earns its existence. Nothing is there "just in case" or because it was interesting to build. The question isn't "can I find something to remove?" — it's "has this solution found its natural form?"
+
 For every change, ask:
 
 - **Is this necessary?** Could the problem be solved without this code?
@@ -51,8 +53,9 @@ For every change, ask:
 - **Does this abstraction earn its keep?** Does it have two real use cases, or is it speculative?
 - **Is there a new dependency?** Is the coupling worth it? Could you inline it instead?
 - **Would a stranger understand this?** Without explanation, without context from the conversation that produced it?
+- **Does the change feel inevitable?** Or does it feel like machinery bolted onto the system?
 
-Be ruthless here. Complexity is easy to add and hard to remove. The default answer to "should we add this?" is no.
+The default answer to "should we add this?" is no. Complexity is easy to add and hard to remove. A codebase with less code that does the same thing is always better.
 
 ### Step 4: Report
 

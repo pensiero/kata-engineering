@@ -99,6 +99,26 @@ Use the templates in `skills/build/templates/` as guides (not copy-paste). Adapt
 - Structural integrity tests
 - Complete test baseline
 
+### Writing architecture docs — the narrative principle
+
+Architecture documentation follows one rule: **order by understanding dependency.** Each section should require only the context established by the sections before it. A reader — human or agent — should never encounter something that needs knowledge they haven't been given yet.
+
+This means:
+- Start with WHY the system exists and WHAT it is (the premise)
+- Then introduce WHAT exists in it (entities, concepts, components)
+- Then explain HOW they relate and what governs their interaction (boundaries, rules)
+- Then show HOW things move through the system (lifecycle, data flow)
+- Then explain WHY the system has this particular shape (decisions, tradeoffs)
+- Then provide HOW to operate, verify, and change it (practice)
+
+The specific sections vary by project. A library's natural story is different from a data pipeline's, which is different from a web application's. The principle is constant: **build understanding sequentially.** Each section depends on what came before.
+
+When writing or updating architecture docs, ask: "if someone read only up to this point, would they have enough context to understand what comes next?" If not, something is missing or misordered.
+
+This also prevents the append-over-append problem. New information doesn't go at the bottom — it goes where it belongs in the narrative. "Where does this fit in the story?" is the organizing question.
+
+The templates in `skills/build/templates/` demonstrate this principle for typical projects. Adapt the structure to the project's natural story.
+
 **Get human approval** before proceeding. The bootstrap sets the foundation — it should be right.
 
 ### Tier upgrades
@@ -213,10 +233,16 @@ Skip for leaf-node changes with no callbacks, state, or parallel interfaces.
 
 ### Step 4: Simplicity check
 
+Step back from the details. Look at the change as a whole.
+
+A good change has a natural shape — it feels like the obvious way to solve the problem. If it feels forced, convoluted, or "clever," something is wrong. The goal is not to make something that works — it's to find the solution that couldn't reasonably be simpler.
+
+Concretely:
 - For each new file: is it necessary? Could this live in an existing file?
 - For each new abstraction: does it have two concrete use cases, or is it premature?
 - For each new dependency: is the coupling worth it?
-- Read your diff as if you're seeing it for the first time: would a stranger understand it?
+- Read your diff as if you're seeing it for the first time: would a stranger understand it without explanation?
+- Read your diff as a whole: does this feel like the natural solution, or does it feel like machinery bolted on?
 
 ### Step 5: Task contract verification
 

@@ -1,6 +1,8 @@
 # Full Tier — Architecture Template
 
-Use this as a guide for full-tier projects. Extends the standard tier with governance, change classification, and deeper structural verification. Adapt to the domain.
+Use this as a guide for full-tier projects. Extends the standard tier with governance, change classification, structural verification, and deeper precision. The narrative principle is critical here — a complex system's docs must build understanding sequentially, or they become impenetrable.
+
+**Principle:** order by understanding dependency. Each section requires only the context from sections before it.
 
 ---
 
@@ -9,23 +11,25 @@ Use this as a guide for full-tier projects. Extends the standard tier with gover
 project_tier: full
 ---
 
-# Architecture
+# [Project Name]
 
-## System Story
+## The Story
 
-[What is this system in narrative form. Not just what it does — what it IS. Define the core entities and their relationships in plain language.]
+[The premise, written as prose. Not what the system does — what it IS. What problem exists in the world, and what role this system plays. Write this so a reader who's never seen the project understands its purpose and feels the integrity worth protecting.]
+
+[This is the most important section. Every architectural decision, every boundary, every invariant should make sense as a consequence of what's written here. If a proposed change contradicts this story, it's the wrong change — or the story needs to evolve.]
 
 ### Canonical Entities
 
-- **[Entity 1]**: [What it represents and its role in the system]
-- **[Entity 2]**: [What it represents and its role in the system]
-- **[Entity 3]**: [What it represents and its role in the system]
+[The characters. Define them precisely — what each one is, what it means, what it does not mean. These definitions are authoritative. No module or document may redefine them inconsistently.]
 
-No document or module may redefine these semantics.
+- **[Entity 1]**: [definition and role in the system]
+- **[Entity 2]**: [definition and role in the system]
+- **[Entity 3]**: [definition and role in the system]
 
-## Layer Model
+## The Structure
 
-[Non-overlapping layers with clear ownership. Every piece of code belongs to exactly one layer. No ambiguity.]
+[Now that the reader knows what the system is and what exists inside it, show how it's organized. Non-overlapping layers with clear ownership. Every piece of code belongs to exactly one layer.]
 
 ### [Layer 1] (`src/[path]`)
 **Owns:**
@@ -44,95 +48,102 @@ No document or module may redefine these semantics.
 
 ### Forbidden Coupling
 
-- [Layer A] modules must not depend on [Layer B] (transport/session/orchestration logic)
-- [Layer C] must not implement independent [canonical operations] — it consumes [Layer B] contracts
-- [Add all forbidden dependency directions]
+[The walls. What must never depend on what. These are the most load-bearing constraints in the system.]
 
-## Data Model
+- [Layer A] must not depend on [Layer B] — [why this matters]
+- [Layer C] must not implement independent [canonical operations] — [why]
+
+## The Data
+
+[What state exists, where it lives, what shape it takes. Reference schemas.]
 
 ### [Core Entity 1]
-[Detailed description of the entity, its fields, their semantics, and valid ranges/values.]
+[Fields, semantics, valid ranges. What each field means, not just what type it is.]
 
 Schema: `schemas/[entity].{ts,json,yaml}`
+**Invariant:** `INV-DATA-001`: [canonical constraint]
 
-**Invariant:** `INV-DATA-001`: [canonical constraint, e.g., "canonical N keys in canonical order across state/UI/API"]
+### Data Ownership
 
-### [Core Entity 2]
-[Detailed description.]
-
-Schema: `schemas/[entity].{ts,json,yaml}`
-
-## Data Ownership and State
-
-[Where canonical mutable state lives. What is code/docs/fixtures (repository) vs runtime state.]
-
-- Canonical mutable state: `[state location]`
+- Canonical mutable state lives in: [location]
 - Repository holds: code, docs, schemas, fixtures, tests
 
 **Invariant:** `INV-STORAGE-001`: canonical mutable state lives only in [defined location].
-**Invariant:** `INV-STATE-001`: runtime state is reconstructable from canonical artifacts.
 
-## Authoritative Mutation Path
+## The Flow
 
-[If the system has state mutations, define the ONE canonical path. All mutations flow through this path.]
+[How things move through the system. Now that the reader knows the layers, the data, and the boundaries, show the primary paths.]
+
+### Authoritative Path
+
+[If the system has state mutations, define the ONE canonical path.]
 
 ```
-[validator] → [governance/decision] → [applier] → [event log]
+[step 1] → [step 2] → [step 3] → [step 4]
 ```
 
-Any direct path outside this service is non-authoritative implementation debt.
+Any path outside this is non-authoritative implementation debt.
 
-## Change Classification
+### [Other significant flows]
 
-A change is **major** if any of these apply:
-1. [Criterion 1, e.g., "data delta exceeds threshold"]
-2. [Criterion 2, e.g., "more than N items changed in one batch"]
-3. [Criterion 3, e.g., "any governance/policy value changed"]
-4. [Criterion 4, e.g., "structural change to high-stakes component"]
+[Describe other primary paths through the system. Each should feel like a natural consequence of the structure described above.]
 
-Major changes must include:
-- Evidence / rationale linking
-- Evaluation metadata (who reviews, by when)
+## The Governance
+
+[How changes are classified and controlled.]
+
+### Change Classification
+
+A change is **major** if any apply:
+1. [Criterion 1]
+2. [Criterion 2]
+3. [Criterion 3]
+
+**Major changes require:**
+- Evidence and rationale
+- Evaluation metadata (reviewer, deadline)
 - Event log entry
+- Evaluation closure before proceeding
 
-Everything else is **minor** and auto-applies after validation.
+Everything else is **minor** — auto-applies after validation.
 
-## Key Decisions
+## The Decisions
+
+[Why the system has this particular shape. Decisions make sense only after the reader understands the structure they shaped.]
 
 ### [Decision 1]
 **Choice:** [what]
-**Rationale:** [why, including rejected alternatives]
+**Why:** [rationale, including rejected alternatives]
 
 ### [Decision 2]
 **Choice:** [what]
-**Rationale:** [why]
+**Why:** [rationale]
 
-## Success Metrics
+## The Measures
 
-[How do you know the system is healthy?]
+[How you know the system is healthy.]
 
-1. [Metric 1, e.g., "non-degrading quality score over time"]
-2. [Metric 2, e.g., ">=90% of changes are evidence-linked"]
-3. [Metric 3, e.g., "evaluation closure within target latency"]
+1. [Metric 1 and target]
+2. [Metric 2 and target]
+3. [Metric 3 and target]
 
-## Repository Structure
+## Working With This Project
 
-[Contract-bound ownership map. Every directory has a clear owner.]
+### Repository Map
 
 ```
 project/
   src/
-    [layer-1]/     # [Owner/purpose]
-    [layer-2]/     # [Owner/purpose]
-    [layer-3]/     # [Owner/purpose]
+    [layer-1]/     # [owner/purpose]
+    [layer-2]/     # [owner/purpose]
+    [layer-3]/     # [owner/purpose]
   schemas/         # Data structure definitions
   tests/           # Verification baseline
-  docs/            # Additional documentation
   ARCHITECTURE.md  # This file
   CONTRACTS.md     # Invariants and gates
 ```
 
-## Running
+### Commands
 
 ```bash
 # Run / start
@@ -148,12 +159,12 @@ project/
 [command]
 ```
 
-## Change Discipline
+### Change Discipline
 
 Every meaningful change updates:
 1. Code
 2. Relevant tests (including contract tests)
-3. Impacted docs (ARCHITECTURE.md, CONTRACTS.md, schemas)
+3. Impacted docs (this file, CONTRACTS.md, schemas)
 
 No silent drift. Code and docs ship together.
 Major changes require evidence and evaluation closure before commit.
@@ -161,14 +172,9 @@ Major changes require evidence and evaluation closure before commit.
 
 ---
 
-## Full tier expectations
+## Notes for the agent
 
-Everything in standard tier, plus:
-- Layer model with explicit non-overlapping ownership
-- Canonical entity definitions that no module may redefine
-- Authoritative mutation path (if state exists)
-- Change classification with major/minor governance
-- Success metrics for system health
-- Repository structure map with ownership
-- Coupling guardrail tests enforcing forbidden dependencies
-- Structural integrity tests verifying docs match code
+- The sections above follow the narrative principle: Story → Structure → Data → Flow → Governance → Decisions → Measures → Practice. Each depends on what came before.
+- For your specific project, the natural story may differ. A system without governance needs no governance section. A system without a mutation path needs no authoritative path section. Adapt.
+- The story section is the most important. It's not decoration — it's the frame that makes every other section coherent. Write it with care. It should read like the opening of a good explanation, not like a spec.
+- Full-tier docs are longer. Fight the urge to let them become a dump. Every section should earn its place. If a section exists only because the template had it, delete it.

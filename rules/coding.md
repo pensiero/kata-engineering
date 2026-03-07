@@ -1,6 +1,20 @@
 # Coding Rules
 
-Read this before writing code. These are non-negotiable practices.
+Read this before writing code.
+
+---
+
+## First Principle
+
+The simplest solution that works is not a compromise — it is the goal.
+
+Complexity is debt. Every abstraction, every indirection, every extra file is a choice to make the system harder to understand. Sometimes that cost is justified. Usually it isn't.
+
+Before adding anything, ask: does this earn its existence? Not "could this be useful someday" — but does the system need this, right now, to work correctly?
+
+A well-built system has a natural shape. When you find it, the code feels inevitable — like it couldn't have been written any other way. When you miss it, you feel the friction: things that should be simple aren't, names that should be obvious aren't, changes that should be local aren't.
+
+Seek the natural shape. Remove what obscures it.
 
 ---
 
@@ -34,7 +48,7 @@ Read this before writing code. These are non-negotiable practices.
 - No base classes for single implementations
 - No interfaces/protocols for single consumers
 - No configuration systems where a constant would do
-- If you're building it "for future flexibility" — stop. Build it when the future arrives.
+- If you're building it "for future flexibility" — stop. Build it when the future arrives
 
 ### Schema-first
 - Define data structures (types, schemas, interfaces) BEFORE implementing logic
