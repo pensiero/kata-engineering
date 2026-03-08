@@ -87,13 +87,13 @@ Use the templates in `skills/build/templates/` as guides (not copy-paste). Adapt
 - Initial test file
 
 **Standard tier scaffolds:**
-- `ARCHITECTURE.md` (from `templates/standard-architecture.md`)
+- `ARCHITECTURE.md` (from `templates/standard.md`)
 - `CONTRACTS.md` (from `templates/standard-contracts.md`)
 - Schema definitions for core data structures
 - Test baseline: schema validation, boundary invariants, happy path
 
 **Full tier scaffolds:**
-- `ARCHITECTURE.md` (from `templates/full-architecture.md`)
+- `ARCHITECTURE.md` (from `templates/full.md`)
 - `CONTRACTS.md` (from `templates/full-contracts.md`)
 - Coupling guardrail tests
 - Structural integrity tests
