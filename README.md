@@ -2,7 +2,12 @@
 
 *A practiced form for building software with AI agents.*
 
-In martial arts, a kata is a sequence of movements practiced until they become instinct — correct form achieved not through constant supervision, but through deeply internalized principle. This is the same idea applied to AI-assisted development. Not instructions handed to an agent at the start of each session and quietly forgotten. Contracts that live in the codebase, survive every context reset, and keep agents building in the right direction without anyone watching.
+> "Perfection is achieved not when there is nothing more to add, but when there is nothing more to remove."
+> — Antoine de Saint-Exupéry
+
+Dave Thomas introduced the code kata: a small exercise practiced until correct form becomes instinct. The practitioner stops thinking about each step. The form is internalized.
+
+This applies the same idea to agentic AI. Not instructions handed to an agent at the start of each session and forgotten by the end — contracts that live in the codebase, survive every context reset, and keep agents building correctly without anyone watching.
 
 ## Why This Exists
 
@@ -46,10 +51,10 @@ kata-agents/
 
 ## Deployment
 
-1. Copy `rules/` to your OpenClaw workspace (`~/.openclaw/workspace/rules/`)
+1. Copy `rules/` to your workspace (example if you are using OpenClaw: `~/.openclaw/workspace/rules/`)
 2. Copy `skills/build/` and `skills/review/` to workspace skills folder
 3. Add the contents of `agents-md-patch.md` to your workspace `AGENTS.md`
-4. Optionally register skills in OpenClaw config for auto-discovery
+4. Optionally register skills in config for auto-discovery
 
 ## How It Works
 
