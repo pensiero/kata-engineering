@@ -1,6 +1,6 @@
-# Kata
+# Kata 型
 
-*A practiced form for building software with AI agents.*
+*A minimal approach for building software with AI agents.*
 
 In martial arts, a kata is a sequence of movements practiced until they become instinct — correct form achieved not through supervision, but through deeply internalized principle. The elegance is inseparable from the discipline. Nothing is added that doesn't belong.
 
