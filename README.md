@@ -2,6 +2,16 @@
 
 A minimal, durable approach to AI-assisted software development.
 
+## Why This Exists
+
+After working with AI agents on real projects for a while, a pattern became impossible to ignore. The agent would start strong — exploring alternatives, following the conventions, building with care. Then, gradually, it would drift. Complexity crept in. The point of what was being built got lost. Fragility appeared in random places. Bugs hid inside codebases that looked fine from the outside. Instructions given once — use schemas, enforce invariants, write tests — would be followed for a session or two, then quietly forgotten. The agent would get stuck on the same approach and stop exploring. At the end of each session, the next one started almost from scratch.
+
+The instinctive response is to add more: more agents, more orchestration, more elaborate frameworks. But that instinct is wrong. Complex wrappers are the problem dressed up as a solution — they age fast, they break in surprising ways, and they obscure what's actually happening. The agentic AI landscape moves so fast that anything baroque is obsolete in months.
+
+The real problem is not that agents are dumb. It's that they have no durable memory of the system they're building. Every session, the agent has to rediscover the architecture, the decisions, the boundaries — or it doesn't, and it drifts. The fix isn't more orchestration. It's contracts. Clear, testable, project-specific contracts that live in the codebase and survive context resets.
+
+Simplicity is not a constraint here. It is the goal. A system with fewer moving parts is easier to understand, easier to maintain, and easier to hand to an agent without watching it unravel. The most elegant solution is the one that couldn't reasonably be simpler — and tends to be the one that lasts.
+
 ## Philosophy
 
 Complex agent wrappers expire in months. Project contracts last as long as the project. This framework invests in contracts and rules — not elaborate orchestration.
