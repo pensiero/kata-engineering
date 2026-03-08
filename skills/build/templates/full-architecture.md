@@ -15,7 +15,7 @@ project_tier: full
 
 ## The Story
 
-[The premise, written as prose. Not what the system does — what it IS. What problem exists in the world, and what role this system plays. Write this so a reader who's never seen the project understands its purpose and feels the integrity worth protecting.]
+[The premise, written as clear, direct prose. Two to four sentences — not a literary essay. Define what the system IS, not what it does. "A persistent identity blueprint" tells you more than "a system that manages identity data." Use the strongest, most precise language you can find. Every word should be load-bearing.]
 
 [This is the most important section. Every architectural decision, every boundary, every invariant should make sense as a consequence of what's written here. If a proposed change contradicts this story, it's the wrong change — or the story needs to evolve.]
 
@@ -176,5 +176,5 @@ Major changes require evidence and evaluation closure before commit.
 
 - The sections above follow the narrative principle: Story → Structure → Data → Flow → Governance → Decisions → Measures → Practice. Each depends on what came before.
 - For your specific project, the natural story may differ. A system without governance needs no governance section. A system without a mutation path needs no authoritative path section. Adapt.
-- The story section is the most important. It's not decoration — it's the frame that makes every other section coherent. Write it with care. It should read like the opening of a good explanation, not like a spec.
+- The story section is the most important. It's not decoration — it's the frame that makes every other section coherent. Write it with care — clear and direct, not flowery or literary. The best system stories are the shortest ones that make you understand what you're dealing with.
 - Full-tier docs are longer. Fight the urge to let them become a dump. Every section should earn its place. If a section exists only because the template had it, delete it.

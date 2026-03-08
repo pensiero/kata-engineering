@@ -13,7 +13,7 @@ project_tier: light
 
 ## What This Is
 
-[A few sentences of prose. What does this do, why does it exist, who is it for. Write it so that someone encountering this project for the first time knows immediately whether they're in the right place.]
+[A few sentences of prose. Define what this IS, not what it does — who is it for, why does it exist. Write it so that someone encountering this project for the first time knows immediately whether they're in the right place.]
 
 ## How It Works
 

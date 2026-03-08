@@ -15,7 +15,7 @@ project_tier: standard
 
 ## What This Is
 
-[The premise. Two to four sentences of prose — not bullet points — explaining what this system is and why it exists. Write it so someone with no context understands the purpose and cares about the system's integrity.]
+[The premise. Two to four sentences of prose — not bullet points. Define what the system IS, not what it does. "A persistent identity blueprint" tells you more than "a system that manages identity data." Write it so someone with no context understands the purpose and cares about the system's integrity.]
 
 [This section sets the frame for everything that follows. Every architectural decision should make sense in light of what's written here.]
 
