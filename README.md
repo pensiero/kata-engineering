@@ -14,14 +14,14 @@ In martial arts, a kata (型) is a sequence of movements practiced until they be
 
 ## Why This Exists
 
-After working with AI agents on real projects for a while, a pattern became clear. The agent would start strong — exploring alternatives, following the conventions, building with care. Then, gradually, it would drift. Complexity crept in. The point of what was being built got lost. Fragility appeared in random places. Bugs hid inside codebases that looked fine from the outside. Instructions like use schemas, enforce invariants, or write tests would be followed for a while, then quietly forgotten. The agent would get stuck on the same approach and stop exploring.
+After working with AI agents on real projects for a while, a pattern became clear. The agent would start strong — exploring alternatives, following the conventions, building with care. Then, gradually, it would drift. Complexity crept in. The point of what was being built got lost. Fragility appeared in random places. Instructions like use schemas, enforce invariants, or write tests would be followed for a while, then quietly forgotten. The agent would get stuck on the same approach and stop exploring.
 
 The obvious response is to add more: more agents, more orchestration, more complex setups. In practice this makes things worse. Complex setups age badly, hide problems, and quickly become obsolete in a fast-moving agent ecosystem.
 
-Industry is moving fast:
-- Yesterday: you had to carefully design and orchestrate dozens of specialized agents.
-- Today: you can ask a model like Claude to generate the instructions for those agents.
-- Tomorrow: the model will likely create and run them internally from a single prompt.
+- _Few months ago_: you used few-shot prompting and asked your agent to "act like a professional chef" in order to get a recipe
+- _Yesterday_: you had to carefully handicraft and orchestrate dozens of specialized agents.
+- _Today_: you can ask a model like Claude to generate the instructions for those agents, but you still orchestrate them.
+- _Tomorrow_: the model will likely create and run multiple agents under the hood depending on your single prompt.
 
 If something consistently works, frameworks eventually automate it.
 Over-engineering may become obsolete sooner than you think. So, KISS 💋.
