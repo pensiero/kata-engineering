@@ -21,8 +21,9 @@ project_tier: light
 
 ```
 project/
-  src/           # [what's here]
-  tests/         # [what's here]
+  src/             # [what's here]
+  tests/           # [what's here]
+  ARCHITECTURE.md  # This file
 ```
 
 ## The Decisions

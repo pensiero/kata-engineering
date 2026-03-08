@@ -71,6 +71,21 @@ project_tier: standard
 
 ## Working With This Project
 
+### Repository Map
+
+```
+project/
+  src/
+    [component-1]/   # [purpose]
+    [component-2]/   # [purpose]
+  schemas/           # Data structure definitions
+  tests/             # Test baseline
+  ARCHITECTURE.md    # This file
+  CONTRACTS.md       # Invariants and gates
+```
+
+### Commands
+
 ```bash
 # How to run
 [command]
