@@ -1,6 +1,8 @@
-# Agents Framework
+# Kata
 
-A minimal, durable approach to AI-assisted software development.
+*A practiced form for building software with AI agents.*
+
+In martial arts, a kata is a sequence of movements practiced until they become instinct — correct form achieved not through constant supervision, but through deeply internalized principle. This is the same idea applied to AI-assisted development. Not instructions handed to an agent at the start of each session and quietly forgotten. Contracts that live in the codebase, survive every context reset, and keep agents building in the right direction without anyone watching.
 
 ## Why This Exists
 
@@ -12,11 +14,8 @@ The real problem is not that agents are dumb. It's that they have no durable mem
 
 Simplicity is not a constraint here. It is the goal. A system with fewer moving parts is easier to understand, easier to maintain, and easier to hand to an agent without watching it unravel. The most elegant solution is the one that couldn't reasonably be simpler — and tends to be the one that lasts.
 
-## Philosophy
+## Principles
 
-Complex agent wrappers expire in months. Project contracts last as long as the project. This framework invests in contracts and rules — not elaborate orchestration.
-
-**Core principles:**
 - **Contracts over instructions** — instructions decay; testable invariants don't
 - **Thin routing, deep projects** — AGENTS.md is a directory; intelligence lives in per-project docs
 - **One agent, two modes** — build and review are skills, not separate agents
@@ -26,7 +25,7 @@ Complex agent wrappers expire in months. Project contracts last as long as the p
 ## Structure
 
 ```
-agents-framework/
+kata-agents/
 ├── README.md                  # This file
 ├── agents-md-patch.md         # Routing section to add to workspace AGENTS.md
 ├── rules/
