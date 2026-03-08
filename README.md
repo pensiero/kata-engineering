@@ -4,7 +4,7 @@
 
 In martial arts, zanshin is the awareness that remains after the technique — the mind that doesn't relax, doesn't drift, stays present. A practitioner without zanshin executes correctly once. With zanshin, they remain aligned.
 
-This applies the same idea to agentic AI. Not instructions handed to an agent at the start of each session and forgotten by the end — contracts that live in the codebase, survive every context reset, and keep agents building correctly without anyone watching. Zen simplicity over elaborate orchestration.
+This applies the same idea to agentic AI. A session ends, the context resets, and the agent starts fresh — the alignment gone. The question isn't how to make agents smarter. It's how to make them remain.
 
 Dave Thomas brought the code kata to software. Zanshin is what a good kata produces.
 
@@ -12,11 +12,9 @@ Dave Thomas brought the code kata to software. Zanshin is what a good kata produ
 
 After working with AI agents on real projects for a while, a pattern became impossible to ignore. The agent would start strong — exploring alternatives, following the conventions, building with care. Then, gradually, it would drift. Complexity crept in. The point of what was being built got lost. Fragility appeared in random places. Bugs hid inside codebases that looked fine from the outside. Instructions given once — use schemas, enforce invariants, write tests — would be followed for a session or two, then quietly forgotten. The agent would get stuck on the same approach and stop exploring. At the end of each session, the next one started almost from scratch.
 
-The instinctive response is to add more: more agents, more orchestration, more elaborate frameworks. But that instinct is wrong. Complex wrappers are the problem dressed up as a solution — they age fast, they break in surprising ways, and they obscure what's actually happening. The agentic AI landscape moves so fast that anything baroque is obsolete in months.
+The obvious response is to add more — more agents, more orchestration, a more elaborate setup. It's the wrong instinct. Complex systems age badly, break in places you don't expect, and hide what's actually going wrong. The agentic landscape moves fast enough that anything baroque is obsolete within months.
 
-The real problem is not that agents are dumb. It's that they have no durable memory of the system they're building. Every session, the agent has to rediscover the architecture, the decisions, the boundaries — or it doesn't, and it drifts. The fix isn't more orchestration. It's contracts. Clear, testable, project-specific contracts that live in the codebase and survive context resets.
-
-Simplicity is not a constraint here. It is the goal. A system with fewer moving parts is easier to understand, easier to maintain, and easier to hand to an agent without watching it unravel. The most elegant solution is the one that couldn't reasonably be simpler — and tends to be the one that lasts.
+The real problem is simpler. Agents have no durable memory of the system they're building. Every session, the architecture has to be rediscovered — or it isn't, and things drift. The fix isn't more orchestration. It's contracts. Clear, testable, project-specific invariants that live in the codebase and survive every reset.
 
 ## Principles
 
