@@ -1,3 +1,8 @@
+---
+name: build
+description: Implement features, fix bugs, start new projects, or bootstrap project structure. Use for any coding task.
+---
+
 # Build Skill
 
 Use for implementing features, fixing bugs, starting new projects, or bootstrapping project structure.

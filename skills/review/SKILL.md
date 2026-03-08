@@ -1,3 +1,8 @@
+---
+name: review
+description: Review code changes, check project health, or verify contract compliance. Use for any review task.
+---
+
 # Review Skill
 
 Use for reviewing code changes, checking project health, or verifying contract compliance.
