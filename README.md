@@ -1,12 +1,12 @@
-# Kata 型
+# Zanshin 残心
 
-*A minimal approach for building software with AI agents.*
+*A minimal and elegant practice for building software with AI agents.*
 
-In martial arts, a kata is a sequence of movements practiced until they become instinct — correct form achieved not through supervision, but through deeply internalized principle. The elegance is inseparable from the discipline. Nothing is added that doesn't belong.
+In martial arts, zanshin is the awareness that remains after the technique — the mind that doesn't relax, doesn't drift, stays present. A practitioner without zanshin executes correctly once. With zanshin, they remain aligned.
 
 This applies the same idea to agentic AI. Not instructions handed to an agent at the start of each session and forgotten by the end — contracts that live in the codebase, survive every context reset, and keep agents building correctly without anyone watching. Zen simplicity over elaborate orchestration.
 
-Dave Thomas brought the code kata to software. This extends it to AI agents.
+Dave Thomas brought the code kata to software. Zanshin is what a good kata produces.
 
 ## Why This Exists
 
@@ -29,7 +29,7 @@ Simplicity is not a constraint here. It is the goal. A system with fewer moving 
 ## Structure
 
 ```
-kata-agents/
+zanshin-agents/
 ├── README.md                  # This file
 ├── agents-md-patch.md         # Routing section to add to workspace AGENTS.md
 ├── rules/
