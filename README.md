@@ -67,7 +67,9 @@ kata-engineering/
 │   └── review/
 │       └── SKILL.md           # Review skill (observe + check + simplify + report)
 ├── examples/
-│   └── brownfield-rework-prompt.md  # Ready-to-use prompt for reworking existing projects
+│   ├── greenfield-project-prompt.md   # Prompt for starting a new project from scratch
+│   ├── brownfield-rework-prompt.md    # Prompt for reworking an existing project
+│   └── review-prompt.md              # Prompt for a full project health review
 ```
 
 ## Tiers
@@ -114,3 +116,11 @@ The following are sample prompts:
 
 **Tier upgrade**
 > _This project has grown. Let's upgrade from light to standard._
+
+### Advanced Examples
+
+For longer, multi-phase tasks, use the ready-made prompts in `examples/`:
+
+- [**Start a new project from scratch**](examples/greenfield-project-prompt.md) — full bootstrap with tier selection, architecture docs, schemas, and initial tests
+- [**Rework an existing project**](examples/brownfield-rework-prompt.md) — restructure docs and contracts for a project that already has working code
+- [**Full project health review**](examples/review-prompt.md) — periodic check on architecture accuracy, contract health, tier compliance, and complexity
