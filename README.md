@@ -2,11 +2,7 @@
 
 *A minimal and elegant practice for building software with AI agents.*
 
-In martial arts, zanshin is the awareness that remains after the technique — the mind that doesn't relax, doesn't drift, stays present. A practitioner without zanshin executes correctly once. With zanshin, they remain aligned.
-
-This applies the same idea to agentic AI. A session ends, the context resets, and the agent starts fresh — the alignment gone. The question isn't how to make agents smarter. It's how to make them remain.
-
-Dave Thomas brought the code kata to software. Zanshin is what a good kata produces.
+In martial arts, zanshin is the awareness that remains after the technique — the mind that doesn't drift, stays present, keeps the form intact.
 
 ## Why This Exists
 
@@ -14,7 +10,9 @@ After working with AI agents on real projects for a while, a pattern became impo
 
 The obvious response is to add more — more agents, more orchestration, a more elaborate setup. It's the wrong instinct. Complex systems age badly, break in places you don't expect, and hide what's actually going wrong. The agentic landscape moves fast enough that anything baroque is obsolete within months.
 
-The real problem is simpler. Agents have no durable memory of the system they're building. Every session, the architecture has to be rediscovered — or it isn't, and things drift. The fix isn't more orchestration. It's contracts. Clear, testable, project-specific invariants that live in the codebase and survive every reset.
+What's actually needed is continuity. Clear guardrails, boundaries, and practices — light enough to leave the agent free to explore and push back, but durable enough to survive every session reset. Not rules the agent forgets by the second session. A consistent shape that persists: the architecture, the decisions, the constraints. The agent stays free. The project stays coherent.
+
+Dave Thomas brought the code kata to software. Zanshin is what a good kata produces.
 
 ## Principles
 
