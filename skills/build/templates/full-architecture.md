@@ -15,7 +15,7 @@ project_tier: full
 
 ## The Story
 
-[The premise, written as clear, direct prose. Two to four sentences — not a literary essay. Define what the system IS, not what it does. "A persistent identity blueprint" tells you more than "a system that manages identity data." Use the strongest, most precise language you can find. Every word should be load-bearing.]
+[The premise, written as clear, direct prose. Two to four sentences — not bullet points, not a literary essay. Define what the system IS, not what it does. "A persistent identity blueprint" tells you more than "a system that manages identity data." Every word should be load-bearing.]
 
 [This is the most important section. Every architectural decision, every boundary, every invariant should make sense as a consequence of what's written here. If a proposed change contradicts this story, it's the wrong change — or the story needs to evolve.]
 

@@ -11,7 +11,7 @@ project_tier: light
 
 # [Project Name]
 
-## What This Is
+## The Story
 
 [A few sentences of prose. Define what this IS, not what it does — who is it for, why does it exist. Write it so that someone encountering this project for the first time knows immediately whether they're in the right place.]
 
@@ -25,13 +25,13 @@ project/
   tests/         # [what's here]
 ```
 
-## Decisions
+## The Decisions
 
 [Record non-obvious choices. Why this language, this library, this approach. One or two entries is fine. Future-you will thank you.]
 
 - [Decision and rationale]
 
-## Running
+## Working With This Project
 
 ```bash
 # How to run

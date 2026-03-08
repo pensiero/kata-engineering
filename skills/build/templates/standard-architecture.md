@@ -13,9 +13,9 @@ project_tier: standard
 
 # [Project Name]
 
-## What This Is
+## The Story
 
-[The premise. Two to four sentences of prose — not bullet points. Define what the system IS, not what it does. "A persistent identity blueprint" tells you more than "a system that manages identity data." Write it so someone with no context understands the purpose and cares about the system's integrity.]
+[The premise, written as clear, direct prose. Two to four sentences — not bullet points, not a literary essay. Define what the system IS, not what it does. "A persistent identity blueprint" tells you more than "a system that manages identity data." Every word should be load-bearing.]
 
 [This section sets the frame for everything that follows. Every architectural decision should make sense in light of what's written here.]
 
@@ -31,7 +31,7 @@ project_tier: standard
 
 [If core data structures have schemas, reference them here: "defined in `schemas/[file]`"]
 
-## The Boundaries
+## The Structure
 
 [Now that the reader knows what exists, explain how these things are allowed to interact. What owns what. What must never depend on what.]
 
@@ -42,14 +42,14 @@ project_tier: standard
 | [Component 1] | [its responsibilities] | `src/[path]` |
 | [Component 2] | [its responsibilities] | `src/[path]` |
 
-### Forbidden Dependencies
+### Forbidden Coupling
 
 [These are the walls. Crossing them is an architectural violation.]
 
 - [Component A] must not import from [Component B] — [why]
 - [Component C] must not directly access [resource D] — [why]
 
-## How Things Flow
+## The Flow
 
 [Now that the reader knows the concepts and the boundaries, show how data/control actually moves through the system. This should feel like a natural consequence of the structure described above.]
 
@@ -57,13 +57,13 @@ project_tier: standard
 
 [Keep it concrete. "A request arrives at X, which validates it against Y, then passes it to Z for processing" — not abstract descriptions of possible flows.]
 
-## Key Decisions
+## The Decisions
 
 [Now that the reader understands the system, explain why it has this particular shape. Decisions only make sense in context — that's why this section comes after the structure, not before.]
 
 ### [Decision 1]
 **Choice:** [what was chosen]
-**Why:** [rationale, including what alternatives were considered]
+**Why:** [rationale, including rejected alternatives]
 
 ### [Decision 2]
 **Choice:** [what was chosen]
@@ -98,7 +98,7 @@ Code and docs ship together. No silent drift.
 
 - The sections above are ONE example of the narrative principle for a typical multi-module project. Your project's natural story may be different.
 - Ask: "what does a reader need to understand first? what depends on that?" — and build the reading order accordingly.
-- A library might flow: What This Is → The Interface → The Contracts → The Internals → Usage.
-- A data pipeline might flow: What This Is → Sources → Transformations → Destinations → Failure Modes.
-- A CLI tool might flow: What This Is → Commands → Configuration → Extension.
+- A library might flow: The Story → The Interface → The Contracts → The Internals → Usage.
+- A data pipeline might flow: The Story → Sources → Transformations → Destinations → Failure Modes.
+- A CLI tool might flow: The Story → Commands → Configuration → Extension.
 - The principle is constant. The sections adapt.
