@@ -66,6 +66,8 @@ kata-engineering/
 │   │       └── full-contracts.md
 │   └── review/
 │       └── SKILL.md           # Review skill (observe + check + simplify + report)
+├── examples/
+│   └── brownfield-rework-prompt.md  # Ready-to-use prompt for reworking existing projects
 ```
 
 ## Tiers
