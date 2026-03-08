@@ -18,6 +18,10 @@
 
 Use the `build` skill. It detects whether the project has structure and bootstraps if needed.
 
+### Planning Phased Work
+
+Use the `build` skill. If the human asks for a plan, or the project has clear phases ahead, create `PLAN.md` using `templates/plan.md` as a guide.
+
 ### Implementing Features, Fixes, or Changes
 
 Use the `build` skill.

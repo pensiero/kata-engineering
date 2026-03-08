@@ -99,6 +99,9 @@ Use the templates in `skills/build/templates/` as guides (not copy-paste). Adapt
 - Structural integrity tests
 - Complete test baseline
 
+**Any tier, optionally:**
+- `PLAN.md` (from `templates/plan.md`) — when the project has phased work, sequencing, or deferred scope. Create it if the human asks for planning, or if the project clearly has multiple phases ahead. Not required by default.
+
 ### Writing architecture docs — the narrative principle
 
 Architecture documentation follows one rule: **order by understanding dependency.** Each section should require only the context established by the sections before it. A reader — human or agent — should never encounter something that needs knowledge they haven't been given yet.

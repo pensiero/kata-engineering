@@ -74,12 +74,13 @@ kata-engineering/
 |---|:---:|:---:|:---:|
 | `ARCHITECTURE.md` | ✓ | ✓ | ✓ |
 | `CONTRACTS.md` | | ✓ | ✓ |
+| `PLAN.md` | optional | optional | optional |
 | Schema definitions | | ✓ | ✓ |
 | Coupling guardrail tests | | | ✓ |
 | Structural integrity tests | | | ✓ |
 | Change governance | | | ✓ |
 
-Use **light** for scripts and personal tools. **Standard** for projects with APIs, persistence, or multiple modules. **Full** for production systems that need governance.
+Use **light** for scripts and personal tools. **Standard** for projects with APIs, persistence, or multiple modules. **Full** for production systems that need governance. Use `PLAN.md` when the project has phased work, sequencing, or deferred scope.
 
 ## Deployment
 
@@ -105,6 +106,9 @@ The following are sample prompts:
 
 **Review**
 > _Review the changes I just made to the auth module._
+
+**Planning phased work**
+> _Let's create a plan. I want to break the remaining work into phases — authentication first, then the API layer, then the CLI._
 
 **Tier upgrade**
 > _This project has grown. Let's upgrade from light to standard._
