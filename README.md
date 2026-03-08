@@ -1,9 +1,11 @@
 # Kata Engineering (型)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 *A minimal practice for building software with AI agents.*
 
 Contracts, guardrails, workflows and practices that keep projects coherent while leaving agents free to explore.
-
+ 
 ## Older Than Software
 
 In martial arts, a kata (型) is a sequence of movements practiced until they become instinct — correct form achieved not through supervision, but through deeply internalized principle. Elegance comes from discipline. Nothing is added that doesn't belong.
@@ -16,14 +18,33 @@ After working with AI agents on real projects for a while, a pattern became clea
 
 The obvious response is to add more: more agents, more orchestration, more complex setups. In practice this makes things worse. Complex setups age badly, hide problems, and quickly become obsolete in a fast-moving agent ecosystem.
 
-What's actually needed is structure — not control. Clear boundaries, guardrails, and best practices precise enough that the agent knows what the project is, how it's shaped, and what must never change. Simple enough that the agent stays free to explore, try alternatives, push back. The architecture persists. The decisions are recorded. The constraints are testable. The agent works within them, not around them.
+Industry is moving fast:
+- Yesterday: you had to carefully design and orchestrate dozens of specialized agents.
+- Today: you can ask a model like Claude to generate the instructions for those agents.
+- Tomorrow: the model will likely create and run them internally from a single prompt.
+
+If something consistently works, frameworks eventually automate it.
+Over-engineering may become obsolete sooner than you think. So, KISS 💋.
+
+What's actually needed is structure — not control. Elegant boundaries, guardrails, and best practices precise enough that the agent knows what the project is, how it's shaped, and what must never change. Simple enough that the agent stays free to explore, try alternatives, push back. The architecture persists. The decisions are recorded. The constraints are testable. The agent works within them, not around them.
+
+## Works with
+
+![Claude Code](https://img.shields.io/badge/Claude_Code-D97757?style=flat&logo=claude&logoColor=white)
+![Codex](https://img.shields.io/badge/Codex-2563EB?style=flat&logo=openai&logoColor=white)
+![Cursor](https://img.shields.io/badge/Cursor-000000?style=flat&logo=cursor&logoColor=white)
+![OpenClaw](https://img.shields.io/badge/🦞_OpenClaw-FF5A2D?style=flat)
+![Gemini CLI](https://img.shields.io/badge/Gemini_CLI-4285F4?style=flat&logo=google-gemini&logoColor=white)
+![Any markdown agent](https://img.shields.io/badge/✨_any_agent_that_reads_text-FFBD16?style=flat)
 
 ## Principles
 
-- **1 agent, 2 modes** — build and review are skills, not separate agents
+- **1 agent, 2 modes** - _build_ and _review_ are skills, not separate agents
 - **3 tiers complexity** based on your project - light, standard and full
 - AGENTS.md routes, intelligence lives in project docs
 - Contracts over instructions
+
+> **Zero footprint.** No install, no dependencies, no external services or API calls. Instructions in markdown files have no external reference. 
 
 ## Structure
 
@@ -46,6 +67,19 @@ kata-engineering/
 │   └── review/
 │       └── SKILL.md           # Review skill (observe + check + simplify + report)
 ```
+
+## Tiers
+
+| | Light | Standard | Full |
+|---|:---:|:---:|:---:|
+| `ARCHITECTURE.md` | ✓ | ✓ | ✓ |
+| `CONTRACTS.md` | | ✓ | ✓ |
+| Schema definitions | | ✓ | ✓ |
+| Coupling guardrail tests | | | ✓ |
+| Structural integrity tests | | | ✓ |
+| Change governance | | | ✓ |
+
+Use **light** for scripts and personal tools. **Standard** for projects with APIs, persistence, or multiple modules. **Full** for production systems that need governance.
 
 ## Deployment
 
