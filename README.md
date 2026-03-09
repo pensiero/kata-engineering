@@ -4,29 +4,49 @@
 
 *A minimal practice for building software with AI agents.*
 
-Contracts, guardrails, workflows and practices that keep projects coherent while leaving agents free to explore.
+It gives your projects a small amount of structure:
+- Contracts, guardrails, workflows and practices stored in markdown that keep projects coherent while leaving agents free to explore
+- **2 simple skills**: [build](./skills/build) and [review](./skills/review)
+- **a tiny routing patch** for [AGENTS.md](./AGENTS-patch.md) (or any other file loaded at runtime)
+
+> **Zero footprint.** No install, no dependencies, no external services.
+> Just markdown files loaded by your agent at runtime. Boring in the best way.
+
+## How it works
+
+1. `AGENTS.md` routes the agent to the right skill
+2. project docs define architecture, contracts, and constraints
+3. the agent builds or reviews within those boundaries
+4. as the project grows, you can move from **Light** to **Standard** to **Full** tiers
+
+## Why This Exists
+
+Have you also noticed that AI agents often start well, then drift?
+
+They explore alternatives and follow the conventions for a while, then gradually drift. Complexity crept in. 
+The original shape of the project gets blurred. Fragility appears in random places. 
+Instructions like use schemas, enforce invariants, or write are quietly forgotten. 
+The agent would get stuck on the same approach and stop exploring.
+
+A common reaction is to add more: more specialized agents, more orchestration, more complex setups. 
+In practice this often makes things worse. Complex setups age badly and quickly become obsolete in a fast-moving agent ecosystem.
+
+- _A few months ago_: we used few-shot prompting and asked agents to "act like a professional chef" in order to get a recipe
+- _Yesterday_: we carefully hand-crafted and orchestrated dozens of specialized agents
+- _Today_: models can generate those agent instructions for us
+- _Tomorrow_: the model will likely create and run multiple agents under the hood from a single prompt
+
+If a pattern works, frameworks eventually automate it.
+Over-engineering agents may become obsolete sooner than you think. So, KISS 💋.
+
+So the real need is not more control. It is better structure.
+Kata Engineering gives agents elegant boundaries without over-constraining them. The architecture persists. Decisions are recorded. Constraints are testable. The agent remains free to explore, but not free to quietly deform the project.
  
 ## Older Than Software
 
 In martial arts, a kata (型) is a sequence of movements practiced until they become instinct — correct form achieved not through supervision, but through deeply internalized principle. Elegance comes from discipline. Nothing is added that doesn't belong.
 
 [Dave Thomas](https://en.wikipedia.org/wiki/Dave_Thomas_%28programmer%29) introduced the [concept of code kata](https://en.wikipedia.org/wiki/The_Pragmatic_Programmer) to help developers practice and refine their craft. Kata Engineering extends that idea to AI agents.
-
-## Why This Exists
-
-After working with AI agents on real projects for a while, a pattern became clear. The agent would start strong — exploring alternatives, following the conventions, building with care. Then, gradually, it would drift. Complexity crept in. The point of what was being built got lost. Fragility appeared in random places. Instructions like use schemas, enforce invariants, or write tests would be followed for a while, then quietly forgotten. The agent would get stuck on the same approach and stop exploring.
-
-The obvious response is to add more: more agents, more orchestration, more complex setups. In practice this makes things worse. Complex setups age badly, hide problems, and quickly become obsolete in a fast-moving agent ecosystem.
-
-- _Few months ago_: you used few-shot prompting and asked your agent to "act like a professional chef" in order to get a recipe
-- _Yesterday_: you had to carefully handicraft and orchestrate dozens of specialized agents.
-- _Today_: you can ask a model like Claude to generate the instructions for those agents, but you still orchestrate them.
-- _Tomorrow_: the model will likely create and run multiple agents under the hood depending on your single prompt.
-
-If something consistently works, frameworks eventually automate it.
-Over-engineering may become obsolete sooner than you think. So, KISS 💋.
-
-What's actually needed is structure — not control. Elegant boundaries, guardrails, and best practices precise enough that the agent knows what the project is, how it's shaped, and what must never change. Simple enough that the agent stays free to explore, try alternatives, push back. The architecture persists. The decisions are recorded. The constraints are testable. The agent works within them, not around them.
 
 ## Works with
 
@@ -37,21 +57,12 @@ What's actually needed is structure — not control. Elegant boundaries, guardra
 ![Gemini CLI](https://img.shields.io/badge/Gemini_CLI-4285F4?style=flat&logo=google-gemini&logoColor=white)
 ![Any markdown agent](https://img.shields.io/badge/✨_any_agent_that_reads_text-FFBD16?style=flat)
 
-## Principles
-
-- **1 agent, 2 modes** - _build_ and _review_ are skills, not separate agents
-- **3 tiers complexity** based on your project - light, standard and full
-- AGENTS.md routes, intelligence lives in project docs
-- Contracts over instructions
-
-> **Zero footprint.** No install, no dependencies, no external services or API calls. Instructions in markdown files have no external reference. 
-
 ## Structure
 
 ```
 kata-engineering/
 ├── README.md                  # This file
-├── agents-md-patch.md         # Routing section to add to workspace AGENTS.md
+├── AGENTS-md-patch.md         # Routing section to add to workspace AGENTS.md
 ├── rules/
 │   ├── coding.md              # Universal coding practices
 │   └── testing.md             # Universal testing practices
@@ -90,7 +101,7 @@ Use **light** for scripts and personal tools. **Standard** for projects with API
 
 1. Copy `rules/` to your workspace (example if you are using OpenClaw: `~/.openclaw/workspace/rules/`)
 2. Copy `skills/build/` and `skills/review/` to workspace skills folder
-3. Add the contents of `agents-md-patch.md` to your workspace `AGENTS.md`
+3. Add the contents of `AGENTS-patch.md` to your workspace `AGENTS.md`
 4. Optionally register skills in config for auto-discovery
 
 ## Usage
