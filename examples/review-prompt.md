@@ -20,9 +20,8 @@ Before doing anything, read these files in this order:
    - `[KATA_PATH]/skills/review/SKILL.md` — the review skill (your workflow)
 
 2. **The project docs:**
-   - `[PROJECT_PATH]/ARCHITECTURE.md`
-   - `[PROJECT_PATH]/CONTRACTS.md` (if it exists)
-   - `[PROJECT_PATH]/PLAN.md` (if it exists)
+   - Stable docs: `[PROJECT_PATH]/ARCHITECTURE.md`, `[PROJECT_PATH]/CONTRACTS.md` (if it exists)
+   - Living docs (all optional): `[PROJECT_PATH]/PLAN.md`, `[PROJECT_PATH]/DECISIONS.md`, `[PROJECT_PATH]/RESEARCH.md`
 
 3. **The project itself:**
    - The directory structure: `find [PROJECT_PATH] -type f | grep -v node_modules | grep -v .git | sort`
@@ -86,15 +85,26 @@ Walk through the codebase:
 - Dead code — files, functions, or modules that nothing uses?
 - Dependencies that could be inlined or removed?
 
-### Phase 5 — Plan Check
+### Phase 5 — Living Doc Check
 
-If `PLAN.md` exists:
+Living docs go stale quickly. For each one that exists:
 
-- Is it up to date? Does "completed" match what's actually built?
+**`PLAN.md`:**
+- Is "completed" up to date with what's actually built?
 - Does "up next" still make sense given the current state?
 - Are there deferred items that should be reconsidered?
 
-If `PLAN.md` doesn't exist but the project has clear phased work ahead: suggest creating one.
+**`DECISIONS.md`:**
+- Do the recorded decisions still reflect the current code?
+- Are there recent design choices (visible in git history) that should have been recorded but weren't?
+
+**`RESEARCH.md`:**
+- Are "open questions" still open, or have they been silently resolved?
+- Do "key findings" still reflect current understanding?
+
+If a living doc is clearly stale, flag it. If a living doc is absent but obviously needed, suggest creating it.
+
+**Do not edit the docs in this phase.** This is review — if the human wants them refreshed, use the review skill's Refresh mode (or invoke it directly).
 
 ### Phase 6 — Report
 
@@ -104,7 +114,7 @@ Structure the full report as:
 2. **Contract health** — coverage, freshness, gaps
 3. **Tier compliance** — checklist results
 4. **Complexity assessment** — where is unnecessary complexity accumulating?
-5. **Plan status** — current, stale, or missing
+5. **Living doc status** — `PLAN.md`, `DECISIONS.md`, `RESEARCH.md`: current, stale, or missing
 6. **Recommendations** — prioritized list of actions, each with concrete steps
 
 ## Rules

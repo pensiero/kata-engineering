@@ -31,6 +31,8 @@ CLOSE     → update docs, verify completion
 
 If the project already has architecture docs, skip to Phase 1.
 
+> **Coming from `project-kickoff`?** If the kickoff skill was already run and produced a Project Brief, Execution Plan, or Research Brief — read them before starting Bootstrap. They answer the questions in Step 2, so skip straight to Step 3. Your job here is scaffolding the project structure, not revisiting strategy. The kickoff's Refined Kickoff Prompt, if present, is the right input for this phase.
+
 ### Step 1: Detect project state
 
 Is this a **greenfield** project (empty or near-empty) or a **brownfield** project (existing code without architecture docs)?
@@ -88,24 +90,26 @@ project_tier: standard  # light | standard | full
 Use the templates in `skills/build/templates/` as guides (not copy-paste). Adapt to the specific project.
 
 **Light tier scaffolds:**
-- `ARCHITECTURE.md` (from `templates/light.md`)
+- `ARCHITECTURE.md` (from `templates/architecture-light.md`)
 - Initial test file
 
 **Standard tier scaffolds:**
-- `ARCHITECTURE.md` (from `templates/standard.md`)
-- `CONTRACTS.md` (from `templates/standard-contracts.md`)
+- `ARCHITECTURE.md` (from `templates/architecture-standard.md`)
+- `CONTRACTS.md` (from `templates/contracts-standard.md`)
 - Schema definitions for core data structures
 - Test baseline: schema validation, boundary invariants, happy path
 
 **Full tier scaffolds:**
-- `ARCHITECTURE.md` (from `templates/full.md`)
-- `CONTRACTS.md` (from `templates/full-contracts.md`)
+- `ARCHITECTURE.md` (from `templates/architecture-full.md`)
+- `CONTRACTS.md` (from `templates/contracts-full.md`)
 - Coupling guardrail tests
 - Structural integrity tests
 - Complete test baseline
 
 **Any tier, optionally:**
 - `PLAN.md` (from `templates/plan.md`) — when the project has phased work, sequencing, or deferred scope. Create it if the human asks for planning, or if the project clearly has multiple phases ahead. Not required by default.
+- `DECISIONS.md` (from `templates/decisions.md`) — when the project will involve multiple sessions or non-obvious design choices. Lightweight: a running log of choices and their reasoning. Not required by default, but worth creating for anything beyond a simple script.
+- `RESEARCH.md` (from `templates/research.md`) — when the project requires investigation before or during implementation. Create it if a Research Brief was produced during kickoff, or if the project has meaningful unknowns. Not required by default.
 
 ### Writing architecture docs — the narrative principle
 
@@ -136,10 +140,17 @@ When upgrading from a lower tier (e.g., light → standard):
 
 ### Step 1: Read project docs
 
+**Stable docs — describe what the project is and what must hold true:**
 - Read `ARCHITECTURE.md` — understand the system, boundaries, ownership
 - Read `CONTRACTS.md` — understand invariants and quality gates
-- If `PLAN.md` exists — check what's been completed and what's next. This tells you where the project stands
-- If a task contract exists (`{TASK}_CONTRACT.md`), read it — it defines completion
+
+**Living docs — describe current state and recent thinking:**
+- If `PLAN.md` exists — check what's been completed and what's next. This tells you where the project stands.
+- If `DECISIONS.md` exists — scan recent entries. They tell you why earlier choices were made and what was rejected, so you don't re-litigate solved problems.
+- If `RESEARCH.md` exists — scan open questions and recent findings if the task touches areas under investigation.
+
+**Task-specific:**
+- If a task contract exists (`{TASK}_CONTRACT.md`), read it — it defines completion.
 - Scope your reading: for a small change, you don't need to internalize the entire architecture. Read the sections relevant to the area you're changing.
 
 ### Step 2: Understand the task
@@ -258,11 +269,21 @@ If a task contract exists (`{TASK}_CONTRACT.md`):
 
 ### Step 1: Update documentation
 
-- If architecture changed → update `ARCHITECTURE.md`
-- If invariants were added/changed/removed → update `CONTRACTS.md`
-- If schemas changed → update schema definitions
-- If `PLAN.md` exists → check off completed items, update "Up Next" if scope changed
-- All doc updates in the same commit as the code change
+Two kinds of docs require different discipline:
+
+**Stable docs** — change only when the underlying design changes. If you're unsure whether the change is significant enough to warrant an update, err toward updating.
+
+- `ARCHITECTURE.md` — update if: you added a new module, layer, or subsystem; changed how data flows between components; changed a key boundary or ownership rule; or made a decision that would confuse someone reading the doc against the current code. Do **not** add implementation minutiae — keep it at the level of structure, boundaries, and reasoning.
+- `CONTRACTS.md` — update if: an invariant was added, changed, or no longer holds; a quality gate was modified; schemas changed; verification commands changed.
+- Schema definitions — update whenever the data shape changed.
+
+**Living docs** — check on every Close, not just when something obviously changed.
+
+- `PLAN.md` (if it exists) — always: mark completed items as done, update "Up Next" to reflect what's actually next, move anything that got deferred. The plan should match reality, not wishful thinking from three sessions ago.
+- `DECISIONS.md` (if it exists) — add an entry if: you made a non-obvious architectural or design choice; you chose between two real alternatives; you rejected an approach that a future agent might plausibly try again. One entry per decision, newest first. Do **not** record obvious choices.
+- `RESEARCH.md` (if it exists) — update if you discovered something that changes your understanding of the problem space: a library behaving differently than expected, an assumption proven wrong, a new constraint found. Remove resolved open questions.
+
+**Rule:** all doc updates ship in the same commit as the code change they document. Silent drift starts when docs and code diverge at commit boundaries.
 
 ### Step 2: Final commit
 

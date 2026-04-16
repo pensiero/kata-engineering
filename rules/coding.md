@@ -95,6 +95,28 @@ Skip this check only for leaf-node changes with no callbacks, no state persisten
 - If your changes add, remove, or modify an invariant, update `CONTRACTS.md` in the same commit
 - Code and docs ship together — no silent drift
 
+### Two kinds of docs, two different disciplines
+
+Project docs fall into two categories. The discipline is different for each.
+
+**Stable docs** — describe what the project IS and what MUST hold true. They change deliberately, when the underlying design changes.
+
+- `ARCHITECTURE.md` — what the system is, how it's organized, why it has this shape
+- `CONTRACTS.md` — invariants, quality gates, verification
+- Schema definitions — data shapes
+
+Update these only when the change is real. Avoid rewriting them casually — they are the project's memory of intent, and churn erodes trust in them.
+
+**Living docs** — describe current state. They go stale quickly, and staleness is a defect.
+
+- `PLAN.md` — what's been done, what's next, what's deferred
+- `DECISIONS.md` — non-obvious choices and their reasoning
+- `RESEARCH.md` — findings, open questions, sources
+
+Check these on every Close phase. If you touched the project, touch the living docs. Staleness in a living doc is not a minor issue — it's a trap for the next agent.
+
+A living doc is recognizable by its `freshness: living` frontmatter, or by matching one of the templates in `skills/build/templates/`. If in doubt: architecture and contracts are stable; plan, decisions, and research are living.
+
 ### Commit discipline
 - Commit when a logical unit is complete and tests pass
 - Commit message describes a complete, valuable change — not "WIP" or "partial X"

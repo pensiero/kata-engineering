@@ -1,14 +1,19 @@
-# Plan Template (Optional)
+# Plan Template
 
-Use when a project has phased delivery. Not required for any tier. Useful when multiple sessions will work on the project over time and need to know where things stand.
+Scaffold for `PLAN.md`. Living doc — optional for any tier, useful when multiple sessions will work on the project over time.
 
-PLAN.md records the journey: what's been done, what's next, what's deferred. It is NOT architecture (what the system is), contracts (what must hold true), or documentation of why decisions were made (that lives in ARCHITECTURE.md).
+PLAN.md records the journey: what's been done, what's next, what's deferred. It is NOT architecture (what the system is), contracts (what must hold true), or reasoning about why decisions were made (that lives in `ARCHITECTURE.md` or `DECISIONS.md`).
 
 If the plan disappeared, the project could still be understood and maintained from architecture + contracts + tests. The plan makes pickup faster, not survival possible.
+
+Copy the content inside the code block below and adapt it to the project. Everything outside the code block is guidance for the agent, not part of the output.
 
 ---
 
 ```markdown
+---
+freshness: living
+---
 # Plan
 
 What we're building, in what order, and what's done.

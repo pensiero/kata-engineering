@@ -1,6 +1,8 @@
-# Standard Tier — Contracts Template
+# Contracts Template — Standard Tier
 
-Contracts is a reference document, not a narrative. Optimized for lookup: authority first, then invariants by domain, then gates, then verification. A reader looks things up here — they don't read it cover to cover.
+Scaffold for `CONTRACTS.md` in standard-tier projects. Contracts is a reference document, not a narrative. Optimized for lookup: invariants by domain, then gates, then verification. A reader looks things up here — they don't read it cover to cover.
+
+Copy the content inside the code block below and adapt it to the project. Everything outside the code block is guidance for the agent, not part of the output.
 
 ---
 

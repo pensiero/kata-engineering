@@ -6,7 +6,7 @@
 
 It gives your projects a small amount of structure:
 - Contracts, guardrails, workflows and practices stored in markdown that keep projects coherent while leaving agents free to explore
-- **2 simple skills**: [build](./skills/build) and [review](./skills/review)
+- **3 skills**: [project-kickoff](./skills/project-kickoff) · [build](./skills/build) · [review](./skills/review)
 - **a tiny routing patch** for [AGENTS.md](./AGENTS-patch.md) (or any other file loaded at runtime)
 
 > **Zero footprint.** No install, no dependencies, no external services.
@@ -18,6 +18,7 @@ It gives your projects a small amount of structure:
 2. project docs define architecture, contracts, and constraints
 3. the agent builds or reviews within those boundaries
 4. as the project grows, you can move from **Light** to **Standard** to **Full** tiers
+5. living docs (`PLAN.md`, `DECISIONS.md`, `RESEARCH.md`) capture state that evolves — refreshed as you work, or in one pass via the review skill's Refresh mode
 
 ## Works with
 
@@ -61,46 +62,92 @@ In martial arts, a kata (型) is a sequence of movements practiced until they be
 
 ```
 kata-engineering/
-├── README.md                  # This file
-├── AGENTS-md-patch.md         # Routing section to add to workspace AGENTS.md
+├── README.md                          # This file
+├── AGENTS-patch.md                    # Routing section to add to workspace AGENTS.md
 ├── rules/
-│   ├── coding.md              # Universal coding practices
-│   └── testing.md             # Universal testing practices
+│   ├── coding.md                      # Universal coding practices
+│   └── testing.md                     # Universal testing practices
 ├── skills/
+│   ├── project-kickoff/
+│   │   └── SKILL.md                   # Optional first step: refine an idea before building
 │   ├── build/
-│   │   ├── SKILL.md           # Build skill (bootstrap + orient + build + verify + close)
-│   │   └── templates/         # Per-tier project scaffolding templates
-│   │       ├── light.md
-│   │       ├── standard.md
-│   │       ├── standard-contracts.md
-│   │       ├── full.md
-│   │       └── full-contracts.md
+│   │   ├── SKILL.md                   # Build skill (bootstrap + orient + build + verify + close)
+│   │   └── templates/                 # Project scaffolding templates
+│   │       ├── architecture-light.md      # Stable docs — tiered
+│   │       ├── architecture-standard.md
+│   │       ├── architecture-full.md
+│   │       ├── contracts-standard.md
+│   │       ├── contracts-full.md
+│   │       ├── plan.md                    # Living docs — tier-agnostic
+│   │       ├── decisions.md
+│   │       └── research.md
 │   └── review/
-│       └── SKILL.md           # Review skill (observe + check + simplify + report)
-├── examples/
-│   ├── greenfield-project-prompt.md   # Prompt for starting a new project from scratch
-│   ├── brownfield-rework-prompt.md    # Prompt for reworking an existing project
-│   └── review-prompt.md              # Prompt for a full project health review
+│       └── SKILL.md                   # Review skill (focused + health + tier + refresh)
+└── examples/
+    ├── greenfield-project-prompt.md   # Prompt for starting a new project from scratch
+    ├── brownfield-rework-prompt.md    # Prompt for reworking an existing project
+    └── review-prompt.md               # Prompt for a full project health review
 ```
 
-## Tiers
+## Skills
 
-| | Light | Standard | Full |
-|---|:---:|:---:|:---:|
-| `ARCHITECTURE.md` | ✓ | ✓ | ✓ |
-| `CONTRACTS.md` | | ✓ | ✓ |
-| `PLAN.md` | optional | optional | optional |
-| Schema definitions | | ✓ | ✓ |
-| Coupling guardrail tests | | | ✓ |
-| Structural integrity tests | | | ✓ |
-| Change governance | | | ✓ |
+There are three skills. They are used in sequence for new projects, and independently for ongoing work.
 
-Use **light** for scripts and personal tools. **Standard** for projects with APIs, persistence, or multiple modules. **Full** for production systems that need governance. Use `PLAN.md` when the project has phased work, sequencing, or deferred scope.
+### `project-kickoff` — optional starting point
+
+Use this before `build` when the idea is fuzzy. It interrogates the concept, challenges weak assumptions, and produces a Project Brief, Research Brief, and Execution Plan. It ends with a refined prompt ready to hand to the build skill.
+
+Skip it when the idea is already clear.
+
+### `build` — the implementation loop
+
+The core skill. Covers the full lifecycle of a coding task:
+
+- **Bootstrap** (once, on new projects) — pick a tier, scaffold architecture docs and living docs
+- **Orient** — read project context, understand scope
+- **Build** — implement the change
+- **Verify** — run tests, check contracts, simplicity check
+- **Close** — update affected docs, commit
+
+The agent determines which phase to start from automatically. On a new project with no docs, it starts at Bootstrap. On an existing project, it starts at Orient.
+
+### `review` — four modes
+
+| Mode | When | Edits files? |
+|---|---|:---:|
+| **Focused** | After a change, before merge | No |
+| **Health** | Periodic, or when something feels off | No |
+| **Tier** | After a tier upgrade, before a handoff | No |
+| **Refresh** | When living docs have drifted from reality | Yes — living docs only |
+
+Focused, Health, and Tier are diagnostic: they produce findings, not edits. Refresh is the only mode that writes, and it writes only to living docs (`PLAN.md`, `DECISIONS.md`, `RESEARCH.md`).
+
+## Docs: stable vs living
+
+Project docs fall into two categories with different discipline:
+
+**Stable docs** describe what the project IS and what MUST hold true. They change only when the underlying design changes. Casual edits erode their authority.
+
+**Living docs** describe current state. They go stale quickly — staleness is a defect. They are checked on every Close phase and can be batch-refreshed via the review skill's Refresh mode.
+
+| | Kind | Light | Standard |    Full     |
+|---|---|:---:|:---:|:-----------:|
+| `ARCHITECTURE.md` | stable | ✓ | ✓ |      ✓      |
+| `CONTRACTS.md` | stable | | ✓ |      ✓      |
+| Schema definitions | stable | | ✓ |      ✓      |
+| Coupling guardrail tests | stable | | |      ✓      |
+| Structural integrity tests | stable | | |      ✓      |
+| Change governance | stable | | |      ✓      |
+| `DECISIONS.md` | living | optional | optional |      ✓      |
+| `PLAN.md` | living | optional | optional | recommended |
+| `RESEARCH.md` | living | optional | optional |      optional      |
+
+Use **light** for scripts and personal tools. **Standard** for projects with APIs, persistence, or multiple modules. **Full** for production systems that need governance.
 
 ## Deployment
 
 1. Copy `rules/` to your workspace (example if you are using OpenClaw: `~/.openclaw/workspace/rules/`)
-2. Copy `skills/build/` and `skills/review/` to workspace skills folder
+2. Copy `skills/project-kickoff/`, `skills/build/`, and `skills/review/` to workspace skills folder
 3. Add the contents of `AGENTS-patch.md` to your workspace `AGENTS.md`
 4. Optionally register skills in config for auto-discovery
 
@@ -110,7 +157,10 @@ Once deployed, your agent picks up the right skill automatically via AGENTS.md. 
 
 The following are sample prompts:
 
-**New project**
+**New project from a rough idea** *(uses project-kickoff, then build)*
+> _I want to build a CLI tool that syncs files between two directories. Help me think it through first. Use project-kickoff skill._
+
+**New project with a clear idea** *(uses build directly)*
 > _I want to build a CLI tool that syncs files between two directories. It's a personal utility, keep it light._
 
 **Feature on an existing project**
@@ -124,6 +174,9 @@ The following are sample prompts:
 
 **Planning phased work**
 > _Let's create a plan. I want to break the remaining work into phases — authentication first, then the API layer, then the CLI._
+
+**Refreshing living docs**
+> _Refresh the living docs. I've done a few sessions of work and PLAN.md is out of date._
 
 **Tier upgrade**
 > _This project has grown. Let's upgrade from light to standard._

@@ -8,27 +8,23 @@
 
 ## Engineering
 
-### Before Any Coding Task
+### Before Any Task
 
-1. Read the project's architecture docs if they exist (`ARCHITECTURE.md`, `CONTRACTS.md`, or equivalent at project root)
-2. Read `rules/coding.md`
-3. If the task involves writing tests, also read `rules/testing.md`
+1. Read the project's stable docs if they exist: `ARCHITECTURE.md`, `CONTRACTS.md`
+2. Read any living docs that exist: `PLAN.md`, `DECISIONS.md`, `RESEARCH.md`
+3. Read `rules/coding.md` (and `rules/testing.md` if writing tests)
 
-### Starting or Bootstrapping a Project
+### Pick the Right Skill
 
-Use the `build` skill. It detects whether the project has structure and bootstraps if needed.
+| Situation | Skill |
+|---|---|
+| The idea is fuzzy — needs clarification before building anything | `project-kickoff` |
+| Starting a new project, or writing/modifying code on an existing one | `build` |
+| Reviewing code, checking project health, or refreshing living docs | `review` |
 
-### Planning Phased Work
+`build` handles the full lifecycle: bootstrapping new projects (picking a tier, scaffolding docs), implementing features and fixes, and keeping docs current at the end of each task. You don't pick a phase — the skill handles it.
 
-Use the `build` skill. If the human asks for a plan, or the project has clear phases ahead, create `PLAN.md` using `templates/plan.md` as a guide.
-
-### Implementing Features, Fixes, or Changes
-
-Use the `build` skill.
-
-### Reviewing Code or Project Health
-
-Use the `review` skill.
+`review` has four modes: **Focused** (review a change), **Health** (periodic check), **Tier** (verify tier compliance), **Refresh** (update stale living docs to match reality). Specify the mode, or let the agent pick the sensible default for the situation.
 
 ### When Scope Is Unclear
 

@@ -1,6 +1,8 @@
-# Full Tier — Contracts Template
+# Contracts Template — Full Tier
 
-Extends standard contracts with governance, precedence, and a traceability matrix. This is a reference document — optimized for lookup, not narrative reading.
+Scaffold for `CONTRACTS.md` in full-tier projects. Extends the standard contracts with governance, precedence, and a traceability matrix. This is a reference document — optimized for lookup, not narrative reading.
+
+Copy the content inside the code block below and adapt it to the project. Everything outside the code block is guidance for the agent, not part of the output.
 
 ---
 

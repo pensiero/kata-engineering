@@ -1,8 +1,10 @@
-# Standard Tier — Architecture Template
+# Architecture Template — Standard Tier
 
-Use this as a guide when bootstrapping a standard-tier project. The sections below demonstrate the narrative principle: each builds on what came before. Adapt the structure to your project's natural story — the reading order matters more than the specific headings.
+Scaffold for `ARCHITECTURE.md` in standard-tier projects. The sections below demonstrate the narrative principle: each builds on what came before. Adapt the structure to the project's natural story — the reading order matters more than the specific headings.
 
 **Principle:** order by understanding dependency. A reader should never encounter something that requires context they haven't been given yet.
+
+Copy the content inside the code block below and adapt it to the project. Everything outside the code block is guidance for the agent, not part of the output.
 
 ---
 

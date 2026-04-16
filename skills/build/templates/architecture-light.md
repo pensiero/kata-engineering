@@ -1,6 +1,8 @@
-# Light Tier — Architecture Template
+# Architecture Template — Light Tier
 
-Use this as a guide for light-tier projects. Keep it short. The narrative principle still applies — order by understanding dependency — but a simple project needs only a few sections.
+Scaffold for `ARCHITECTURE.md` in light-tier projects. Keep it short. The narrative principle still applies — order by understanding dependency — but a simple project needs only a few sections.
+
+Copy the content inside the code block below and adapt it to the project. Everything outside the code block is guidance for the agent, not part of the output.
 
 ---
 
@@ -45,7 +47,7 @@ project/
 
 ---
 
-## Light tier expectations
+## Notes for the agent
 
 - This doc exists and describes the project clearly
 - Tests exist and pass (at minimum: happy path)

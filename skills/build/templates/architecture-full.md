@@ -1,8 +1,10 @@
-# Full Tier — Architecture Template
+# Architecture Template — Full Tier
 
-Use this as a guide for full-tier projects. Extends the standard tier with governance, change classification, structural verification, and deeper precision. The narrative principle is critical here — a complex system's docs must build understanding sequentially, or they become impenetrable.
+Scaffold for `ARCHITECTURE.md` in full-tier projects. Extends the standard tier with governance, change classification, structural verification, and deeper precision. The narrative principle is critical here — a complex system's docs must build understanding sequentially, or they become impenetrable.
 
 **Principle:** order by understanding dependency. Each section requires only the context from sections before it.
+
+Copy the content inside the code block below and adapt it to the project. Everything outside the code block is guidance for the agent, not part of the output.
 
 ---
 

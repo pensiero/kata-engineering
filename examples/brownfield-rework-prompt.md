@@ -20,13 +20,10 @@ Before doing anything, read these files in this order:
    - `[KATA_PATH]/skills/build/SKILL.md` — the build skill (your workflow)
    - `[KATA_PATH]/skills/review/SKILL.md` — the review skill
 
-2. **The architecture templates** (read the tier that fits — or all three for reference):
-   - `[KATA_PATH]/skills/build/templates/light.md`
-   - `[KATA_PATH]/skills/build/templates/standard.md`
-   - `[KATA_PATH]/skills/build/templates/standard-contracts.md`
-   - `[KATA_PATH]/skills/build/templates/full.md`
-   - `[KATA_PATH]/skills/build/templates/full-contracts.md`
-   - `[KATA_PATH]/skills/build/templates/plan.md`
+2. **The templates** (read the tier that fits — plus the living-doc templates if relevant):
+   - Architecture (pick the tier): `[KATA_PATH]/skills/build/templates/architecture-light.md`, `architecture-standard.md`, or `architecture-full.md`
+   - Contracts (standard or full): `[KATA_PATH]/skills/build/templates/contracts-standard.md`, or `contracts-full.md`
+   - Living docs (optional, any tier): `[KATA_PATH]/skills/build/templates/plan.md`, `decisions.md`, `research.md`
 
 3. **The existing project** — read thoroughly:
    - Any existing architecture or design docs
@@ -86,13 +83,15 @@ If the project warrants standard or full tier, create `CONTRACTS.md` following t
 - Include governance rules if applicable (full tier)
 - Include quality gates and verification commands
 
-### Phase 4 — Create PLAN.md (if applicable)
+### Phase 4 — Create living docs (if applicable)
 
-If the project has phased work, sequencing, or deferred scope, create a `PLAN.md` using `skills/build/templates/plan.md` as a guide:
-- What's been completed
-- What's up next
-- What's deferred and why
-- Prioritization principles
+Living docs capture state that changes over the life of the project. Create the ones that make sense:
+
+- `PLAN.md` (from `skills/build/templates/plan.md`) — if the project has phased work, sequencing, or deferred scope.
+- `DECISIONS.md` (from `skills/build/templates/decisions.md`) — if the project has hard-won design choices worth preserving as a log (separate from their presence in `ARCHITECTURE.md`'s Decisions section). Useful when non-obvious rationale is scattered across old docs.
+- `RESEARCH.md` (from `skills/build/templates/research.md`) — if the project has ongoing investigation or unresolved questions.
+
+None are required. Create only the ones that will pay for themselves.
 
 ### Phase 5 — Assess Code Alignment
 

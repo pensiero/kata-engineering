@@ -19,7 +19,10 @@ Select based on what's needed:
 FOCUSED   → review specific changes (after a coding session, before merge)
 HEALTH    → broader project health check (periodic, or when something feels off)
 TIER      → verify project meets its declared tier requirements
+REFRESH   → update living docs to match current reality (periodic maintenance)
 ```
+
+Focused, Health, and Tier are **diagnostic** — they produce findings, not edits. Refresh is the only mode that writes to files, and it writes only to living docs (`PLAN.md`, `DECISIONS.md`, `RESEARCH.md`).
 
 ---
 
@@ -166,6 +169,79 @@ Structure as:
 List each requirement as ✅ met / ❌ not met / ⚠️ partially met.
 
 For each gap: describe what's missing and what to do about it.
+
+---
+
+## Mode 4 — Refresh
+
+**When:** Periodically — when living docs have drifted from current reality, or at the start of a new session after multiple sessions of work have accumulated. Also useful after a Health Check flags stale living docs.
+
+**Scope:** This mode **edits** living docs to match reality. It does **not** edit stable docs and does **not** write code. Stable drift is flagged, not fixed.
+
+### What this mode does and does not do
+
+| | Edits? | Scope |
+|---|---|---|
+| `PLAN.md` | ✅ | mark completed items, update "Up Next", move deferred items |
+| `DECISIONS.md` | ✅ | add missing entries for recent design choices visible in git history |
+| `RESEARCH.md` | ✅ | close resolved questions, update findings, prune stale content |
+| `ARCHITECTURE.md` | ❌ | flag drift, do not edit |
+| `CONTRACTS.md` | ❌ | flag drift, do not edit |
+| Code / tests | ❌ | flag issues, do not edit |
+
+If the project has no living docs, Refresh has nothing to do. Exit cleanly. If the project would benefit from one or more of them, suggest creating them directly from the templates in `skills/build/templates/` (`plan.md`, `decisions.md`, `research.md`) — do not route back to Bootstrap, which only runs on projects without `ARCHITECTURE.md`.
+
+### Step 1: Gather reality
+
+Establish what has changed since the living docs were last updated:
+
+- Read recent git log (commits since the last update of each living doc)
+- Read the current code structure at the level of modules/layers
+- Read any Focused Review or Health Check reports that already exist
+
+Do not read the entire codebase. You're looking for signals of change, not doing a full review.
+
+### Step 2: Refresh `PLAN.md` (if it exists)
+
+- Check off completed items — anything in "Up Next" that is now built, tested, and shipped
+- Move completed phases/milestones from "Up Next" to "Completed"
+- Update "Up Next" to reflect what's actually next given the current state (not wishful thinking from three sessions ago)
+- Move anything deferred to "Deferred" with a one-line reason
+- Prune "Completed" if it has grown into archaeology — keep enough history to understand the journey, not every checkmark forever
+
+### Step 3: Refresh `DECISIONS.md` (if it exists)
+
+- Scan recent commits for non-obvious architectural or design choices that were made but never recorded
+- For each one, add an entry at the top (newest first): what was chosen, why, what was rejected
+- Do not invent rationale — if you can't determine the "why" from context, flag it for the human instead of guessing
+- Never rewrite old entries. Superseded decisions get a new entry that references the old one
+
+### Step 4: Refresh `RESEARCH.md` (if it exists)
+
+- Close open questions that have been answered. If the answer matters long-term, promote it to a Key Finding or a `DECISIONS.md` entry
+- Update Key Findings with new information
+- Prune findings that are no longer relevant
+- Add sources for any research done since the last refresh
+
+### Step 5: Flag stable drift
+
+If you noticed during Steps 1–4 that stable docs (`ARCHITECTURE.md`, `CONTRACTS.md`) no longer match the code, **do not edit them**. List the drift at the end of your summary. The human decides whether to fix it directly or run a Health Check.
+
+### Step 6: Report
+
+Briefly state:
+- Which living docs were refreshed and what was changed (file-by-file summary)
+- What was flagged for the human (stable drift, missing rationale, questions without evidence)
+- Suggested follow-ups (e.g. "consider running Health Check on the auth module — `ARCHITECTURE.md` no longer describes its flow")
+
+Commit the living doc updates as a single commit with a message like `chore: refresh living docs`.
+
+### Constraints
+
+- **One file at a time.** Edit `PLAN.md` fully before touching `DECISIONS.md`. This keeps the changes auditable.
+- **No speculation.** If you don't have evidence for an edit, don't make it.
+- **No new content categories.** Don't invent new sections. Work within the existing template structure.
+- **Terse.** Living docs should shrink when possible, not grow indefinitely. If a section can be tightened, tighten it.
 
 ---
 
