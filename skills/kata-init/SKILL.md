@@ -1,3 +1,8 @@
+---
+name: kata-init
+description: Initialize this computer with the Kata Engineering framework for Codex and/or Claude.
+---
+
 # Skill: kata-init
 
 Initialize this computer with the Kata Engineering framework for Codex and/or
