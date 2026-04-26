@@ -6,7 +6,8 @@
 
 It gives your projects a small amount of structure:
 - Contracts, guardrails, workflows and practices stored in markdown that keep projects coherent while leaving agents free to explore
-- **3 skills**: [project-kickoff](./skills/project-kickoff) · [build](./skills/build) · [review](./skills/review)
+- **3 workflow skills**: [project-kickoff](./skills/project-kickoff) · [build](./skills/build) · [review](./skills/review)
+- **1 setup skill**: [kata-init](./skills/kata-init)
 - **a tiny routing patch** for [AGENTS.md](./AGENTS-patch.md) (or any other file loaded at runtime)
 
 > **Zero footprint.** No install, no dependencies, no external services.
@@ -14,7 +15,7 @@ It gives your projects a small amount of structure:
 
 ## How it works
 
-1. `AGENTS.md` routes the agent to the right skill
+1. the agent's global instruction file routes the agent to the right skill
 2. project docs define architecture, contracts, and constraints
 3. the agent builds or reviews within those boundaries
 4. as the project grows, you can move from **Light** to **Standard** to **Full** tiers
@@ -68,6 +69,8 @@ kata-engineering/
 │   ├── coding.md                      # Universal coding practices
 │   └── testing.md                     # Universal testing practices
 ├── skills/
+│   ├── kata-init/
+│   │   └── SKILL.md                   # Global setup for Codex and Claude
 │   ├── project-kickoff/
 │   │   └── SKILL.md                   # Optional first step: refine an idea before building
 │   ├── build/
@@ -91,7 +94,7 @@ kata-engineering/
 
 ## Skills
 
-There are three skills. They are used in sequence for new projects, and independently for ongoing work.
+There are three workflow skills. They are used in sequence for new projects, and independently for ongoing work. The separate `kata-init` skill is only for installing or refreshing the global Codex/Claude setup.
 
 ### `project-kickoff` — optional starting point
 
@@ -144,12 +147,86 @@ Project docs fall into two categories with different discipline:
 
 Use **light** for scripts and personal tools. **Standard** for projects with APIs, persistence, or multiple modules. **Full** for production systems that need governance.
 
-## Deployment
+## Global setup
 
-1. Copy `rules/` to your workspace (example if you are using OpenClaw: `~/.openclaw/workspace/rules/`)
-2. Copy `skills/project-kickoff/`, `skills/build/`, and `skills/review/` to workspace skills folder
-3. Add the contents of `AGENTS-patch.md` to your workspace `AGENTS.md`
-4. Optionally register skills in config for auto-discovery
+For Codex and Claude, prefer a single global setup instead of copying skills and
+patching every project. Clone this repository once, then symlink its skills into
+the agent's global skills directory and include its routing patch from the
+agent's global instruction file.
+
+### Codex
+
+Run these commands from the cloned `kata-engineering` repository:
+
+```bash
+KATA_ENGINEERING_HOME="$(pwd -P)"
+mkdir -p ~/.codex/skills
+
+ln -sfn "$KATA_ENGINEERING_HOME/skills/build" ~/.codex/skills/build
+ln -sfn "$KATA_ENGINEERING_HOME/skills/review" ~/.codex/skills/review
+ln -sfn "$KATA_ENGINEERING_HOME/skills/project-kickoff" ~/.codex/skills/project-kickoff
+ln -sfn "$KATA_ENGINEERING_HOME/skills/kata-init" ~/.codex/skills/kata-init
+```
+
+Then ensure `~/.codex/AGENTS.md` includes the central routing patch:
+
+```bash
+include="@${KATA_ENGINEERING_HOME}/AGENTS-patch.md"
+touch ~/.codex/AGENTS.md
+grep -Fxq "$include" ~/.codex/AGENTS.md || printf '\n%s\n' "$include" >> ~/.codex/AGENTS.md
+```
+
+### Claude
+
+Run these commands from the cloned `kata-engineering` repository:
+
+```bash
+KATA_ENGINEERING_HOME="$(pwd -P)"
+mkdir -p ~/.claude/skills
+
+ln -sfn "$KATA_ENGINEERING_HOME/skills/build" ~/.claude/skills/build
+ln -sfn "$KATA_ENGINEERING_HOME/skills/review" ~/.claude/skills/review
+ln -sfn "$KATA_ENGINEERING_HOME/skills/project-kickoff" ~/.claude/skills/project-kickoff
+ln -sfn "$KATA_ENGINEERING_HOME/skills/kata-init" ~/.claude/skills/kata-init
+```
+
+Then ensure `~/.claude/CLAUDE.md` includes the central routing patch:
+
+```bash
+include="@${KATA_ENGINEERING_HOME}/AGENTS-patch.md"
+touch ~/.claude/CLAUDE.md
+grep -Fxq "$include" ~/.claude/CLAUDE.md || printf '\n%s\n' "$include" >> ~/.claude/CLAUDE.md
+```
+
+Do not duplicate unrelated global instructions that are already present in
+the global instruction file. For example, if RTK is already included globally,
+leave it as-is and only add the Kata include if it is missing.
+
+With this setup, edits to this repository's skills, rules, or `AGENTS-patch.md`
+are picked up by all projects automatically. Project-level `AGENTS.md` or
+`CLAUDE.md` files can stay focused on project-specific constraints.
+
+### Agent bootstrap prompt
+
+If you want an agent to initialize a computer from GitHub, use a prompt like:
+
+> Clone `https://github.com/pensiero/kata-engineering` into a sensible local
+> projects directory. From the cloned repository, set `KATA_ENGINEERING_HOME` to
+> the repository's absolute path, create symlinks from its `skills/kata-init`,
+> `skills/build`, `skills/review`, and `skills/project-kickoff` directories into
+> the global skills directory for the agent I am using (`~/.codex/skills` for
+> Codex, `~/.claude/skills` for Claude), and add
+> `@${KATA_ENGINEERING_HOME}/AGENTS-patch.md` to the agent's global instruction
+> file if it is not already present (`~/.codex/AGENTS.md` for Codex,
+> `~/.claude/CLAUDE.md` for Claude). Do not add duplicate global instructions
+> such as RTK if they are already configured.
+
+### Other agents
+
+For agents that do not read Codex global skills, use the same principle:
+reference this repository from the agent's global configuration where possible.
+Only copy `skills/`, `rules/`, or `AGENTS-patch.md` when the tool has no support
+for includes or symlinks.
 
 ## Usage
 
