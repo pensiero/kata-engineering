@@ -6,7 +6,7 @@
 
 It gives your projects a small amount of structure:
 - Contracts, guardrails, workflows and practices stored in markdown that keep projects coherent while leaving agents free to explore
-- **3 workflow skills**: [project-kickoff](./skills/project-kickoff) · [build](./skills/build) · [review](./skills/review)
+- **4 workflow skills**: [project-kickoff](./skills/project-kickoff) · [build](./skills/build) · [review](./skills/review) · [harmonize](./skills/harmonize)
 - **1 setup skill**: [kata-init](./skills/kata-init)
 - **a tiny routing patch** for [AGENTS.md](./AGENTS-patch.md) (or any other file loaded at runtime)
 
@@ -84,8 +84,10 @@ kata-engineering/
 │   │       ├── plan.md                    # Living docs — tier-agnostic
 │   │       ├── decisions.md
 │   │       └── research.md
-│   └── review/
-│       └── SKILL.md                   # Review skill (focused + health + tier + refresh)
+│   ├── review/
+│   │   └── SKILL.md                   # Review skill (focused + health + tier + refresh)
+│   └── harmonize/
+│       └── SKILL.md                   # Harmonize filenames and folder layout for product-readability
 └── examples/
     ├── greenfield-project-prompt.md   # Prompt for starting a new project from scratch
     ├── brownfield-rework-prompt.md    # Prompt for reworking an existing project
@@ -94,7 +96,7 @@ kata-engineering/
 
 ## Skills
 
-There are three workflow skills. They are used in sequence for new projects, and independently for ongoing work. The separate `kata-init` skill is only for installing or refreshing the global Codex/Claude setup.
+There are four workflow skills. They are used in sequence for new projects, and independently for ongoing work. The separate `kata-init` skill is only for installing or refreshing the global Codex/Claude setup.
 
 ### `project-kickoff` — optional starting point
 
@@ -124,6 +126,16 @@ The agent determines which phase to start from automatically. On a new project w
 | **Refresh** | When living docs have drifted from reality | Yes — living docs only |
 
 Focused, Health, and Tier are diagnostic: they produce findings, not edits. Refresh is the only mode that writes, and it writes only to living docs (`PLAN.md`, `DECISIONS.md`, `RESEARCH.md`).
+
+### `harmonize` — three modes
+
+| Mode | When | Edits files? |
+|---|---|:---:|
+| **Propose** | First pass — surface rename candidates without touching anything | No |
+| **Apply** | Execute approved renames, update imports + doc refs, run tests | Yes |
+| **Review** | Fresh-eyes pass over a plan or applied diff produced by another agent | No |
+
+Use when filenames and folder layout no longer match the product vocabulary — names that mislead, undersell what a file owns, or reflect historical accidents. The skill insists on building independent assumptions before reading any prior plan, so the fresh-eyes signal stays honest.
 
 ## Docs: stable vs living
 
@@ -165,6 +177,7 @@ mkdir -p ~/.codex/skills
 ln -sfn "$KATA_ENGINEERING_HOME/skills/build" ~/.codex/skills/build
 ln -sfn "$KATA_ENGINEERING_HOME/skills/review" ~/.codex/skills/review
 ln -sfn "$KATA_ENGINEERING_HOME/skills/project-kickoff" ~/.codex/skills/project-kickoff
+ln -sfn "$KATA_ENGINEERING_HOME/skills/harmonize" ~/.codex/skills/harmonize
 ln -sfn "$KATA_ENGINEERING_HOME/skills/kata-init" ~/.codex/skills/kata-init
 ```
 
@@ -187,6 +200,7 @@ mkdir -p ~/.claude/skills
 ln -sfn "$KATA_ENGINEERING_HOME/skills/build" ~/.claude/skills/build
 ln -sfn "$KATA_ENGINEERING_HOME/skills/review" ~/.claude/skills/review
 ln -sfn "$KATA_ENGINEERING_HOME/skills/project-kickoff" ~/.claude/skills/project-kickoff
+ln -sfn "$KATA_ENGINEERING_HOME/skills/harmonize" ~/.claude/skills/harmonize
 ln -sfn "$KATA_ENGINEERING_HOME/skills/kata-init" ~/.claude/skills/kata-init
 ```
 
