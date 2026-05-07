@@ -52,18 +52,7 @@ Read the project's `CONTRACTS.md` (or equivalent). For each invariant relevant t
 
 ### Step 3: Simplify
 
-A well-built system has a natural shape. Every part earns its existence. Nothing is there "just in case" or because it was interesting to build. The question isn't "can I find something to remove?" — it's "has this solution found its natural form?"
-
-For every change, ask:
-
-- **Is this necessary?** Could the problem be solved without this code?
-- **Is this the simplest version?** Could it be shorter, flatter, more direct?
-- **Does this abstraction earn its keep?** Does it have two real use cases, or is it speculative?
-- **Is there a new dependency?** Is the coupling worth it? Could you inline it instead?
-- **Would a stranger understand this?** Without explanation, without context from the conversation that produced it?
-- **Does the change feel inevitable?** Or does it feel like machinery bolted onto the system?
-
-The default answer to "should we add this?" is no. Complexity is easy to add and hard to remove. A codebase with less code that does the same thing is always better.
+Run the Simplify checklist from `rules/coding.md` (First Principle section) against the change. The question isn't "can I find something to remove?" — it's "has this solution found its natural form?"
 
 ### Step 4: Report
 
@@ -112,6 +101,7 @@ Walk through the codebase module by module:
 - **Pattern consistency** — is there one way to do things, or have multiple patterns accumulated?
 - **Dead code** — files, functions, or modules that nothing uses
 - **Dependency health** — unused dependencies, outdated dependencies, dependencies that could be inlined
+- **Earned existence** — tests/fixtures protecting deleted or unchanged behavior → cut candidates. Files relocated to `docs/archive/` or similar → delete; archive lives in Git history
 
 ### Step 4: Stagnation check
 
@@ -140,25 +130,12 @@ Structure as:
 
 ### Check against tier requirements
 
-**Light tier:**
-- [ ] `ARCHITECTURE.md` exists with project purpose, structure, and run commands
-- [ ] Tests exist and pass
-- [ ] At minimum: happy-path test coverage
+Tier definitions are canonical in `build` Phase 0 Step 3. Verify the project meets every requirement listed there for its declared tier (in `ARCHITECTURE.md` frontmatter), plus:
 
-**Standard tier** (everything in light, plus):
-- [ ] `ARCHITECTURE.md` has layer boundaries, ownership, forbidden dependencies, data model, key decisions
-- [ ] `CONTRACTS.md` exists with named invariants, quality gates, verification commands
-- [ ] Core data structures have schema definitions
-- [ ] Schema validation tests exist
-- [ ] Boundary/coupling tests exist
-- [ ] Happy path + error path test coverage
-- [ ] Docs co-evolve with code (check recent commits: did code changes include doc updates?)
+**Standard, beyond build's scaffold list:**
+- [ ] Docs co-evolve with code — recent commits include doc updates when applicable
 
-**Full tier** (everything in standard, plus):
-- [ ] Layer model has explicit non-overlapping ownership
-- [ ] Canonical entity definitions exist
-- [ ] Change classification rules defined (major/minor)
-- [ ] Governance invariants with tests
+**Full, beyond build's scaffold list:**
 - [ ] Coupling guardrail tests verify forbidden dependencies
 - [ ] Structural integrity tests verify docs match code
 - [ ] Test coverage map traces invariants to tests

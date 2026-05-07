@@ -243,16 +243,7 @@ Skip for leaf-node changes with no callbacks, state, or parallel interfaces.
 
 ### Step 4: Simplicity check
 
-Step back from the details. Look at the change as a whole.
-
-A good change has a natural shape — it feels like the obvious way to solve the problem. If it feels forced, convoluted, or "clever," something is wrong. The goal is not to make something that works — it's to find the solution that couldn't reasonably be simpler.
-
-Concretely:
-- For each new file: is it necessary? Could this live in an existing file?
-- For each new abstraction: does it have two concrete use cases, or is it premature?
-- For each new dependency: is the coupling worth it?
-- Read your diff as if you're seeing it for the first time: would a stranger understand it without explanation?
-- Read your diff as a whole: does this feel like the natural solution, or does it feel like machinery bolted on?
+Run the Simplify checklist from `rules/coding.md` (First Principle section) against the diff as a whole. If any answer fails, fix before declaring done.
 
 ### Step 5: Task contract verification
 
@@ -269,21 +260,19 @@ If a task contract exists (`{TASK}_CONTRACT.md`):
 
 ### Step 1: Update documentation
 
-Two kinds of docs require different discipline:
+Stable vs. living doc discipline is canonical in `rules/coding.md` ("Two kinds of docs"). Action checklist for Close:
 
-**Stable docs** — change only when the underlying design changes. If you're unsure whether the change is significant enough to warrant an update, err toward updating.
+**Stable** (only if design actually changed):
+- `ARCHITECTURE.md` — new module/layer, changed data flow, changed boundary/ownership
+- `CONTRACTS.md` — invariant added/changed/dropped, gate modified, schema or verification command changed
+- Schemas — whenever data shape changed
 
-- `ARCHITECTURE.md` — update if: you added a new module, layer, or subsystem; changed how data flows between components; changed a key boundary or ownership rule; or made a decision that would confuse someone reading the doc against the current code. Do **not** add implementation minutiae — keep it at the level of structure, boundaries, and reasoning.
-- `CONTRACTS.md` — update if: an invariant was added, changed, or no longer holds; a quality gate was modified; schemas changed; verification commands changed.
-- Schema definitions — update whenever the data shape changed.
+**Living** (check every Close):
+- `PLAN.md` — mark completed, update "Up Next", move deferred
+- `DECISIONS.md` — add entry for non-obvious choices a future agent might re-litigate
+- `RESEARCH.md` — close resolved questions, update findings, prune stale
 
-**Living docs** — check on every Close, not just when something obviously changed.
-
-- `PLAN.md` (if it exists) — always: mark completed items as done, update "Up Next" to reflect what's actually next, move anything that got deferred. The plan should match reality, not wishful thinking from three sessions ago.
-- `DECISIONS.md` (if it exists) — add an entry if: you made a non-obvious architectural or design choice; you chose between two real alternatives; you rejected an approach that a future agent might plausibly try again. One entry per decision, newest first. Do **not** record obvious choices.
-- `RESEARCH.md` (if it exists) — update if you discovered something that changes your understanding of the problem space: a library behaving differently than expected, an assumption proven wrong, a new constraint found. Remove resolved open questions.
-
-**Rule:** all doc updates ship in the same commit as the code change they document. Silent drift starts when docs and code diverge at commit boundaries.
+All doc updates ship in the same commit as the code they document.
 
 ### Step 2: Final commit
 
@@ -303,26 +292,10 @@ Briefly state:
 
 ## After Context Compaction
 
-If your context gets compacted mid-task:
-
-1. Re-read the task scope (what are you trying to do?)
-2. Re-read the files most relevant to your current work
-3. Re-read any task contract if one exists
-4. Do NOT rely on memory — verify by re-reading
-
-This is critical. Compaction loses nuance. Re-reading prevents drift.
+See `rules/coding.md` "After context compaction". Re-read scope, relevant files, and task contract — don't trust memory.
 
 ---
 
-## Anti-Patterns To Catch
+## Anti-Patterns
 
-These are common agent failure modes. If you notice yourself doing any of these, stop:
-
-- **Helper/utility files that serve one caller** — inline the logic instead
-- **Abstract base classes with one implementation** — delete the base class
-- **Configuration where constants would do** — hardcode it until you need flexibility
-- **Error handling for impossible cases** — handle what can actually happen
-- **Logging/monitoring before the feature works** — make it work first
-- **Over-normalized data structures** — denormalize unless you have a concrete reason
-- **Building "for the future"** — build for now. Refactor when the future arrives
-- **Multiple patterns for the same concern** — pick one, migrate the others
+See `rules/coding.md` "Anti-Patterns" for the canonical list.

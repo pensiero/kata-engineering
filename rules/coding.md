@@ -16,6 +16,18 @@ A well-built system has a natural shape. When you find it, the code feels inevit
 
 Seek the natural shape. Remove what obscures it.
 
+### Simplify checklist
+Canonical questions for any change. Cited from `build` Phase 3 and `review` Mode 1.
+
+- **Necessary?** Could the problem be solved without this code?
+- **Simplest version?** Could it be shorter, flatter, more direct?
+- **Earns its keep?** Does this abstraction have two real use cases, or speculative?
+- **Coupling worth it?** New dependency — could you inline it?
+- **Stranger-readable?** Without explanation, without conversation context?
+- **Inevitable shape?** Or machinery bolted on?
+
+Default answer to "should we add this?" is no. Codebase with less code doing the same thing is always better.
+
 ---
 
 ## Before You Write Code
@@ -71,6 +83,11 @@ Seek the natural shape. Remove what obscures it.
 - Tests are not a follow-up task — they're part of writing the code
 - If you can't test it, the design is probably wrong
 
+### Earned existence
+- Tests, fixtures, schemas, scripts: add only to protect behavior you're changing now. "Once caught a bug" / "useful someday" = no.
+- Inline minimal objects beat fixture files. New fixture file only when reused 3+ times.
+- Deleting a script: drop the `package.json` entry, callers, and any fixtures/tests it owned in the same commit. No drift.
+
 ---
 
 ## After Writing Code
@@ -121,6 +138,21 @@ A living doc is recognizable by its `freshness: living` frontmatter, or by match
 - Commit when a logical unit is complete and tests pass
 - Commit message describes a complete, valuable change — not "WIP" or "partial X"
 - Stage only files related to the logical unit — not `git add .`
+
+---
+
+## Anti-Patterns
+
+Common agent failure modes. If you catch yourself doing any of these, stop.
+
+- **Helper/utility files for one caller** — inline the logic
+- **Abstract base classes with one implementation** — delete the base
+- **Configuration where constants would do** — hardcode until flexibility is needed
+- **Error handling for impossible cases** — handle what can actually happen
+- **Logging/monitoring before the feature works** — make it work first
+- **Over-normalized data structures** — denormalize unless concrete reason
+- **Building "for the future"** — build for now; refactor when future arrives
+- **Multiple patterns for the same concern** — pick one, migrate the others
 
 ---
 
