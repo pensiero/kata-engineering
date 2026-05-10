@@ -5,8 +5,7 @@ description: Initialize this computer with the Kata Engineering framework for Co
 
 # Skill: kata-init
 
-Initialize this computer with the Kata Engineering framework for Codex and/or
-Claude.
+Initialize this computer with the Kata Engineering framework for Codex and/or Claude.
 
 ## Usage
 

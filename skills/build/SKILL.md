@@ -6,7 +6,6 @@ description: Implement features, fix bugs, start new projects, or bootstrap proj
 # Build Skill
 
 Use for implementing features, fixing bugs, starting new projects, or bootstrapping project structure.
-
 NOT for: reviewing code (use `review` skill), researching without implementing, or non-coding tasks.
 
 ---
@@ -121,8 +120,6 @@ This also prevents the append-over-append problem. New information doesn't go at
 
 The specific sections vary by project. A library's natural story is different from a data pipeline's, which is different from a web application's. The principle is constant: **build understanding sequentially.** The templates in `skills/build/templates/` demonstrate this principle for typical projects — use them as starting points, but adapt the structure to the project's natural story.
 
-**Get human approval** before proceeding. The bootstrap sets the foundation — it should be right.
-
 ### Tier upgrades
 
 When upgrading from a lower tier (e.g., light → standard):
@@ -130,7 +127,6 @@ When upgrading from a lower tier (e.g., light → standard):
 2. Generate the additional artifacts required by the new tier
 3. Integrate existing content — don't discard what's there
 4. Update the `project_tier` in frontmatter
-5. Get human approval
 
 ---
 
@@ -290,12 +286,7 @@ Briefly state:
 
 ---
 
-## After Context Compaction
+## After Context Compaction and Anti-Patterns
 
 See `rules/coding.md` "After context compaction". Re-read scope, relevant files, and task contract — don't trust memory.
-
----
-
-## Anti-Patterns
-
 See `rules/coding.md` "Anti-Patterns" for the canonical list.
