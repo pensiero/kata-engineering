@@ -35,6 +35,7 @@ The same repository files are used for both agents:
 | `skills/build/` | `<global-skills-dir>/build` |
 | `skills/review/` | `<global-skills-dir>/review` |
 | `skills/project-kickoff/` | `<global-skills-dir>/project-kickoff` |
+| `skills/harmonize/` | `<global-skills-dir>/harmonize` |
 | `AGENTS-patch.md` | included from the global instruction file |
 
 Do not copy Kata skills or rules into individual projects. Global symlinks make
@@ -81,6 +82,7 @@ ln -sfn "$KATA_ENGINEERING_HOME/skills/kata-init" ~/.codex/skills/kata-init
 ln -sfn "$KATA_ENGINEERING_HOME/skills/build" ~/.codex/skills/build
 ln -sfn "$KATA_ENGINEERING_HOME/skills/review" ~/.codex/skills/review
 ln -sfn "$KATA_ENGINEERING_HOME/skills/project-kickoff" ~/.codex/skills/project-kickoff
+ln -sfn "$KATA_ENGINEERING_HOME/skills/harmonize" ~/.codex/skills/harmonize
 ```
 
 For Claude:
@@ -91,6 +93,7 @@ ln -sfn "$KATA_ENGINEERING_HOME/skills/kata-init" ~/.claude/skills/kata-init
 ln -sfn "$KATA_ENGINEERING_HOME/skills/build" ~/.claude/skills/build
 ln -sfn "$KATA_ENGINEERING_HOME/skills/review" ~/.claude/skills/review
 ln -sfn "$KATA_ENGINEERING_HOME/skills/project-kickoff" ~/.claude/skills/project-kickoff
+ln -sfn "$KATA_ENGINEERING_HOME/skills/harmonize" ~/.claude/skills/harmonize
 ```
 
 If a destination already exists as a real directory, move it to a timestamped

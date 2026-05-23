@@ -22,10 +22,13 @@
 | The idea is fuzzy — needs clarification before building anything | `project-kickoff` |
 | Starting a new project, or writing/modifying code on an existing one | `build` |
 | Reviewing code, checking project health, or refreshing living docs | `review` |
+| Filenames or folder layout no longer match the product vocabulary | `harmonize` |
 
 `build` handles the full lifecycle: bootstrapping new projects (picking a tier, scaffolding docs), implementing features and fixes, and keeping docs current at the end of each task. You don't pick a phase — the skill handles it.
 
 `review` has four modes: **Focused** (review a change), **Health** (periodic check), **Tier** (verify tier compliance), **Refresh** (update stale living docs to match reality). Specify the mode, or let the agent pick the sensible default for the situation.
+
+`harmonize` has three modes: **Propose** (rename plan only), **Apply** (execute renames, update imports and doc refs), **Review** (fresh-eyes pass over a plan or applied diff). Always start in Propose unless an existing plan is being reviewed or applied.
 
 ### When Scope Is Unclear
 
@@ -46,3 +49,7 @@ Periodically (every few weeks, or when agent performance degrades):
 - Merge overlapping rules
 - Remove rules that no longer apply
 - Verify skills still match your workflow
+
+When editing any rule, skill, or `AGENTS.md`:
+- Write instructions, not descriptions — tell the agent what to do, don't restate what the code already shows
+- Refer to artifacts by descriptive name (e.g. "the architecture doc", "the auth module"), not by exact path — paths churn, names survive

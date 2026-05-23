@@ -26,7 +26,7 @@ Canonical questions for any change. Cited from `build` Phase 3 and `review` Mode
 - **Stranger-readable?** Without explanation, without conversation context?
 - **Inevitable shape?** Or machinery bolted on?
 
-Default answer to "should we add this?" is no. Codebase with less code doing the same thing is always better.
+Default answer to "should we add this?" is no. Codebase with less code doing the same thing is always better. The same default applies to docs, rules, and `AGENTS.md` entries: every line is loaded into agent context on every session, so each line must earn its place.
 
 ---
 
@@ -116,7 +116,7 @@ Skip this check only for leaf-node changes with no callbacks, no state persisten
 
 Project docs fall into two categories. The discipline is different for each.
 
-**Stable docs** — describe what the project IS and what MUST hold true. They change deliberately, when the underlying design changes.
+**Stable docs** — describe what the project IS and what MUST hold true. They change deliberately, when the underlying design changes. Trust them as the source of truth for the system today.
 
 - `ARCHITECTURE.md` — what the system is, how it's organized, why it has this shape
 - `CONTRACTS.md` — invariants, quality gates, verification
@@ -124,7 +124,7 @@ Project docs fall into two categories. The discipline is different for each.
 
 Update these only when the change is real. Avoid rewriting them casually — they are the project's memory of intent, and churn erodes trust in them.
 
-**Living docs** — describe current state. They go stale quickly, and staleness is a defect.
+**Living docs** — describe intent and current state. They go stale quickly, and staleness is a defect. Treat them as hypothesis: verify against the code before acting on them.
 
 - `PLAN.md` — what's been done, what's next, what's deferred
 - `DECISIONS.md` — non-obvious choices and their reasoning

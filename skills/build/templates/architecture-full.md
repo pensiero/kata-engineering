@@ -180,3 +180,4 @@ Major changes require evidence and evaluation closure before commit.
 - For your specific project, the natural story may differ. A system without governance needs no governance section. A system without a mutation path needs no authoritative path section. Adapt.
 - The story section is the most important. It's not decoration — it's the frame that makes every other section coherent. Write it with care — clear and direct, not flowery or literary. The best system stories are the shortest ones that make you understand what you're dealing with.
 - Full-tier docs are longer. Fight the urge to let them become a dump. Every section should earn its place. If a section exists only because the template had it, delete it.
+- At this tier, module-scoped contracts (a small `CONTRACTS.md` next to the module it constrains) often beat one root-level file. Place context at the most specific layer that fully owns it; only promote to the root when it is genuinely shared.

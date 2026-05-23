@@ -52,6 +52,8 @@ Over-engineering agents may become obsolete sooner than you think. So, KISS 💋
 
 So the real need is not more control. It is better structure.
 Kata Engineering gives agents elegant boundaries without over-constraining them. The architecture persists. Decisions are recorded. Constraints are testable. The agent remains free to explore, but not free to quietly deform the project.
+
+A project's docs are not only for humans. They are loaded into agent context on every session — they are the codebase, too. That is why the discipline below treats them as load-bearing artifacts, not afterthought documentation.
  
 ## Older Than Software
 
