@@ -1,13 +1,15 @@
 ---
 name: review
-description: Review code changes, check project health, or verify contract compliance. Use for any review task.
+description: Review code changes, check project health, verify contract compliance, or refresh living docs (PLAN.md, DECISIONS.md). Use for any review or project health task.
 ---
 
 # Review Skill
 
-Use for reviewing code changes, checking project health, or verifying contract compliance.
+Use for reviewing code changes, checking project health, verifying contract compliance, or refreshing living docs.
 
 NOT for: implementing changes (use `build` skill), bootstrapping projects, or research tasks.
+
+**Central rules:** this skill ships with the Kata Engineering repository. Resolve this skill directory's real path (it is usually symlinked into the agent's global skills directory); the rules live two levels up, at the repository root. The Simplify checklist cited below is in `rules/coding.md`.
 
 ---
 
@@ -22,7 +24,7 @@ TIER      → verify project meets its declared tier requirements
 REFRESH   → update living docs to match current reality (periodic maintenance)
 ```
 
-Focused, Health, and Tier are **diagnostic** — they produce findings, not edits. Refresh is the only mode that writes to files, and it writes only to living docs (`PLAN.md`, `DECISIONS.md`, `RESEARCH.md`).
+Focused, Health, and Tier are **diagnostic** — they produce findings, not edits. Refresh is the only mode that writes to files, and it writes only to living docs (`PLAN.md`, `DECISIONS.md`).
 
 ---
 
@@ -159,14 +161,13 @@ For each gap: describe what's missing and what to do about it.
 
 | | Edits? | Scope |
 |---|---|---|
-| `PLAN.md` | ✅ | mark completed items, update "Up Next", move deferred items |
+| `PLAN.md` | ✅ | mark completed items, update "Up Next", move deferred items, close answered open questions |
 | `DECISIONS.md` | ✅ | add missing entries for recent design choices visible in git history |
-| `RESEARCH.md` | ✅ | close resolved questions, update findings, prune stale content |
 | `ARCHITECTURE.md` | ❌ | flag drift, do not edit |
 | `CONTRACTS.md` | ❌ | flag drift, do not edit |
 | Code / tests | ❌ | flag issues, do not edit |
 
-If the project has no living docs, Refresh has nothing to do. Exit cleanly. If the project would benefit from one or more of them, suggest creating them directly from the templates in `skills/build/templates/` (`plan.md`, `decisions.md`, `research.md`) — do not route back to Bootstrap, which only runs on projects without `ARCHITECTURE.md`.
+If the project has no living docs, Refresh has nothing to do. Exit cleanly. If the project would benefit from one or both of them, suggest creating them directly from the templates in `skills/build/templates/` (`plan.md`, `decisions.md`) — do not route back to Bootstrap, which only runs on projects without `ARCHITECTURE.md`.
 
 ### Step 1: Gather reality
 
@@ -184,6 +185,7 @@ Do not read the entire codebase. You're looking for signals of change, not doing
 - Move completed phases/milestones from "Up Next" to "Completed"
 - Update "Up Next" to reflect what's actually next given the current state (not wishful thinking from three sessions ago)
 - Move anything deferred to "Deferred" with a one-line reason
+- Close answered Open Questions — promote durable answers to `DECISIONS.md`
 - Prune "Completed" if it has grown into archaeology — keep enough history to understand the journey, not every checkmark forever
 
 ### Step 3: Refresh `DECISIONS.md` (if it exists)
@@ -193,12 +195,9 @@ Do not read the entire codebase. You're looking for signals of change, not doing
 - Do not invent rationale — if you can't determine the "why" from context, flag it for the human instead of guessing
 - Never rewrite old entries. Superseded decisions get a new entry that references the old one
 
-### Step 4: Refresh `RESEARCH.md` (if it exists)
+### Step 4: Fold legacy `RESEARCH.md` (if it exists)
 
-- Close open questions that have been answered. If the answer matters long-term, promote it to a Key Finding or a `DECISIONS.md` entry
-- Update Key Findings with new information
-- Prune findings that are no longer relevant
-- Add sources for any research done since the last refresh
+`RESEARCH.md` is no longer a Kata artifact. If a project still has one: move its open questions into `PLAN.md`'s Open Questions section, promote durable findings to `DECISIONS.md` entries, then delete the file (git history is the archive). Confirm with the human before deleting.
 
 ### Step 5: Flag stable drift
 

@@ -2,7 +2,7 @@
 
 Scaffold for `PLAN.md`. Living doc — optional for any tier, useful when multiple sessions will work on the project over time.
 
-PLAN.md records the journey: what's been done, what's next, what's deferred. It is NOT architecture (what the system is), contracts (what must hold true), or reasoning about why decisions were made (that lives in `ARCHITECTURE.md` or `DECISIONS.md`).
+PLAN.md records the journey: what's been done, what's next, what's deferred, and what's still unknown. It is NOT architecture (what the system is), contracts (what must hold true), or reasoning about why decisions were made (that lives in `ARCHITECTURE.md` or `DECISIONS.md`).
 
 If the plan disappeared, the project could still be understood and maintained from architecture + contracts + tests. The plan makes pickup faster, not survival possible.
 
@@ -55,6 +55,14 @@ What we're building, in what order, and what's done.
 
 ---
 
+## Open Questions
+
+[What still needs to be figured out before or during upcoming work. Remove each item when resolved — if the answer matters long-term, record it as a `DECISIONS.md` entry. If research produced findings worth keeping, they belong in `DECISIONS.md` (the why) or `ARCHITECTURE.md` (the what), not here.]
+
+- [Question — why it matters, what answering it would unblock.]
+
+---
+
 ## Prioritization
 
 [What principles guide ordering. These help an agent make good decisions about what to work on next when the human isn't available to direct.]
@@ -83,4 +91,5 @@ What we're building, in what order, and what's done.
 - When you complete work: check off items, move phases to Completed
 - When scope changes: update Up Next, add to Deferred with rationale
 - When priorities shift: update the Prioritization section
+- When a question is answered: remove it from Open Questions; promote durable answers to `DECISIONS.md`
 - Prune completed phases periodically — keep enough history to understand the journey, not so much that the file becomes archaeology

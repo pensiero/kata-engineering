@@ -126,13 +126,12 @@ Update these only when the change is real. Avoid rewriting them casually — the
 
 **Living docs** — describe intent and current state. They go stale quickly, and staleness is a defect. Treat them as hypothesis: verify against the code before acting on them.
 
-- `PLAN.md` — what's been done, what's next, what's deferred
+- `PLAN.md` — what's been done, what's next, what's deferred, open questions
 - `DECISIONS.md` — non-obvious choices and their reasoning
-- `RESEARCH.md` — findings, open questions, sources
 
 Check these on every Close phase. If you touched the project, touch the living docs. Staleness in a living doc is not a minor issue — it's a trap for the next agent.
 
-A living doc is recognizable by its `freshness: living` frontmatter, or by matching one of the templates in `skills/build/templates/`. If in doubt: architecture and contracts are stable; plan, decisions, and research are living.
+A living doc is recognizable by its `freshness: living` frontmatter, or by matching one of the templates in `skills/build/templates/`. If in doubt: architecture and contracts are stable; plan and decisions are living.
 
 ### Commit discipline
 - Commit when a logical unit is complete and tests pass

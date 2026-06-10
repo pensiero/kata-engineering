@@ -22,7 +22,7 @@ Before doing anything, read these files in this order:
 2. **The templates** (read the tier that fits — plus the living-doc templates if relevant):
    - Architecture (pick the tier): `[KATA_PATH]/skills/build/templates/architecture-light.md`, `architecture-standard.md`, or `architecture-full.md`
    - Contracts (standard or full): `[KATA_PATH]/skills/build/templates/contracts-standard.md`, or `contracts-full.md`
-   - Living docs (optional, any tier): `[KATA_PATH]/skills/build/templates/plan.md`, `decisions.md`, `research.md`
+   - Living docs (optional, any tier): `[KATA_PATH]/skills/build/templates/plan.md`, `decisions.md`
 
 ## The Project
 
@@ -75,9 +75,8 @@ Work in small increments. Each increment should leave the project in a working s
 
 Living docs capture state that changes over the life of the project. Create the ones that make sense:
 
-- `PLAN.md` (from `skills/build/templates/plan.md`) — if the project has multiple phases or significant deferred scope.
+- `PLAN.md` (from `skills/build/templates/plan.md`) — if the project has multiple phases, significant deferred scope, or meaningful unknowns (fold any kickoff Research Brief into its Open Questions section).
 - `DECISIONS.md` (from `skills/build/templates/decisions.md`) — if the project involves non-obvious design choices, or will span multiple sessions.
-- `RESEARCH.md` (from `skills/build/templates/research.md`) — if the project has meaningful unknowns, or a Research Brief exists from kickoff.
 
 None are required. Create only the ones that will pay for themselves. Each one is a living doc — keep it current on every Close.
 

@@ -8,18 +8,18 @@ It gives your projects a small amount of structure:
 - Contracts, guardrails, workflows and practices stored in markdown that keep projects coherent while leaving agents free to explore
 - **5 workflow skills**: [project-kickoff](./skills/project-kickoff) · [build](./skills/build) · [review](./skills/review) · [harmonize](./skills/harmonize) · [knowledgebase-kickoff](./skills/knowledgebase-kickoff)
 - **1 setup skill**: [kata-init](./skills/kata-init)
-- **a tiny routing patch** for [AGENTS.md](./AGENTS-patch.md) (or any other file loaded at runtime)
+- **no instruction-file patching** — skills route themselves through their descriptions and point to the central rules
 
 > **Zero footprint.** No install, no dependencies, no external services.
 > Just markdown files loaded by your agent at runtime. Boring in the best way.
 
 ## How it works
 
-1. the agent's global instruction file routes the agent to the right skill
+1. skill descriptions route the agent to the right skill; each skill reads the central rules
 2. project docs define architecture, contracts, and constraints
 3. the agent builds or reviews within those boundaries
 4. as the project grows, you can move from **Light** to **Standard** to **Full** tiers
-5. living docs (`PLAN.md`, `DECISIONS.md`, `RESEARCH.md`) capture state that evolves — refreshed as you work, or in one pass via the review skill's Refresh mode
+5. living docs (`PLAN.md`, `DECISIONS.md`) capture state that evolves — refreshed as you work, or in one pass via the review skill's Refresh mode
 
 ## Works with
 
@@ -69,7 +69,6 @@ This repository is itself a light-tier Kata project — all docs, no code. This 
 kata-engineering/
 ├── README.md                          # This file — also the repo's architecture doc
 ├── INITIAL_PROMPT.md                  # Origin story: the prompt that started this project
-├── AGENTS-patch.md                    # Routing section to add to workspace AGENTS.md
 ├── rules/
 │   ├── coding.md                      # Universal coding practices
 │   └── testing.md                     # Universal testing practices
@@ -87,8 +86,7 @@ kata-engineering/
 │   │       ├── contracts-standard.md
 │   │       ├── contracts-full.md
 │   │       ├── plan.md                    # Living docs — tier-agnostic
-│   │       ├── decisions.md
-│   │       └── research.md
+│   │       └── decisions.md
 │   ├── review/
 │   │   └── SKILL.md                   # Review skill (focused + health + tier + refresh)
 │   ├── harmonize/
@@ -135,7 +133,7 @@ Close runs the **compounding loop**: corrections received during the task are ro
 | **Tier** | After a tier upgrade, before a handoff | No |
 | **Refresh** | When living docs have drifted from reality | Yes — living docs only |
 
-Focused, Health, and Tier are diagnostic: they produce findings, not edits. Refresh is the only mode that writes, and it writes only to living docs (`PLAN.md`, `DECISIONS.md`, `RESEARCH.md`).
+Focused, Health, and Tier are diagnostic: they produce findings, not edits. Refresh is the only mode that writes, and it writes only to living docs (`PLAN.md`, `DECISIONS.md`).
 
 ### `harmonize` — three modes
 
@@ -169,24 +167,19 @@ Project docs fall into two categories with different discipline:
 | Change governance | stable | | |      ✓      |
 | `DECISIONS.md` | living | optional | optional |      ✓      |
 | `PLAN.md` | living | optional | optional | recommended |
-| `RESEARCH.md` | living | optional | optional |      optional      |
 
 Use **light** for scripts and personal tools. **Standard** for projects with APIs, persistence, or multiple modules. **Full** for production systems that need governance.
 
 ## Global setup
 
-For Codex and Claude, prefer a single global setup instead of copying skills and
-patching every project. Clone this repository once, then run the **`kata-init`**
-skill from the repository root — or ask your agent to follow
+Setup is symlinks only. Clone this
+repository once, then run the **`kata-init`** skill from the repository root —
+or ask your agent to follow
 [`skills/kata-init/SKILL.md`](./skills/kata-init/SKILL.md). It symlinks the
-skills into each agent's global skills directory and wires `AGENTS-patch.md`
-into the agent's global instruction file.
-
-The wiring mechanism differs per agent. Claude Code expands `@path` includes
-natively, so edits to this repository are picked up automatically. Codex does
-not expand includes ([openai/codex#6038](https://github.com/openai/codex/issues/6038)),
-so `kata-init` pastes the patch content between managed markers instead —
-re-run `kata-init` after editing `AGENTS-patch.md` to refresh it.
+skills into each agent's global skills directory (`~/.claude/skills`,
+`~/.codex/skills`). Skills route themselves: the agent picks them by their
+descriptions, and each skill points to the central `rules/` in this repository.
+Edits to this repository are picked up by all projects automatically.
 
 Project-level `AGENTS.md` or `CLAUDE.md` files stay focused on
 project-specific constraints.
@@ -197,16 +190,30 @@ If you want an agent to initialize a computer from GitHub, use a prompt like:
 
 > Clone `https://github.com/pensiero/kata-engineering` into a sensible local
 > projects directory, then follow `skills/kata-init/SKILL.md` from the cloned
-> repository to configure the agents installed on this machine. Do not add
-> duplicate global instructions that are already configured.
+> repository to configure the agents installed on this machine.
 
 ### Other agents
 
-For other agents, apply the same principle: reference this repository from the
-agent's global configuration — via an include if the tool supports it,
-otherwise by pasting `AGENTS-patch.md` content between managed markers the way
-`kata-init` does for Codex. Only copy `skills/` or `rules/` when the tool
-supports neither includes nor symlinks.
+For agents that support the SKILL.md format, symlink `skills/` into their
+skills directory the same way. For agents that don't, copy or reference
+`rules/` and the relevant SKILL.md files from the agent's configuration —
+the skills are plain markdown and work anywhere text is read.
+
+## Maintaining the framework
+
+Rules encode preferences and practices. They grow through the build skill's
+lesson capture at Close, and they shrink through periodic consolidation.
+Every few weeks — or when agent performance degrades:
+
+- Review rules for contradictions or bloat; merge overlapping rules; remove rules that no longer apply
+- Promote recurring lesson entries (captured in project docs by `build` Close) into rules; drop the originals
+- Verify the skills still match your workflow
+
+When editing any rule or skill:
+
+- Write instructions, not descriptions — tell the agent what to do, don't restate what the code already shows
+- Refer to artifacts by descriptive name (e.g. "the architecture doc"), not by exact path — paths churn, names survive
+- Add new rule files as needed; reference them from the skills that should read them
 
 ## Usage
 

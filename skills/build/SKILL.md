@@ -1,12 +1,14 @@
 ---
 name: build
-description: Implement features, fix bugs, start new projects, or bootstrap project structure. Use for any coding task.
+description: Implement features, fix bugs, start new projects, or bootstrap project structure. Use for any coding task — writing or modifying code on any project, even small edits.
 ---
 
 # Build Skill
 
 Use for implementing features, fixing bugs, starting new projects, or bootstrapping project structure.
 NOT for: reviewing code (use `review` skill), researching without implementing, or non-coding tasks.
+
+**Central rules:** this skill ships with the Kata Engineering repository. Resolve this skill directory's real path (it is usually symlinked into the agent's global skills directory); the rules live two levels up, at the repository root. Read `rules/coding.md` before writing code and `rules/testing.md` before writing tests.
 
 ---
 
@@ -106,9 +108,8 @@ Use the templates in `skills/build/templates/` as guides (not copy-paste). Adapt
 - Complete test baseline
 
 **Any tier, optionally:**
-- `PLAN.md` (from `templates/plan.md`) — when the project has phased work, sequencing, or deferred scope. Create it if the human asks for planning, or if the project clearly has multiple phases ahead. Not required by default.
+- `PLAN.md` (from `templates/plan.md`) — when the project has phased work, sequencing, deferred scope, or meaningful unknowns. Create it if the human asks for planning, or if the project clearly has multiple phases ahead. If a Research Brief was produced during kickoff, fold its unknowns into the plan's Open Questions section. Not required by default.
 - `DECISIONS.md` (from `templates/decisions.md`) — when the project will involve multiple sessions or non-obvious design choices. Lightweight: a running log of choices and their reasoning. Not required by default, but worth creating for anything beyond a simple script.
-- `RESEARCH.md` (from `templates/research.md`) — when the project requires investigation before or during implementation. Create it if a Research Brief was produced during kickoff, or if the project has meaningful unknowns. Not required by default.
 
 ### Writing architecture docs — the narrative principle
 
@@ -141,9 +142,8 @@ When upgrading from a lower tier (e.g., light → standard):
 - Read `CONTRACTS.md` — understand invariants and quality gates
 
 **Living docs — describe current state and recent thinking:**
-- If `PLAN.md` exists — check what's been completed and what's next. This tells you where the project stands.
+- If `PLAN.md` exists — check what's been completed, what's next, and any open questions touching your task. This tells you where the project stands.
 - If `DECISIONS.md` exists — scan recent entries. They tell you why earlier choices were made and what was rejected, so you don't re-litigate solved problems.
-- If `RESEARCH.md` exists — scan open questions and recent findings if the task touches areas under investigation.
 
 **Task-specific:**
 - If a task contract exists (`{TASK}_CONTRACT.md`), read it — it defines completion.
@@ -264,9 +264,8 @@ Stable vs. living doc discipline is canonical in `rules/coding.md` ("Two kinds o
 - Schemas — whenever data shape changed
 
 **Living** (check every Close):
-- `PLAN.md` — mark completed, update "Up Next", move deferred
+- `PLAN.md` — mark completed, update "Up Next", move deferred, close answered open questions
 - `DECISIONS.md` — add entry for non-obvious choices a future agent might re-litigate
-- `RESEARCH.md` — close resolved questions, update findings, prune stale
 
 All doc updates ship in the same commit as the code they document.
 

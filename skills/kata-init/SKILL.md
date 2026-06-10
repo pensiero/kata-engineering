@@ -22,22 +22,15 @@ configure every supported agent that appears to be installed on the machine.
 
 ## Supported Agents
 
-| Agent | Global skills directory | Global instruction file |
+| Agent | Global skills directory | Global instruction file (legacy cleanup only) |
 |---|---|---|
 | Codex | `~/.codex/skills` | `~/.codex/AGENTS.md` |
 | Claude | `~/.claude/skills` | `~/.claude/CLAUDE.md` |
 
-The same repository files are used for both agents:
-
-| Source (kata-engineering/) | Destination |
-|---|---|
-| `skills/kata-init/` | `<global-skills-dir>/kata-init` |
-| `skills/build/` | `<global-skills-dir>/build` |
-| `skills/review/` | `<global-skills-dir>/review` |
-| `skills/project-kickoff/` | `<global-skills-dir>/project-kickoff` |
-| `skills/harmonize/` | `<global-skills-dir>/harmonize` |
-| `skills/knowledgebase-kickoff/` | `<global-skills-dir>/knowledgebase-kickoff` |
-| `AGENTS-patch.md` | loaded from the global instruction file (mechanism differs per agent — see Step 4) |
+Setup is symlinks only — global instruction files are never patched. Skills
+route themselves through their descriptions and point to the central `rules/`.
+Every skill directory under `skills/` is symlinked into each agent's global
+skills directory under its own name.
 
 Do not copy Kata skills or rules into individual projects. Global symlinks make
 every project read the latest version from this repository.
@@ -50,7 +43,7 @@ every project read the latest version from this repository.
 
 Resolve the Kata Engineering repository root dynamically. Use the current
 working directory when it is the repository root; otherwise locate the nearest
-parent directory containing `AGENTS-patch.md`, `skills/`, and `rules/`.
+parent directory containing both `skills/` and `rules/`.
 
 In shell examples, use:
 
@@ -79,10 +72,14 @@ For each selected agent (`<dir>` is `~/.codex` or `~/.claude`):
 
 ```bash
 mkdir -p <dir>/skills
-for s in kata-init build review project-kickoff harmonize knowledgebase-kickoff; do
-  ln -sfn "$KATA_ENGINEERING_HOME/skills/$s" <dir>/skills/$s
+for s in "$KATA_ENGINEERING_HOME"/skills/*/; do
+  ln -sfn "${s%/}" <dir>/skills/"$(basename "$s")"
 done
 ```
+
+Every skill in the repository is linked — new skills added to the repository
+are picked up on the next `kata-init` run. Verify with `file`, not `ls`:
+macOS Finder aliases look like files and are not followed by agents.
 
 If a destination already exists as a real file or directory (not a symlink),
 move it to a timestamped backup under the agent's backup directory before
@@ -93,42 +90,18 @@ creating the symlink:
 
 Do not delete existing user content.
 
-### Step 4 - Patch global instruction files
+### Step 4 - Clean up legacy wiring
 
-The loading mechanism differs per agent. Claude Code expands `@path` includes
-natively; Codex does not (open feature request: openai/codex#6038), so a bare
-`@path` line in `~/.codex/AGENTS.md` is inert text. Never use the `@` include
-form for Codex.
+Earlier versions of Kata Engineering patched global instruction files with an
+`AGENTS-patch.md` routing section. That file no longer exists — skills route
+themselves. If present, remove these leftovers:
 
-**Claude** — add this include line to `~/.claude/CLAUDE.md` exactly once:
+- In `~/.claude/CLAUDE.md`: any `@.../kata-engineering/AGENTS-patch.md` include line
+- In `~/.codex/AGENTS.md`: any block between `<!-- BEGIN KATA ENGINEERING ... -->`
+  and `<!-- END KATA ENGINEERING -->` markers, and any bare
+  `@.../kata-engineering/AGENTS-patch.md` line
 
-```md
-@${KATA_ENGINEERING_HOME}/AGENTS-patch.md
-```
-
-Edits to `AGENTS-patch.md` are picked up automatically on the next session.
-
-**Codex** — paste the full content of `AGENTS-patch.md` into
-`~/.codex/AGENTS.md` between managed markers, prefixed with the resolved
-repository root so relative rule paths can be resolved:
-
-```md
-<!-- BEGIN KATA ENGINEERING (managed by kata-init — do not edit between markers) -->
-Kata Engineering home: ${KATA_ENGINEERING_HOME}
-
-...content of AGENTS-patch.md...
-<!-- END KATA ENGINEERING -->
-```
-
-If the markers already exist, replace everything between them with the current
-content. If an old bare `@.../AGENTS-patch.md` line exists, remove it — it does
-nothing in Codex. Because the content is pasted, edits to `AGENTS-patch.md`
-reach Codex only when `kata-init` is re-run — remind the user of this in the
-final report.
-
-For both agents: create the global instruction file if it does not exist.
-Preserve all existing content. Do not add duplicate global instructions such
-as RTK if they are already configured.
+Remove only the Kata leftovers. Preserve all other content in those files.
 
 ### Step 5 - Report
 
@@ -137,8 +110,7 @@ Print a summary:
 - Which agents were configured
 - Which skill symlinks were created or refreshed
 - Which existing directories were backed up, if any
-- Whether each global instruction file was updated or already current (Claude: include line; Codex: marker block)
-- For Codex: remind the user that future `AGENTS-patch.md` edits require re-running `kata-init`
+- Which legacy wiring was removed from global instruction files, if any
 
 ---
 
@@ -146,5 +118,6 @@ Print a summary:
 
 - Project-level `AGENTS.md` and `CLAUDE.md` files should stay focused on
   project-specific constraints.
-- `AGENTS-patch.md` resolves rule files from the Kata Engineering repository
-  root, so projects do not need local copies of `rules/`.
+- Skills resolve `rules/` from the Kata Engineering repository root (two
+  levels above their real, symlink-resolved location), so projects do not
+  need local copies of `rules/`.

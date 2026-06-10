@@ -23,7 +23,7 @@ Before doing anything, read these files in this order:
 2. **The templates** (read the tier that fits — plus the living-doc templates if relevant):
    - Architecture (pick the tier): `[KATA_PATH]/skills/build/templates/architecture-light.md`, `architecture-standard.md`, or `architecture-full.md`
    - Contracts (standard or full): `[KATA_PATH]/skills/build/templates/contracts-standard.md`, or `contracts-full.md`
-   - Living docs (optional, any tier): `[KATA_PATH]/skills/build/templates/plan.md`, `decisions.md`, `research.md`
+   - Living docs (optional, any tier): `[KATA_PATH]/skills/build/templates/plan.md`, `decisions.md`
 
 3. **The existing project** — read thoroughly:
    - Any existing architecture or design docs
@@ -87,9 +87,8 @@ If the project warrants standard or full tier, create `CONTRACTS.md` following t
 
 Living docs capture state that changes over the life of the project. Create the ones that make sense:
 
-- `PLAN.md` (from `skills/build/templates/plan.md`) — if the project has phased work, sequencing, or deferred scope.
+- `PLAN.md` (from `skills/build/templates/plan.md`) — if the project has phased work, sequencing, deferred scope, or unresolved questions (they go in its Open Questions section).
 - `DECISIONS.md` (from `skills/build/templates/decisions.md`) — if the project has hard-won design choices worth preserving as a log (separate from their presence in `ARCHITECTURE.md`'s Decisions section). Useful when non-obvious rationale is scattered across old docs.
-- `RESEARCH.md` (from `skills/build/templates/research.md`) — if the project has ongoing investigation or unresolved questions.
 
 None are required. Create only the ones that will pay for themselves.
 
