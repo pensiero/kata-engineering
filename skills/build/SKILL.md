@@ -19,7 +19,7 @@ BOOTSTRAP → only when project lacks architecture docs
 ORIENT    → read project context, understand scope
 BUILD     → implement the change
 VERIFY    → check contracts, run tests, impact check
-CLOSE     → update docs, verify completion
+CLOSE     → update docs, capture lessons, verify completion
 ```
 
 ---
@@ -270,13 +270,24 @@ Stable vs. living doc discipline is canonical in `rules/coding.md` ("Two kinds o
 
 All doc updates ship in the same commit as the code they document.
 
-### Step 2: Final commit
+### Step 2: Capture lessons — the compounding loop
+
+If the human corrected you during this task — rejected an approach, restated a preference, fixed a misunderstanding — the correction must outlive the session. Route it by scope:
+
+- **Project-specific** (a convention, a constraint, a "we don't do X here") → add a one-line entry to the project's instruction file (`AGENTS.md` / `CLAUDE.md`) or `DECISIONS.md`, whichever fits. Ships in the same commit.
+- **Universal** (a practice that would apply to any project) → propose a one-line addition to the Kata `rules/` files. Rules are stable docs — never edit them silently. Present the proposed line; the human approves.
+
+The bar: the lesson must generalize. Ask "would this have changed how I approached the task from the start?" If no, skip it. One line per lesson — every rule line is loaded into context on every future session, so it must earn its place.
+
+Most tasks have no corrections. Then this step is a no-op — do not manufacture lessons.
+
+### Step 3: Final commit
 
 - Ensure all changes (code + tests + docs) are committed
 - Commit message describes the complete change
 - No uncommitted work left behind
 
-### Step 3: Summary
+### Step 4: Summary
 
 Briefly state:
 - What was built/changed

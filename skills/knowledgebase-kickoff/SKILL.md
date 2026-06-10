@@ -1,6 +1,6 @@
 ---
-name: project-knowledgebase-kickoff
-description: Bootstrap a new project knowledge base with the same structure as the Atlassian Cloud migration project — folder skeleton, entity-page design, SCHEMA/CLAUDE/README scaffolding, the ingest-sources skill, .gitignore, git init, and initial commit. Use when the user says "kickoff a new project", "set up a new knowledge base", "bootstrap a KB project", or wants the same setup replicated for a different project.
+name: knowledgebase-kickoff
+description: Bootstrap a project knowledge base — folder skeleton, entity-page design, SCHEMA/CLAUDE/README scaffolding, an ingest-sources skill, .gitignore, git init, and initial commit. Use when the user wants to set up a knowledge base or queryable source of truth for a stakeholder-heavy project with meetings, emails, and documents.
 ---
 
 # Kickoff Knowledge Base Project
@@ -29,7 +29,7 @@ Use this skill when the user wants to set up knowledge management for a project 
 
 ## What to create
 
-Mirror the template tree at `~/.claude/skills/kickoff-kb-project/templates/` into the target directory, substituting placeholders:
+Mirror this skill's `templates/` tree (resolved relative to this SKILL.md) into the target directory, substituting placeholders:
 
 ### Folders
 ```
@@ -73,17 +73,9 @@ Template files contain `{{PLACEHOLDER}}` tokens. Substitute with user-provided v
    - Confirmed owner + project name.
    - Suggested next action: drop the first sources into `sources/{emails,transcripts,documents}/` and invoke the `ingest-sources` skill.
 
-## Maintenance — KEEP THIS SKILL IN SYNC
+## Maintenance
 
-The templates in this skill are a snapshot of the reference implementation at `/Users/oscar/Projects/atlassian-migration`. **Whenever scaffolding in that reference project changes — `SCHEMA.md`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `PLAN.md`, `SOURCES-CHECKLIST.md`, `LOG.md`, `.gitignore`, or `.claude/skills/ingest-sources/SKILL.md` — the corresponding template in this skill must be updated to match.**
-
-Sync procedure:
-1. Edit the scaffolding file in the reference project.
-2. Copy the updated content into the corresponding template under `~/.claude/skills/kickoff-kb-project/templates/`.
-3. Re-insert `{{PLACEHOLDERS}}` where project-specific values had been substituted.
-4. Commit both changes in the reference project (or separately, whichever the user prefers).
-
-When updating scaffolding in the reference project, proactively ask: "Should I also update the kickoff-kb-project skill templates to match?" Do not silently let them drift.
+The `templates/` tree in this skill is the canonical scaffolding — there is no external reference project. When work in a bootstrapped knowledge base improves its scaffolding in a way that generalizes, fold the improvement back into the templates here, re-inserting `{{PLACEHOLDERS}}` where project-specific values were substituted. This is the same compounding loop as the `build` skill's Close phase.
 
 ## What this skill does NOT do
 

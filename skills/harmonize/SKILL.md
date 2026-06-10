@@ -47,9 +47,9 @@ If a prior agent produced a plan or applied a diff:
 - Where do you disagree? State the disagreement with reasoning, not just preference.
 - Where did the prior agent miss something? Common gaps:
   - Test files renamed inconsistently with their source
-  - Imports updated, comments not (e.g. ownership headers, `extracted from X` notes)
-  - `package.json` scripts referencing old paths
-  - Stale references in docs (`CONTRACTS.md`, `ARCHITECTURE.md`, `SECURITY.md`, smoke-test indices)
+  - Imports updated, comments not (provenance notes like `extracted from X`, headers that name the file)
+  - Build/test scripts (e.g. `package.json`, `Makefile`) referencing old paths
+  - Stale references in docs (`CONTRACTS.md`, `ARCHITECTURE.md`, test-suite indices)
   - Decisions silently dropped that the user explicitly approved in plan comments
 - Where did the prior agent over-reach? If user comments pushed back on splits or folder regrouping, respect that signal.
 
@@ -77,9 +77,9 @@ Watch for and resist:
 For each rename, in this order:
 
 1. `git mv <old> <new>` — preserves history.
-2. Grep for the old basename across `*.ts`, `*.js`, `*.json`, `*.md`. Update every import, script reference, doc mention, and ownership comment.
-3. If the file is a test, also update `package.json` scripts and any `SMOKE_TEST_LANE.md` / equivalent.
-4. If the file's ownership comment mentions itself by name (e.g. `extracted from X.ts`), update those references too.
+2. Grep for the old basename across source, config, and doc files (adjust extensions to the project's languages). Update every import, script reference, doc mention, and comment.
+3. If the file is a test, also update test-runner scripts (e.g. `package.json`) and any test-suite index doc.
+4. If a comment in the file mentions it by name (e.g. `extracted from X.ts`), update those references too.
 5. Run the test suite. Tests must pass before commit.
 6. If the rename uncovered stale docs (e.g. references to a concept that no longer exists in code), clean those in the same pass — but **separately confirm** with the user if the staleness is non-trivial.
 
@@ -115,6 +115,8 @@ After APPLY, this grep should return nothing relevant:
 grep -rn "<old-basename>" --include="*.ts" --include="*.js" --include="*.json" --include="*.md" -n . \
   | grep -v node_modules | grep -v .git/
 ```
+
+Adjust the `--include` patterns to the project's languages and build files.
 
 If anything returns, the rename is incomplete.
 

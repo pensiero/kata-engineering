@@ -36,7 +36,8 @@ The same repository files are used for both agents:
 | `skills/review/` | `<global-skills-dir>/review` |
 | `skills/project-kickoff/` | `<global-skills-dir>/project-kickoff` |
 | `skills/harmonize/` | `<global-skills-dir>/harmonize` |
-| `AGENTS-patch.md` | included from the global instruction file |
+| `skills/knowledgebase-kickoff/` | `<global-skills-dir>/knowledgebase-kickoff` |
+| `AGENTS-patch.md` | loaded from the global instruction file (mechanism differs per agent — see Step 4) |
 
 Do not copy Kata skills or rules into individual projects. Global symlinks make
 every project read the latest version from this repository.
@@ -74,30 +75,18 @@ which agent to configure.
 
 For each selected agent, create its global skills directory if needed.
 
-For Codex:
+For each selected agent (`<dir>` is `~/.codex` or `~/.claude`):
 
 ```bash
-mkdir -p ~/.codex/skills
-ln -sfn "$KATA_ENGINEERING_HOME/skills/kata-init" ~/.codex/skills/kata-init
-ln -sfn "$KATA_ENGINEERING_HOME/skills/build" ~/.codex/skills/build
-ln -sfn "$KATA_ENGINEERING_HOME/skills/review" ~/.codex/skills/review
-ln -sfn "$KATA_ENGINEERING_HOME/skills/project-kickoff" ~/.codex/skills/project-kickoff
-ln -sfn "$KATA_ENGINEERING_HOME/skills/harmonize" ~/.codex/skills/harmonize
+mkdir -p <dir>/skills
+for s in kata-init build review project-kickoff harmonize knowledgebase-kickoff; do
+  ln -sfn "$KATA_ENGINEERING_HOME/skills/$s" <dir>/skills/$s
+done
 ```
 
-For Claude:
-
-```bash
-mkdir -p ~/.claude/skills
-ln -sfn "$KATA_ENGINEERING_HOME/skills/kata-init" ~/.claude/skills/kata-init
-ln -sfn "$KATA_ENGINEERING_HOME/skills/build" ~/.claude/skills/build
-ln -sfn "$KATA_ENGINEERING_HOME/skills/review" ~/.claude/skills/review
-ln -sfn "$KATA_ENGINEERING_HOME/skills/project-kickoff" ~/.claude/skills/project-kickoff
-ln -sfn "$KATA_ENGINEERING_HOME/skills/harmonize" ~/.claude/skills/harmonize
-```
-
-If a destination already exists as a real directory, move it to a timestamped
-backup under the agent's backup directory before creating the symlink:
+If a destination already exists as a real file or directory (not a symlink),
+move it to a timestamped backup under the agent's backup directory before
+creating the symlink:
 
 - Codex backups: `~/.codex/backups/`
 - Claude backups: `~/.claude/backups/`
@@ -106,20 +95,40 @@ Do not delete existing user content.
 
 ### Step 4 - Patch global instruction files
 
-For each selected agent, add this include exactly once:
+The loading mechanism differs per agent. Claude Code expands `@path` includes
+natively; Codex does not (open feature request: openai/codex#6038), so a bare
+`@path` line in `~/.codex/AGENTS.md` is inert text. Never use the `@` include
+form for Codex.
+
+**Claude** — add this include line to `~/.claude/CLAUDE.md` exactly once:
 
 ```md
 @${KATA_ENGINEERING_HOME}/AGENTS-patch.md
 ```
 
-Target files:
+Edits to `AGENTS-patch.md` are picked up automatically on the next session.
 
-- Codex: `~/.codex/AGENTS.md`
-- Claude: `~/.claude/CLAUDE.md`
+**Codex** — paste the full content of `AGENTS-patch.md` into
+`~/.codex/AGENTS.md` between managed markers, prefixed with the resolved
+repository root so relative rule paths can be resolved:
 
-Create the global instruction file if it does not exist. Preserve all existing
-content. Do not add duplicate global instructions such as RTK if they are
-already configured.
+```md
+<!-- BEGIN KATA ENGINEERING (managed by kata-init — do not edit between markers) -->
+Kata Engineering home: ${KATA_ENGINEERING_HOME}
+
+...content of AGENTS-patch.md...
+<!-- END KATA ENGINEERING -->
+```
+
+If the markers already exist, replace everything between them with the current
+content. If an old bare `@.../AGENTS-patch.md` line exists, remove it — it does
+nothing in Codex. Because the content is pasted, edits to `AGENTS-patch.md`
+reach Codex only when `kata-init` is re-run — remind the user of this in the
+final report.
+
+For both agents: create the global instruction file if it does not exist.
+Preserve all existing content. Do not add duplicate global instructions such
+as RTK if they are already configured.
 
 ### Step 5 - Report
 
@@ -128,7 +137,8 @@ Print a summary:
 - Which agents were configured
 - Which skill symlinks were created or refreshed
 - Which existing directories were backed up, if any
-- Whether each global instruction file was updated or already contained the include
+- Whether each global instruction file was updated or already current (Claude: include line; Codex: marker block)
+- For Codex: remind the user that future `AGENTS-patch.md` edits require re-running `kata-init`
 
 ---
 

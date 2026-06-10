@@ -187,7 +187,7 @@ Never paste source content into third-party services.
 - Does not pre-create register files without evidence.
 - Does not merge people, organizations, or workstreams without explicit user confirmation.
 - Does not paste source content into external tools.
-- Does not edit `PLAN.md` — that's Oscar's file.
+- Does not edit `PLAN.md` — that file belongs to the project owner.
 
 ## Output to user after each run
 

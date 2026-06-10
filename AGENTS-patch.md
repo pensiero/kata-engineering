@@ -13,7 +13,7 @@
 
 1. Read the project's stable docs if they exist: `ARCHITECTURE.md`, `CONTRACTS.md`
 2. Read any living docs that exist: `PLAN.md`, `DECISIONS.md`, `RESEARCH.md`
-3. Read the central Kata rule files from this repository: `rules/coding.md` (and `rules/testing.md` if writing tests). If this file was included with an `@.../AGENTS-patch.md` directive, resolve those paths relative to that included file's repository root.
+3. Read the central Kata rule files from this repository: `rules/coding.md` (and `rules/testing.md` if writing tests). Resolve those paths from the Kata Engineering repository root: the path in the `@.../AGENTS-patch.md` include directive (Claude), or the `Kata Engineering home:` line at the top of this section (Codex and other agents where the content is pasted).
 
 ### Pick the Right Skill
 
@@ -23,6 +23,7 @@
 | Starting a new project, or writing/modifying code on an existing one | `build` |
 | Reviewing code, checking project health, or refreshing living docs | `review` |
 | Filenames or folder layout no longer match the product vocabulary | `harmonize` |
+| Setting up a knowledge base (not a codebase) for a stakeholder-heavy project — meetings, emails, documents | `knowledgebase-kickoff` |
 
 `build` handles the full lifecycle: bootstrapping new projects (picking a tier, scaffolding docs), implementing features and fixes, and keeping docs current at the end of each task. You don't pick a phase — the skill handles it.
 
@@ -48,6 +49,7 @@ Periodically (every few weeks, or when agent performance degrades):
 - Review rules for contradictions or bloat
 - Merge overlapping rules
 - Remove rules that no longer apply
+- Promote recurring lesson entries (captured by `build` Close in project docs) into rules; drop the originals
 - Verify skills still match your workflow
 
 When editing any rule, skill, or `AGENTS.md`:
