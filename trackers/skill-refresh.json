@@ -1,0 +1,554 @@
+{
+  "schema": 1,
+  "title": "Kata Engineering · Skill refresh review",
+  "summary": "Proposed changes to the Kata skills, rules and the global ~/.claude/CLAUDE.md from the 29 October review. Temporary: deleted once every item is closed.",
+  "principles": [
+    "Remove before adding: every change should leave the skills shorter or the same length.",
+    "Fix contradictions with how Oscar actually works before matters of style.",
+    "Keep the guardrails that protect the project (contracts, tests, scope); loosen the ones that only slow a capable agent down."
+  ],
+  "groups": [
+    {
+      "id": "wings",
+      "title": "Instructions that clip the agent's wings",
+      "note": "Rules written for weaker or smaller-context models that now hold Opus 5.5 back.",
+      "gate": ""
+    },
+    {
+      "id": "stale",
+      "title": "Stale or contradicting",
+      "note": "Instructions that no longer match the framework or how Oscar works.",
+      "gate": ""
+    },
+    {
+      "id": "redundant",
+      "title": "Redundant",
+      "note": "The same rule in two places, already drifting apart.",
+      "gate": ""
+    },
+    {
+      "id": "global",
+      "title": "Global ~/.claude/CLAUDE.md",
+      "note": "Loaded into every session on this machine.",
+      "gate": ""
+    }
+  ],
+  "items": [
+    {
+      "id": "W1",
+      "group": "wings",
+      "title": "A one-line fix triggers the whole build ceremony, including Bootstrap",
+      "kind": "decision",
+      "status": "done",
+      "context": "The build description says 'any coding task … even small edits', the skill says 'No phase is optional', and the README says the agent bootstraps architecture docs 'even for small tasks'. So a typo fix in a repo without ARCHITECTURE.md starts with a tier menu, doc scaffolding and a question to the owner.",
+      "plan": "Keep build routing every coding task. Replace 'No phase is optional' with 'Scale each phase to the change: a one-line fix is Orient, Build, Verify in minutes.' Run Bootstrap only when starting or restructuring a project, or when asked; in an undocumented repo a small edit just proceeds and may suggest Bootstrap at the end. Drop 'even for small tasks' from the README.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "build: 'Scale each phase to the change'; Bootstrap trigger narrowed; README no longer says 'even for small tasks'.",
+      "refs": [
+        "27b3305",
+        "skills/build/SKILL.md",
+        "README.md"
+      ],
+      "decision": "Bootstrap runs only for new or restructured projects, or on request; phases scale to the change."
+    },
+    {
+      "id": "W2",
+      "group": "wings",
+      "title": "'Do not mix exploration with implementation' forbids spikes and prototypes",
+      "kind": "decision",
+      "status": "done",
+      "context": "rules/coding.md ('Clarify before implementing', 'Context discipline: if you researched alternatives, start fresh for the build') and build Phase 1 Step 3 ('do not start implementing while still exploring', 'do not carry exploration context'). This was context hygiene for small-context models. Today it forbids exactly the exploration INITIAL_PROMPT.md wanted protected: trying two approaches in code, a throwaway spike. 'Start fresh for the build' is also not something an agent can do mid-session.",
+      "plan": "Replace with: 'Explore freely: spikes, prototypes, trying two approaches in code. Before you finish, settle on one, delete the others, and record the rejected one in DECISIONS.md if someone might propose it again.' Delete the 'start fresh' line.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "coding.md 'Clarify, then explore freely' replaces the exploration/implementation split; 'start fresh for the build' removed; build Phase 1 Step 3 points to it.",
+      "refs": [
+        "27b3305",
+        "rules/coding.md",
+        "skills/build/SKILL.md"
+      ],
+      "decision": "Explore freely, converge before finishing."
+    },
+    {
+      "id": "W3",
+      "group": "wings",
+      "title": "The two-strike rule always stops and waits for approval",
+      "kind": "decision",
+      "status": "done",
+      "context": "rules/coding.md, Anti-Stagnation: after two failures, list at least 3 alternatives, recommend one, 'Wait for approval before proceeding.' In auto mode or a long autonomous run this halts work even when one alternative is obviously right, and 'at least 3' invites filler options.",
+      "plan": "Keep the stop-and-rethink. New text: 'After two failures, stop retrying. Say what failed and why, consider real alternatives, pick one and say why. Stop and ask only when the alternatives change scope, cost, or something the owner decides.'",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "coding.md Anti-Stagnation rewritten as proposed.",
+      "refs": [
+        "27b3305",
+        "rules/coding.md"
+      ],
+      "decision": "Two-strike rule rethinks, picks and continues; asks only when the choice is the owner's."
+    },
+    {
+      "id": "W4",
+      "group": "wings",
+      "title": "Focused review tells the agent not to look for bugs",
+      "kind": "decision",
+      "status": "done",
+      "context": "review Mode 1 Step 1 ('don't hunt for problems … if you look for bugs, you'll manufacture them'), Review Principles ('Neutral observation over bug hunting') and examples/review-prompt.md ('Observe, don't hunt'). For a strong model this suppresses the main value of a review. The guard against invented findings is already there: evidence required, 'No issues found' is valid.",
+      "plan": "Replace with: 'Look for real defects, actively. Every finding needs evidence (file, line, consequence); no findings is a valid result.' Keep the Observe step as a way to understand intent before judging.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "review Mode 1 has 'Understand the change' then 'Look for defects'; 'Neutral observation over bug hunting' removed.",
+      "refs": [
+        "27b3305",
+        "skills/review/SKILL.md"
+      ],
+      "decision": "Reviews look for defects actively; evidence is the guard."
+    },
+    {
+      "id": "W5",
+      "group": "wings",
+      "title": "project-kickoff is a persona prompt with 11 mandatory sections",
+      "kind": "decision",
+      "status": "done",
+      "context": "It opens with 'You are a senior project strategist', ends with 'I will give you the rough project idea now' (a chat prompt pasted into a skill), and requires all 11 sections for any idea. The README itself mocks 'act like a professional chef'. 'Prefer precision over completeness' contradicts the mandatory list. The output stays only in chat, so build's Bootstrap has to find it there.",
+      "plan": "Rewrite as instructions: ask when underspecified, critique, then always produce Brief, Project Shape, first 3 actions and the Kickoff Prompt; Research Brief and Quality Gates only when there are real unknowns. Write the brief to a file the build skill reads (unknowns into PLAN.md Open Questions). Remove the persona and the closing line.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "Rewritten: interrogate, critique, produce (brief, shape, first 3 actions, kickoff prompt; research, execution plan, gates only when needed), hand off into PLAN.md. plan.md template gains an optional 'What We're Building' section.",
+      "refs": [
+        "27b3305",
+        "skills/project-kickoff/SKILL.md",
+        "skills/build/templates/plan.md"
+      ],
+      "decision": "project-kickoff is instructions, not a persona; optional sections only when needed."
+    },
+    {
+      "id": "W6",
+      "group": "wings",
+      "title": "Full-tier templates carry one project's governance machinery",
+      "kind": "decision",
+      "status": "done",
+      "context": "contracts-full.md requires for major changes 'evaluation metadata (reviewer, deadline)', 'event log entry', and for minor ones 'evidence-linked event emitted, auto-applies after validation'; architecture-full.md's example is 'a persistent identity blueprint'. That fits a mutation/evaluation system, not a generic production service. An agent scaffolding full tier copies it.",
+      "plan": "Generalize Change Governance to: 'Define what makes a change major in this project and what it requires before it ships', with one neutral example. Drop event log and auto-apply. Same in review Mode 3's full-tier list.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "architecture-full and contracts-full: major-change requirements are a placeholder with neutral examples; event log, evaluation metadata and auto-apply removed. Same in build and review.",
+      "refs": [
+        "27b3305",
+        "skills/build/templates/architecture-full.md",
+        "skills/build/templates/contracts-full.md"
+      ],
+      "decision": "Full-tier governance is generic."
+    },
+    {
+      "id": "S1",
+      "group": "stale",
+      "title": "The skills commit on their own; you commit between sessions",
+      "kind": "decision",
+      "status": "done",
+      "context": "build Phase 2 'Incremental commits', Close Step 3 'Final commit … No uncommitted work left behind', review Refresh 'Commit the living doc updates as a single commit', rules/coding.md 'Commit discipline'. You leave changes uncommitted and commit yourself; Claude Code's own default is to commit only when asked. The skills and the harness pull opposite ways.",
+      "plan": "Replace with one rule in coding.md: 'Commit only when the owner asks or the project's instructions say so. When you commit: one logical unit, code + tests + docs together, only related files staged.' Remove the commit steps from build and review.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "i'm actually ok in leaving more independence to the agent in committing, but it has to be when it make sense (so when there is a chunk of work, with code tests docs etc). so, i want to change the previous instruction I gave, and let the agent always handle commit by themselves. i won't tell them when to commit, and i won't commit myself unless very needed"
+        },
+        {
+          "by": "agent",
+          "at": "2026-10-29T16:44:51Z",
+          "text": "Applied in coding.md and in your global CLAUDE.md. Two choices I made: commits go on the current branch, and nothing is pushed unless you ask. Tell me if you want either to be different."
+        }
+      ],
+      "outcome": "coding.md 'Commit discipline' rewritten; build commits chunks as it goes and at Close; global ~/.claude/CLAUDE.md gains a 'Commits' section so it holds outside Kata skills too. Project memory updated.",
+      "refs": [
+        "27b3305",
+        "rules/coding.md",
+        "~/.claude/CLAUDE.md"
+      ],
+      "decision": "Agents own their commits: commit each complete chunk (code, tests, docs) without being asked; no push unless asked."
+    },
+    {
+      "id": "S2",
+      "group": "stale",
+      "title": "build and review don't know about TRACKER.json",
+      "kind": "decision",
+      "status": "done",
+      "context": "The tracker is 'the tracking half of PLAN.md made exact', but build Close, review Refresh and Health, the plan template and the README table only know PLAN.md and DECISIONS.md. In a project with TRACKER.json the agent refreshes PLAN.md and leaves the tracker stale.",
+      "plan": "build Close and review Refresh: 'PLAN.md, or TRACKER.json where the project has one'. README docs table: one row for TRACKER.json as the alternative to PLAN.md's tracking half.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "i'm ok but do you think the tracker skill, as it is defined today, can fully replace the role of PLAN.md? or it needs rework? I'm afraid we may cut important aspects of PLAN.md"
+        },
+        {
+          "by": "agent",
+          "at": "2026-10-29T16:44:51Z",
+          "text": "Wiring done. Your question is answered in S2b: mostly yes, with one real gap."
+        }
+      ],
+      "decision": "Where a project has TRACKER.json, it holds PLAN.md's tracking half; build, review and coding.md know it.",
+      "outcome": "build Orient/Close, review Refresh, coding.md living docs and the README table all cover TRACKER.json. The question whether the tracker can replace PLAN.md fully continues in S2b.",
+      "refs": [
+        "27b3305"
+      ]
+    },
+    {
+      "id": "S2b",
+      "group": "stale",
+      "kind": "decision",
+      "status": "waiting",
+      "title": "Can the tracker fully replace PLAN.md? Mostly yes, with one gap: you can't add work from the page",
+      "context": "I went through PLAN.md section by section. Work with a status, phases and gates, open questions for you, prioritization and completed work all have a place in the tracker. Three gaps: (1) the brief ('what we're building', goals, non-goals) has nowhere to go, because the summary holds 240 characters. This is solved without rework: the brief stays in PLAN.md or in ARCHITECTURE.md's story, and project-kickoff now puts it there. (2) Deferred work was mapped to 'dropped' in the PLAN migration table, which would have turned 'not now' into 'never'. Fixed in 27b3305: it becomes todo in a later group with the reason. (3) You can edit PLAN.md directly, but on a tracker page you can only reply to existing items. You can't add a task, which is also what you described in S3.",
+      "plan": "Leave PLAN.md as the default and the tracker as the optional, exact version of its tracking half. Add one thing to the tracker: a 'New item' box on the page. What you type there goes out with 'Copy for the agent' as [new] lines, and tracker.py reply turns them into todo items. That is about 30 lines in page.html and tracker.py, plus a test, with no server and nothing uploaded. It's also the first piece your future dashboard would need.",
+      "question": "Add the 'New item' box to the tracker page now, or leave it for the dashboard project?",
+      "thread": [],
+      "created": "2026-10-29",
+      "updated": "2026-10-29"
+    },
+    {
+      "id": "S3",
+      "group": "stale",
+      "title": "review and harmonize produce long finding lists without the tracker",
+      "kind": "decision",
+      "status": "done",
+      "context": "The tracker description says to use it unasked for a review's findings. review's Report steps don't mention it, and harmonize PROPOSE writes its own FILE_NAMING_AND_ORGANIZATION_PLAN.md.",
+      "plan": "One line in each: 'When many findings need the owner's decision, put them in a tracker under trackers/.' harmonize drops its own plan file.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok. I'm wondering also how we can centralize and control all the trackers of every application. From one place. I'm thinking something like a live dashboard where I can see all the open trackers and also I can see then evolving the product in a way which allows me also to interact with the page itself and add the new tasks. This might be potentially something that becomes a Trello or Asana or Jira, but I don't want to overcomplicate things. Anyway, this is probably like a separate project. Not work to be done here"
+        },
+        {
+          "by": "agent",
+          "at": "2026-10-29T16:44:51Z",
+          "text": "Agreed it's a separate project. When you start it, project-kickoff is the right entry point. The one piece that belongs here is letting you add items from a tracker page: see S2b."
+        }
+      ],
+      "outcome": "review: one line at the top plus Health/Focused report wording; harmonize PROPOSE writes a tracker instead of FILE_NAMING_AND_ORGANIZATION_PLAN.md.",
+      "refs": [
+        "27b3305",
+        "skills/review/SKILL.md",
+        "skills/harmonize/SKILL.md"
+      ],
+      "decision": "Review and harmonize send many owner decisions to a tracker. A cross-project tracker dashboard is a separate project, not work for this repo."
+    },
+    {
+      "id": "S4",
+      "group": "stale",
+      "title": "README still says skills route via AGENTS.md, and that it's markdown only",
+      "kind": "task",
+      "status": "done",
+      "context": "Usage: 'your agent picks up the right skill automatically via AGENTS.md' (patching was removed in June). Top: 'Zero footprint … Just markdown files', while tracker ships a Python script. Your uncommitted README diff fixes the Structure line but not these two.",
+      "plan": "'via AGENTS.md' becomes 'via the skill descriptions'; the footprint note says 'markdown, plus one optional standard-library Python script'.",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "question": "",
+      "outcome": "README: skills route 'from the skill descriptions'; footprint note mentions the optional Python script.",
+      "refs": [
+        "27b3305",
+        "README.md"
+      ]
+    },
+    {
+      "id": "S5",
+      "group": "stale",
+      "title": "examples/ predates skills-only setup and has drifted",
+      "kind": "decision",
+      "status": "done",
+      "context": "The three example prompts (333 lines) tell the agent to read rules and SKILL.md by [KATA_PATH], which the skills now do themselves, and restate the tier checklists: review-prompt.md's Standard list already differs from build Phase 0.",
+      "plan": "Delete examples/ and keep the README's sample prompts, which cover the same cases in one line each. Git keeps them.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "examples/ deleted (333 lines); README links removed, a health-check sample prompt added.",
+      "refs": [
+        "27b3305",
+        "README.md"
+      ],
+      "decision": "Delete examples/; the README's sample prompts cover the cases."
+    },
+    {
+      "id": "S6",
+      "group": "stale",
+      "title": "knowledgebase-kickoff duplicates CLAUDE.md into AGENTS.md and hardcodes Claude attribution",
+      "kind": "decision",
+      "status": "done",
+      "context": "'CLAUDE.md: copy to AGENTS.md as well (identical)' gives two copies that drift. The commit step hardcodes 'Co-Authored-By: Claude', wrong when Codex runs it; each harness adds its own attribution. The ingest-sources template reads .pdf with Read (rendered as images), while your global rule prefers pdftotext.",
+      "plan": "AGENTS.md is the file; CLAUDE.md contains only '@AGENTS.md'. Drop the hardcoded attribution. ingest-sources: pdftotext first, Read for scanned or visual PDFs.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "Template renamed to AGENTS.md, CLAUDE.md is '@AGENTS.md'; hardcoded Co-Authored-By removed; ingest-sources reads PDFs with pdftotext and checks for it.",
+      "refs": [
+        "37fbcff",
+        "skills/knowledgebase-kickoff/"
+      ],
+      "decision": "AGENTS.md is the knowledge base's one guide; CLAUDE.md imports it."
+    },
+    {
+      "id": "S7",
+      "group": "stale",
+      "title": ".gitignore misses __pycache__ and .DS_Store",
+      "kind": "task",
+      "status": "done",
+      "context": "git status shows skills/tracker/scripts/__pycache__/ and .DS_Store as untracked.",
+      "plan": "Add both to .gitignore.",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "question": "",
+      "outcome": "__pycache__/ and .DS_Store added to .gitignore.",
+      "refs": [
+        "6be0bd7",
+        ".gitignore"
+      ]
+    },
+    {
+      "id": "R1",
+      "group": "redundant",
+      "title": "build restates rules/coding.md, and the copies already disagree",
+      "kind": "decision",
+      "status": "done",
+      "context": "build's Core discipline, incremental commits, system-wide impact check, compaction note and Close doc checklist repeat coding.md. They already drift: testing.md requires error paths and input validation 'always (any tier)', build's light tier asks for 'at minimum happy-path coverage'.",
+      "plan": "build keeps the phase flow and points to the rules for the how; one sentence per phase instead of the restated lists. Make the light-tier test baseline the same in both (I'd say happy path + the error paths that matter).",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "build's Build phase is one paragraph pointing to coding.md; impact and simplicity checks merged into one step; light tier tests follow testing.md's any-tier baseline.",
+      "refs": [
+        "27b3305",
+        "skills/build/SKILL.md"
+      ],
+      "decision": "build gives the flow; rules give the how."
+    },
+    {
+      "id": "R2",
+      "group": "redundant",
+      "title": "review's Tier mode overlaps Health",
+      "kind": "decision",
+      "status": "done",
+      "context": "Mode 3 points back to build's tier list and adds four lines; Health already checks architecture and contracts.",
+      "plan": "Fold tier compliance into Health as one step. review goes from four modes to three.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "review has three modes: Focused, Health (with tier compliance), Refresh. README table updated.",
+      "refs": [
+        "27b3305",
+        "skills/review/SKILL.md",
+        "README.md"
+      ],
+      "decision": "Tier compliance is a step of Health."
+    },
+    {
+      "id": "R3",
+      "group": "redundant",
+      "title": "'After context compaction, re-read' appears twice and is mostly obsolete",
+      "kind": "decision",
+      "status": "done",
+      "context": "In coding.md and pointed to from build. The harness now carries a summary across compaction and agents re-read files when needed.",
+      "plan": "Delete both.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "Removed from coding.md and build.",
+      "refs": [
+        "27b3305",
+        "rules/coding.md",
+        "skills/build/SKILL.md"
+      ],
+      "decision": "Compaction rule removed."
+    },
+    {
+      "id": "R4",
+      "group": "redundant",
+      "title": "review's description collides with the built-in /code-review and /simplify",
+      "kind": "decision",
+      "status": "done",
+      "context": "'Review code changes …' matches Claude Code's built-in /code-review (bug hunting) and /simplify (cleanup), so routing is a coin toss. What only Kata's review does is check against the project's architecture, contracts, tier and living docs.",
+      "plan": "Description leads with that: 'Review changes against the project's architecture and contracts, check project health, or refresh living docs …'. Keeps working for Codex, which has no built-ins.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "New description: changes against architecture and contracts, health and tier, living docs.",
+      "refs": [
+        "27b3305",
+        "skills/review/SKILL.md"
+      ],
+      "decision": "review's description leads with what only Kata does."
+    },
+    {
+      "id": "G1",
+      "group": "global",
+      "title": "agent-browser is not on PATH: the instruction points to a missing tool",
+      "kind": "decision",
+      "status": "done",
+      "context": "The package is in /opt/homebrew/lib/node_modules/agent-browser (installed 20 June) but no agent-browser binary resolves in zsh or fish; the link was probably lost with the node@22 switch. Every session is told to use it. Claude in Chrome is also available now. The '~82% fewer tokens' claim and the install line cost context every session.",
+      "plan": "Relink with 'npm i -g agent-browser' and shorten to: '1. WebFetch for public pages. 2. agent-browser (snapshot, element refs) for dynamic or logged-in pages.' Or replace step 2 with Claude in Chrome.",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "maybe we don't need that anymore if there is claude in chrome now? let's replace with claude in chrome"
+        }
+      ],
+      "outcome": "~/.claude/CLAUDE.md: 'WebFetch first; Claude in Chrome for dynamic or logged-in pages.' agent-browser left installed (not on PATH); uninstall with 'npm rm -g agent-browser' if you want it gone.",
+      "refs": [
+        "~/.claude/CLAUDE.md"
+      ],
+      "decision": "Claude in Chrome replaces agent-browser."
+    },
+    {
+      "id": "G2",
+      "group": "global",
+      "title": "Subagents section: keep it, tighten two lines",
+      "kind": "decision",
+      "status": "done",
+      "context": "It is load-bearing: Claude Code's default is to spawn only when asked, and this section is what lets the agent spawn on its own. Two issues: 'User instructions override' is ambiguous inside a user instruction file, and the tiers don't mention Fable, which you use (commit 'fable review').",
+      "plan": "Same content, clearer: 'Spawning is allowed without asking: to isolate context, parallelize independent work, or offload bulk mechanical work. Don't spawn when the reasoning or synthesis must stay with you, or when overhead outweighs the work. Use the cheapest model that does the subtask well: Haiku for mechanical work, Sonnet for scoped research and code exploration, Opus for planning and tradeoffs. A subagent that needs a higher tier returns to the parent. The parent owns the final answer. What I say in the conversation overrides this.'",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok to use the text. no, let's not use Fable"
+        }
+      ],
+      "outcome": "Subagents section replaced with the proposed text.",
+      "refs": [
+        "~/.claude/CLAUDE.md"
+      ],
+      "decision": "Use the tightened text; no Fable in the tiers."
+    },
+    {
+      "id": "G3",
+      "group": "global",
+      "title": "PDF rule: keep, in one line",
+      "kind": "decision",
+      "status": "done",
+      "context": "Still valid: pdftotext is installed and much cheaper than Read rendering pages as images.",
+      "plan": "'Read PDFs with pdftotext; use Read only when figures or charts matter.'",
+      "question": "",
+      "created": "2026-10-29",
+      "updated": "2026-10-29",
+      "thread": [
+        {
+          "by": "owner",
+          "at": "2026-10-29T16:37:58+00:00",
+          "text": "ok"
+        }
+      ],
+      "outcome": "'PDFs: read with pdftotext; use Read only when figures or charts matter.'",
+      "refs": [
+        "~/.claude/CLAUDE.md"
+      ],
+      "decision": "Compress to one line."
+    }
+  ]
+}
