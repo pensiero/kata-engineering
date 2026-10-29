@@ -6,7 +6,7 @@
 
 It gives your projects a small amount of structure:
 - Contracts, guardrails, workflows and practices stored in markdown that keep projects coherent while leaving agents free to explore
-- **5 workflow skills**: [project-kickoff](./skills/project-kickoff) · [build](./skills/build) · [review](./skills/review) · [harmonize](./skills/harmonize) · [knowledgebase-kickoff](./skills/knowledgebase-kickoff)
+- **6 workflow skills**: [project-kickoff](./skills/project-kickoff) · [build](./skills/build) · [review](./skills/review) · [harmonize](./skills/harmonize) · [knowledgebase-kickoff](./skills/knowledgebase-kickoff) · [tracker](./skills/tracker)
 - **1 setup skill**: [kata-init](./skills/kata-init)
 - **no instruction-file patching** — skills route themselves through their descriptions and point to the central rules
 
@@ -63,7 +63,7 @@ In martial arts, a kata (型) is a sequence of movements practiced until they be
 
 ## Structure
 
-This repository is itself a light-tier Kata project — all docs, no code. This README serves as its architecture doc.
+This repository is itself a light-tier Kata project — docs, plus one optional standard-library Python script in the `tracker` skill. This README serves as its architecture doc.
 
 ```
 kata-engineering/
@@ -91,9 +91,14 @@ kata-engineering/
 │   │   └── SKILL.md                   # Review skill (focused + health + tier + refresh)
 │   ├── harmonize/
 │   │   └── SKILL.md                   # Harmonize filenames and folder layout for product-readability
-│   └── knowledgebase-kickoff/
-│       ├── SKILL.md                   # Bootstrap a knowledge base for stakeholder-heavy projects
-│       └── templates/                 # KB scaffolding (SCHEMA, CLAUDE, PLAN, ingest-sources skill, …)
+│   ├── knowledgebase-kickoff/
+│   │   ├── SKILL.md                   # Bootstrap a knowledge base for stakeholder-heavy projects
+│   │   └── templates/                 # KB scaffolding (SCHEMA, CLAUDE, PLAN, ingest-sources skill, …)
+│   └── tracker/
+│       ├── SKILL.md                   # Track work, owner questions and outcomes in TRACKER.json
+│       ├── reference/schema.md        # The file format and who moves each status
+│       ├── scripts/tracker.py         # new / check / build / render / reply (stdlib only) + tests
+│       └── assets/page.html           # The template every tracker's page is built from
 └── examples/
     ├── greenfield-project-prompt.md   # Prompt for starting a new project from scratch
     ├── brownfield-rework-prompt.md    # Prompt for reworking an existing project
@@ -102,7 +107,7 @@ kata-engineering/
 
 ## Skills
 
-There are five workflow skills. The first four are used in sequence for new projects, and independently for ongoing work; `knowledgebase-kickoff` bootstraps knowledge bases rather than codebases. The separate `kata-init` skill is only for installing or refreshing the global Codex/Claude setup.
+There are six workflow skills. The first four are used in sequence for new projects, and independently for ongoing work; `knowledgebase-kickoff` bootstraps knowledge bases rather than codebases; `tracker` keeps a project's work and open questions. The separate `kata-init` skill is only for installing or refreshing the global Codex/Claude setup.
 
 ### `project-kickoff` — optional starting point
 
@@ -148,6 +153,14 @@ Use when filenames and folder layout no longer match the product vocabulary — 
 ### `knowledgebase-kickoff` — knowledge bases, not codebases
 
 Bootstraps a project whose deliverable is current knowledge rather than code: raw sources (emails, transcripts, documents) flow into LLM-maintained entity pages, forming a queryable, auditable source of truth. Scaffolds the folder skeleton, `SCHEMA`/`CLAUDE`/`README` docs, and an `ingest-sources` skill for the new project. Use it for stakeholder-heavy projects — many meetings, suppliers to hold accountable, decisions to trace.
+
+### `tracker` — work, questions and outcomes, one item at a time
+
+Keeps the tracking half of `PLAN.md` exact, in a versioned `TRACKER.json`: every item has a status (to do, in progress, needs you, done, dropped), the plan, the question it is waiting on, the conversation, the decision taken and what was finally done, with commit references. Several trackers per project: `TRACKER.json` for the long-lived one, `trackers/<name>.json` for one effort.
+
+Beside each tracker sits a generated page (`TRACKER.html`): a static file the owner opens from disk, with no server and nothing uploaded. It filters items by status and takes replies item by item; a "Copy for the agent" button hands them over, and the agent writes them into the file and rebuilds the page. The file stays the record and both are committed together. It can also propose turning an existing `PLAN.md` into a tracker, leaving the reasoning in the docs where it belongs.
+
+The skill ships a small Python script (standard library only) that validates the file, builds the page and takes the owner's replies, so every project works the same way. The format is specified in plain markdown, so an agent can work the file by hand.
 
 ## Docs: stable vs living
 
