@@ -1,11 +1,11 @@
 ---
 name: review
-description: Review code changes, check project health, verify contract compliance, or refresh living docs (PLAN.md, DECISIONS.md). Use for any review or project health task.
+description: Review changes against the project's architecture and contracts, check project health and tier compliance, or refresh living docs (PLAN.md, TRACKER.json, DECISIONS.md). Use for reviews that judge work against the project's own docs, and for any project health task.
 ---
 
 # Review Skill
 
-Use for reviewing code changes, checking project health, verifying contract compliance, or refreshing living docs.
+Use for reviewing changes against the project's architecture and contracts, checking project health, or refreshing living docs.
 
 NOT for: implementing changes (use `build` skill), bootstrapping projects, or research tasks.
 
@@ -19,12 +19,13 @@ Select based on what's needed:
 
 ```
 FOCUSED   → review specific changes (after a coding session, before merge)
-HEALTH    → broader project health check (periodic, or when something feels off)
-TIER      → verify project meets its declared tier requirements
+HEALTH    → broader project health check, including tier compliance
 REFRESH   → update living docs to match current reality (periodic maintenance)
 ```
 
-Focused, Health, and Tier are **diagnostic** — they produce findings, not edits. Refresh is the only mode that writes to files, and it writes only to living docs (`PLAN.md`, `DECISIONS.md`).
+Focused and Health are **diagnostic** — they produce findings, not edits. Refresh is the only mode that writes to files, and it writes only to living docs (`PLAN.md`, `TRACKER.json`, `DECISIONS.md`).
+
+When many findings need the human's decision, put them in a tracker under `trackers/` (`tracker` skill) instead of a long list in chat.
 
 ---
 
@@ -32,31 +33,29 @@ Focused, Health, and Tier are **diagnostic** — they produce findings, not edit
 
 **When:** After implementing changes. Before merging. When you want a second opinion on recent work.
 
-### Step 1: Observe
+### Step 1: Understand the change
 
-Walk through the changes neutrally. Describe what you see — don't hunt for problems.
-
-**Frame it as:** "What does this code do?" — not "What's wrong with this code?"
-
-This matters. If you look for bugs, you'll manufacture them (sycophancy). If you observe behavior, real issues surface naturally.
-
-For each changed file:
+For each changed file, before judging it:
 - What is the intent of this change?
 - How does it interact with the rest of the system?
 - What state does it read or write?
 
-### Step 2: Check contracts
+### Step 2: Look for defects
+
+Look actively for real defects: wrong behavior, broken edge cases, lost data, races, error paths that swallow failures. Every finding needs evidence — file, line, and the consequence. "No issues found" is a valid result.
+
+### Step 3: Check contracts
 
 Read the project's `CONTRACTS.md` (or equivalent). For each invariant relevant to the changed area:
 - Does the invariant still hold?
 - If a new boundary was created, is there an invariant for it?
 - Run verification commands if available
 
-### Step 3: Simplify
+### Step 4: Simplify
 
 Run the Simplify checklist from `rules/coding.md` (First Principle section) against the change. The question isn't "can I find something to remove?" — it's "has this solution found its natural form?"
 
-### Step 4: Report
+### Step 5: Report
 
 Structure findings by severity:
 
@@ -69,13 +68,13 @@ For each finding:
 - **Why:** explain the consequence — not "this is bad" but "this means X can happen"
 - **How:** suggest a concrete fix, not a vague direction
 
-If there are no findings: say so. "No issues found" is a valid review outcome. Don't manufacture findings to justify the review.
+If there are no findings: say so. Don't manufacture findings to justify the review.
 
 ---
 
 ## Mode 2 — Health Check
 
-**When:** Periodic project review. When complexity feels like it's creeping. When a new person would struggle to understand the codebase.
+**When:** Periodic project review. When complexity feels like it's creeping. When a new person would struggle to understand the codebase. After a tier upgrade or before a handoff.
 
 ### Step 1: Architecture accuracy
 
@@ -94,7 +93,16 @@ Read `CONTRACTS.md`. For each invariant:
 - Is there a passing test for it?
 - Are there boundaries in the code that SHOULD have invariants but don't?
 
-### Step 3: Complexity audit
+### Step 3: Tier compliance
+
+Tier definitions are canonical in `build` Phase 0 Step 3. Check the project against every requirement for its declared tier (`project_tier` in `ARCHITECTURE.md` frontmatter), plus:
+
+- **Standard and up:** docs co-evolve with code — recent commits include doc updates when applicable
+- **Full:** a coverage map traces invariants to tests; recent major changes met the project's own requirements for major changes
+
+Mark each requirement ✅ met / ❌ not met / ⚠️ partially met.
+
+### Step 4: Complexity audit
 
 Walk through the codebase module by module:
 
@@ -105,7 +113,7 @@ Walk through the codebase module by module:
 - **Dependency health** — unused dependencies, outdated dependencies, dependencies that could be inlined
 - **Earned existence** — tests/fixtures protecting deleted or unchanged behavior → cut candidates. Files relocated to `docs/archive/` or similar → delete; archive lives in Git history
 
-### Step 4: Stagnation check
+### Step 5: Stagnation check
 
 Look at recent changes (git log, conversation context):
 
@@ -114,44 +122,20 @@ Look at recent changes (git log, conversation context):
 - Is the architecture being stretched beyond what it was designed for?
 - Should the project tier be upgraded (or downgraded)?
 
-### Step 5: Report
+### Step 6: Report
 
 Structure as:
 
 1. **Architecture accuracy** — match/drift between docs and code
 2. **Contract health** — coverage, freshness, gaps
-3. **Complexity assessment** — where is unnecessary complexity accumulating?
-4. **Stagnation signals** — patterns that suggest the project needs a different approach
-5. **Recommendations** — prioritized actions, each with concrete steps
+3. **Tier compliance** — each requirement ✅ / ❌ / ⚠️, with what to do about each gap
+4. **Complexity assessment** — where is unnecessary complexity accumulating?
+5. **Stagnation signals** — patterns that suggest the project needs a different approach
+6. **Recommendations** — prioritized actions, each with concrete steps
 
 ---
 
-## Mode 3 — Tier Compliance
-
-**When:** After a tier upgrade. Periodically for standard/full projects. When preparing for a handoff.
-
-### Check against tier requirements
-
-Tier definitions are canonical in `build` Phase 0 Step 3. Verify the project meets every requirement listed there for its declared tier (in `ARCHITECTURE.md` frontmatter), plus:
-
-**Standard, beyond build's scaffold list:**
-- [ ] Docs co-evolve with code — recent commits include doc updates when applicable
-
-**Full, beyond build's scaffold list:**
-- [ ] Coupling guardrail tests verify forbidden dependencies
-- [ ] Structural integrity tests verify docs match code
-- [ ] Test coverage map traces invariants to tests
-- [ ] Major changes have evidence and evaluation metadata
-
-### Report
-
-List each requirement as ✅ met / ❌ not met / ⚠️ partially met.
-
-For each gap: describe what's missing and what to do about it.
-
----
-
-## Mode 4 — Refresh
+## Mode 3 — Refresh
 
 **When:** Periodically — when living docs have drifted from current reality, or at the start of a new session after multiple sessions of work have accumulated. Also useful after a Health Check flags stale living docs.
 
@@ -162,6 +146,7 @@ For each gap: describe what's missing and what to do about it.
 | | Edits? | Scope |
 |---|---|---|
 | `PLAN.md` | ✅ | mark completed items, update "Up Next", move deferred items, close answered open questions |
+| `TRACKER.json` | ✅ | close items that are done (with outcome and refs), add items for untracked work, rebuild its page (`tracker` skill) |
 | `DECISIONS.md` | ✅ | add missing entries for recent design choices visible in git history |
 | `ARCHITECTURE.md` | ❌ | flag drift, do not edit |
 | `CONTRACTS.md` | ❌ | flag drift, do not edit |
@@ -179,14 +164,17 @@ Establish what has changed since the living docs were last updated:
 
 Do not read the entire codebase. You're looking for signals of change, not doing a full review.
 
-### Step 2: Refresh `PLAN.md` (if it exists)
+### Step 2: Refresh `PLAN.md` or `TRACKER.json` (whichever exists)
 
+`PLAN.md`:
 - Check off completed items — anything in "Up Next" that is now built, tested, and shipped
 - Move completed phases/milestones from "Up Next" to "Completed"
 - Update "Up Next" to reflect what's actually next given the current state (not wishful thinking from three sessions ago)
 - Move anything deferred to "Deferred" with a one-line reason
 - Close answered Open Questions — promote durable answers to `DECISIONS.md`
 - Prune "Completed" if it has grown into archaeology — keep enough history to understand the journey, not every checkmark forever
+
+`TRACKER.json`: the same moves, following the `tracker` skill — done items get `outcome` and `refs`, settled questions keep their `decision`.
 
 ### Step 3: Refresh `DECISIONS.md` (if it exists)
 
@@ -203,18 +191,17 @@ Do not read the entire codebase. You're looking for signals of change, not doing
 
 If you noticed during Steps 1–4 that stable docs (`ARCHITECTURE.md`, `CONTRACTS.md`) no longer match the code, **do not edit them**. List the drift at the end of your summary. The human decides whether to fix it directly or run a Health Check.
 
-### Step 6: Report
+### Step 6: Report and commit
 
 Briefly state:
 - Which living docs were refreshed and what was changed (file-by-file summary)
 - What was flagged for the human (stable drift, missing rationale, questions without evidence)
 - Suggested follow-ups (e.g. "consider running Health Check on the auth module — `ARCHITECTURE.md` no longer describes its flow")
 
-Commit the living doc updates as a single commit with a message like `chore: refresh living docs`.
+Commit the living doc updates together, with a message like `chore: refresh living docs`.
 
 ### Constraints
 
-- **One file at a time.** Edit `PLAN.md` fully before touching `DECISIONS.md`. This keeps the changes auditable.
 - **No speculation.** If you don't have evidence for an edit, don't make it.
 - **No new content categories.** Don't invent new sections. Work within the existing template structure.
 - **Terse.** Living docs should shrink when possible, not grow indefinitely. If a section can be tightened, tighten it.
@@ -222,9 +209,6 @@ Commit the living doc updates as a single commit with a message like `chore: ref
 ---
 
 ## Review Principles
-
-### Neutral observation over bug hunting
-Describe behavior. Real issues surface from honest observation. Manufactured issues surface from looking for trouble.
 
 ### Evidence over opinion
 Every finding needs a file, a line, a specific piece of code. "This feels wrong" is not a finding.

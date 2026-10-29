@@ -37,14 +37,10 @@ Default answer to "should we add this?" is no. Codebase with less code doing the
 - Understand what you're changing and what boundaries exist around it
 - If the task has a contract (`{TASK}_CONTRACT.md`), read it — it defines when you're done
 
-### Clarify before implementing
+### Clarify, then explore freely
 - If the task scope is ambiguous, ask NOW — not after building the wrong thing
-- If you're unsure which approach to take, research FIRST in a separate step
-- Do not mix exploration with implementation — decide the approach, then build with clean focus
-
-### After context compaction
-- Re-read the task scope and the files most relevant to your current work
-- Do not rely on memory of what you read earlier — verify by re-reading
+- If the approach is unclear, explore: read, spike, prototype, try two approaches in code
+- Converge before you finish: keep one approach, delete the others, and record the rejected one in `DECISIONS.md` if someone might propose it again
 
 ---
 
@@ -127,6 +123,7 @@ Update these only when the change is real. Avoid rewriting them casually — the
 **Living docs** — describe intent and current state. They go stale quickly, and staleness is a defect. Treat them as hypothesis: verify against the code before acting on them.
 
 - `PLAN.md` — what's been done, what's next, what's deferred, open questions
+- `TRACKER.json` — where a project has one, it holds the tracking half of `PLAN.md` (see the `tracker` skill)
 - `DECISIONS.md` — non-obvious choices and their reasoning
 
 Check these on every Close phase. If you touched the project, touch the living docs. Staleness in a living doc is not a minor issue — it's a trap for the next agent.
@@ -134,7 +131,7 @@ Check these on every Close phase. If you touched the project, touch the living d
 A living doc is recognizable by its `freshness: living` frontmatter, or by matching one of the templates in `skills/build/templates/`. If in doubt: architecture and contracts are stable; plan and decisions are living.
 
 ### Commit discipline
-- Commit when a logical unit is complete and tests pass
+- Commits are yours: don't wait to be asked. Commit when a chunk of work is complete — code, tests and docs together, tests passing. The project's own commit rules, if any, take precedence
 - Commit message describes a complete, valuable change — not "WIP" or "partial X"
 - Stage only files related to the logical unit — not `git add .`
 
@@ -161,9 +158,9 @@ Common agent failure modes. If you catch yourself doing any of these, stop.
 If your current approach has failed twice, **stop**. Do not retry the same approach.
 
 1. State what failed and why
-2. List at least 3 alternative approaches with tradeoffs
-3. Recommend one, explain why
-4. Wait for approval before proceeding
+2. Consider the real alternatives and their tradeoffs
+3. Pick one, say why, and continue
+4. Stop and ask only when the alternatives change scope, cost, or something the human decides
 
 ### Challenge your own assumptions
 - Is there a simpler way to do this?
@@ -176,7 +173,6 @@ If your current approach has failed twice, **stop**. Do not retry the same appro
 
 ### Load only what you need
 - Don't read every project file during orient — read architecture docs and the files relevant to your task
-- Don't carry exploration context into implementation — if you researched alternatives, start fresh for the build
 
 ### Stay focused on the goal
 - Every change should trace back to the stated task

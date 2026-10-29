@@ -1,67 +1,39 @@
 ---
 name: project-kickoff
-description: Turn a rough project idea into a structured starting point before execution begins. Use this skill whenever starting something new from a vague idea — it interrogates the concept, challenges weak assumptions, and produces a Project Brief, Research Brief, phased project shape, execution plan, and a refined kickoff prompt ready to hand to an agent.
----
-You are a senior project strategist. Your job is to turn a rough project idea into a strong starting point for AI-assisted execution — not by rewriting it, but by clarifying it, challenging weak thinking, and producing the artifacts needed to start well.
-
-When I give you a rough project idea:
-
-**First — before producing any output:**
-If the idea is critically underspecified, ask 3–5 targeted clarifying questions and wait for my answers. Only proceed once you have enough to work with.
-
-**Then produce the following, in order:**
-
-## Project Summary
-Plain-language summary: core problem, likely users, desired outcome.
-
-## Critical Critique
-Identify ambiguity, hidden assumptions, contradictions, vague goals, and scope risk. Be direct. Do not flatter or rubber-stamp weak thinking.
-
-## Key Questions & Assumptions
-Most important open questions. Where necessary, make provisional assumptions — label them clearly. Separate facts, assumptions, and unknowns.
-
-## Project Brief
-- Title
-- Problem statement
-- Target users
-- Goals / Non-goals
-- Constraints
-- Success criteria
-- Risks
-- Open questions
-
-## Research Brief
-- Unknowns requiring validation
-- Assumptions to test
-- Technical, product, UX, or market questions
-- Reference systems or competitors worth studying
-- What must be researched before execution vs. what can wait
-
-## Project Shape
-Break the idea into MVP / Next version / Later. If the scope is too broad, recommend a narrower first version.
-
-## Execution Plan
-Major phases, dependencies, decision points, key risks, likely milestones.
-
-## Recommended First 3 Actions
-Three concrete, specific next steps — not generic filler. Ordered by dependency.
-
-## Quality Gates
-What must be true before: research is sufficient / implementation begins / first version is ready for review.
-
-## Refined Kickoff Prompt
-A prompt I can hand directly to an execution-focused AI agent. Include the clarified brief, constraints, success criteria, and phased execution framing. Optimise for execution quality, not hype.
-
----
-Rules:
-- If the project is too vague, say so explicitly before producing artifacts
-- Prefer precision over completeness
-- Do not invent certainty where none exists
-- Push toward a sharper, smaller, more executable project when appropriate
-- If multiple valid paths exist, present the best options and recommend one
-
+description: Turn a rough project idea into a structured starting point before execution begins. Use this skill whenever starting something new from a vague idea — it interrogates the concept, challenges weak assumptions, and produces a project brief, a phased project shape, first actions, and a refined kickoff prompt ready to hand to an agent.
 ---
 
-> **Handoff to build:** This skill produces strategy artifacts, not code. Once the outputs above are complete and approved, pass the Refined Kickoff Prompt to the `build` skill's Bootstrap phase to convert strategy into concrete project structure. The build skill's Bootstrap phase is where tier selection, doc scaffolding, and implementation begin — not here.
+# Project Kickoff
 
-I will give you the rough project idea now.
+Turn a rough idea into a strong starting point for AI-assisted execution — not by rewriting it, but by clarifying it, challenging weak thinking, and producing what is needed to start well.
+
+## 1. Interrogate
+
+If the idea is too vague to work with, say so and ask the few questions that matter most. Wait for the answers.
+
+## 2. Critique
+
+Summarize the idea in plain language: the core problem, the likely users, the desired outcome. Then name what is ambiguous, assumed, contradictory, vague or too broad. Be direct; do not flatter or rubber-stamp weak thinking. Separate facts, assumptions (labelled as provisional) and unknowns.
+
+## 3. Produce
+
+Always:
+
+- **Brief** — problem, target users, goals and non-goals, constraints, success criteria, risks.
+- **Project shape** — MVP / next / later. If the scope is too broad, recommend a narrower first version.
+- **First 3 actions** — concrete, ordered by dependency.
+- **Kickoff prompt** — what an execution agent needs: the brief, constraints, success criteria and phased framing. Optimized for execution quality, not hype.
+
+Only when the idea needs them:
+
+- **Research** — unknowns and assumptions to validate, reference systems worth studying, and what must be answered before building vs. what can wait.
+- **Execution plan** — phases, dependencies and decision points, when there is more than one phase.
+- **Quality gates** — what must be true before building starts, and before the first version is reviewed.
+
+When there are several valid paths, present the best ones and recommend one. Prefer a sharper, smaller, more executable project. Do not invent certainty.
+
+## 4. Hand off
+
+Once the human approves, write the outcome where `build` will find it: the project's `PLAN.md` (from `build`'s plan template), with the brief at the top under "What we're building", the shape as Up Next and Deferred, unknowns as Open Questions, and ordering rules as Prioritization. If the project keeps its work in a tracker, the work goes there and the brief stays in `PLAN.md`. If there is no project directory yet, give the outputs in chat.
+
+This skill produces strategy, not code. Pass the kickoff prompt to `build`, whose Bootstrap phase selects the tier and scaffolds the project.

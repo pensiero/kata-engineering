@@ -34,9 +34,9 @@ Precedence when documents conflict:
 
 ## Governance Invariants
 
-- **INV-GOV-001**: [minor update flow rule]
-  - Enforced by: `tests/governance-contracts.test.*`
-- **INV-GOV-002**: [major update requirement]
+[Only the major-change requirements a test can check. Delete this section if none can.]
+
+- **INV-GOV-001**: [checkable major-change requirement]
   - Enforced by: `tests/governance-contracts.test.*`
 
 ## Schema Invariants
@@ -53,7 +53,7 @@ Precedence when documents conflict:
 - [ ] Schema changes have validation tests
 - [ ] No boundary invariants violated (coupling guardrails pass)
 - [ ] Structural integrity verified (docs match code)
-- [ ] If major change: evidence provided, evaluation metadata set
+- [ ] If major change: the major-change requirements below are met
 - [ ] Docs updated in same commit
 
 ## Verification
@@ -81,15 +81,10 @@ A change is major if any apply:
 3. [From ARCHITECTURE.md]
 
 ### Major requirements
-- Evidence / rationale linked
-- Evaluation metadata set (reviewer, deadline)
-- Event log entry
-- Cannot proceed without evaluation closure
+- [What a major change needs before it ships — e.g. written rationale, second reviewer, migration and rollback plan]
 
-### Minor requirements
-- Validator passes
-- Evidence-linked event emitted
-- Auto-applies after validation
+### Minor changes
+- Ship once the quality gates above pass
 
 ## Traceability
 
@@ -97,8 +92,7 @@ A change is major if any apply:
 |-----------|------|----------|
 | INV-LAYER-001 | `tests/coupling-guardrails.test.*` | Import graph respects boundaries |
 | INV-DATA-001 | `tests/schema-validation.test.*` | Data matches schemas |
-| INV-GOV-001 | `tests/governance-contracts.test.*` | Minor updates validate correctly |
-| INV-GOV-002 | `tests/governance-contracts.test.*` | Major updates require evaluation |
+| INV-GOV-001 | `tests/governance-contracts.test.*` | [Major-change requirement holds] |
 | INV-STRUCT-001 | `tests/structural-integrity.contract.test.*` | Docs match code |
 
 ## Adding Invariants

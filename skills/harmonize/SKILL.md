@@ -85,13 +85,11 @@ For each rename, in this order:
 
 ### Step 6 — Output
 
-In PROPOSE mode, produce a `FILE_NAMING_AND_ORGANIZATION_PLAN.md` (or similar) with:
+In PROPOSE mode, put the plan in a tracker under `trackers/` (`tracker` skill), so the user can answer rename by rename:
 
-- One-sentence recommendation up top.
-- Naming principles you applied.
-- Tables grouped by High value / Medium value / Splits / Leave alone.
-- Explicit list of what you would NOT do, with reasoning.
-- Sequencing — which renames first, which last, which depend on user judgement calls.
+- Summary: one-sentence recommendation and the naming principles you applied.
+- One group each for High value / Medium value / Splits; one item per rename (old → new, why), with sequencing as the order of groups and items.
+- One item listing what you would leave alone and what you would NOT do, with the reasoning, waiting on the user's agreement — so the no-renames are visible decisions too.
 
 In APPLY mode, end with:
 - Summary of renames executed (old → new).

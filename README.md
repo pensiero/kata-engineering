@@ -11,7 +11,8 @@ It gives your projects a small amount of structure:
 - **no instruction-file patching** — skills route themselves through their descriptions and point to the central rules
 
 > **Zero footprint.** No install, no dependencies, no external services.
-> Just markdown files loaded by your agent at runtime. Boring in the best way.
+> Markdown files loaded by your agent at runtime, plus one optional
+> standard-library Python script in `tracker`. Boring in the best way.
 
 ## How it works
 
@@ -93,16 +94,12 @@ kata-engineering/
 │   │   └── SKILL.md                   # Harmonize filenames and folder layout for product-readability
 │   ├── knowledgebase-kickoff/
 │   │   ├── SKILL.md                   # Bootstrap a knowledge base for stakeholder-heavy projects
-│   │   └── templates/                 # KB scaffolding (SCHEMA, CLAUDE, PLAN, ingest-sources skill, …)
+│   │   └── templates/                 # KB scaffolding (SCHEMA, AGENTS, PLAN, ingest-sources skill, …)
 │   └── tracker/
 │       ├── SKILL.md                   # Track work, owner questions and outcomes in TRACKER.json
 │       ├── reference/schema.md        # The file format and who moves each status
 │       ├── scripts/tracker.py         # new / check / build / render / reply (stdlib only) + tests
 │       └── assets/page.html           # The template every tracker's page is built from
-└── examples/
-    ├── greenfield-project-prompt.md   # Prompt for starting a new project from scratch
-    ├── brownfield-rework-prompt.md    # Prompt for reworking an existing project
-    └── review-prompt.md               # Prompt for a full project health review
 ```
 
 ## Skills
@@ -111,7 +108,7 @@ There are six workflow skills. The first four are used in sequence for new proje
 
 ### `project-kickoff` — optional starting point
 
-Use this before `build` when the idea is fuzzy. It interrogates the concept, challenges weak assumptions, and produces a Project Brief, Research Brief, and Execution Plan. It ends with a refined prompt ready to hand to the build skill.
+Use this before `build` when the idea is fuzzy. It interrogates the concept, challenges weak assumptions, and produces a brief, a phased project shape and the first actions — plus research and an execution plan when the idea needs them. The outcome lands in `PLAN.md`, with a refined prompt ready to hand to the build skill.
 
 Skip it when the idea is already clear.
 
@@ -119,26 +116,25 @@ Skip it when the idea is already clear.
 
 The core skill. Covers the full lifecycle of a coding task:
 
-- **Bootstrap** (once, on new projects) — pick a tier, scaffold architecture docs and living docs
+- **Bootstrap** (when starting or restructuring a project) — pick a tier, scaffold architecture docs and living docs
 - **Orient** — read project context, understand scope
 - **Build** — implement the change
 - **Verify** — run tests, check contracts, simplicity check
 - **Close** — update affected docs, capture lessons, commit
 
-The agent determines which phase to start from automatically. On a new project with no docs, it starts at Bootstrap. On an existing project, it starts at Orient.
+The agent determines which phase to start from automatically, and scales each phase to the change: a one-line fix runs through them in minutes. A new project starts at Bootstrap; everything else starts at Orient. The agent commits each finished chunk of work on its own — code, tests and docs together.
 
 Close runs the **compounding loop**: corrections received during the task are routed into the project's docs (project-specific lessons) or proposed as additions to the central rules (universal lessons), so the practice improves with every session instead of repeating mistakes.
 
-### `review` — four modes
+### `review` — three modes
 
 | Mode | When | Edits files? |
 |---|---|:---:|
 | **Focused** | After a change, before merge | No |
-| **Health** | Periodic, or when something feels off | No |
-| **Tier** | After a tier upgrade, before a handoff | No |
+| **Health** | Periodic, when something feels off, after a tier upgrade, before a handoff | No |
 | **Refresh** | When living docs have drifted from reality | Yes — living docs only |
 
-Focused, Health, and Tier are diagnostic: they produce findings, not edits. Refresh is the only mode that writes, and it writes only to living docs (`PLAN.md`, `DECISIONS.md`).
+Focused and Health are diagnostic: they produce findings, not edits — in a tracker when many need your decision. Health includes tier compliance. Refresh is the only mode that writes, and it writes only to living docs (`PLAN.md` or `TRACKER.json`, `DECISIONS.md`).
 
 ### `harmonize` — three modes
 
@@ -180,6 +176,7 @@ Project docs fall into two categories with different discipline:
 | Change governance | stable | | |      ✓      |
 | `DECISIONS.md` | living | optional | optional |      ✓      |
 | `PLAN.md` | living | optional | optional | recommended |
+| `TRACKER.json` (the tracking half of `PLAN.md`) | living | optional | optional | optional |
 
 Use **light** for scripts and personal tools. **Standard** for projects with APIs, persistence, or multiple modules. **Full** for production systems that need governance.
 
@@ -230,7 +227,7 @@ When editing any rule or skill:
 
 ## Usage
 
-Once deployed, your agent picks up the right skill automatically via AGENTS.md. Just work naturally — no special syntax needed. If a project has no architecture docs yet, the agent will bootstrap them before proceeding — even for small tasks.
+Once deployed, your agent picks up the right skill automatically from the skill descriptions. Just work naturally — no special syntax needed. When you start a new project, or ask for it, the agent bootstraps the architecture docs first; small changes in an undocumented repo just get made.
 
 The following are sample prompts:
 
@@ -249,6 +246,9 @@ The following are sample prompts:
 **Review**
 > _Review the changes I just made to the auth module._
 
+**Project health check**
+> _Run a health check on this project: does the architecture doc still match the code, are the contracts tested, is complexity creeping in?_
+
 **Planning phased work**
 > _Let's create a plan. I want to break the remaining work into phases — authentication first, then the API layer, then the CLI._
 
@@ -257,11 +257,3 @@ The following are sample prompts:
 
 **Tier upgrade**
 > _This project has grown. Let's upgrade from light to standard._
-
-### Advanced Examples
-
-For longer, multi-phase tasks, use the ready-made prompts in `examples/`:
-
-- [**Start a new project from scratch**](examples/greenfield-project-prompt.md) — full bootstrap with tier selection, architecture docs, schemas, and initial tests
-- [**Rework an existing project**](examples/brownfield-rework-prompt.md) — restructure docs and contracts for a project that already has working code
-- [**Full project health review**](examples/review-prompt.md) — periodic check on architecture accuracy, contract health, tier compliance, and complexity

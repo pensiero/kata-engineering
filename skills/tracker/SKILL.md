@@ -162,7 +162,8 @@ Never in one step, never without the owner. First propose, then migrate.
    | Questions for the owner ("open questions", "the owner's call") | Items, `kind: "decision"`, `waiting` |
    | Order and gates (Now → Next → Later, "don't start before…") | Groups, with `gate` |
    | What was done ("completed", execution logs) | `done` items with `outcome` and `refs`, or left to git history |
-   | Refused or settled ("refused", "answered", "deferred, because…") | `dropped` or `done` items that keep their `decision` |
+   | Deferred ("not now, because…") | `todo` items in a `later` group, the reason in `context` |
+   | Refused or settled ("refused", "answered") | `dropped` or `done` items that keep their `decision` |
    | Prioritization rules | `principles` |
    | Reasoning, design notes, hand-off instructions, snippets | Stays a document (`DECISIONS.md`, `ARCHITECTURE.md`, the existing doc) |
 

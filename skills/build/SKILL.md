@@ -8,31 +8,31 @@ description: Implement features, fix bugs, start new projects, or bootstrap proj
 Use for implementing features, fixing bugs, starting new projects, or bootstrapping project structure.
 NOT for: reviewing code (use `review` skill), researching without implementing, or non-coding tasks.
 
-**Central rules:** this skill ships with the Kata Engineering repository. Resolve this skill directory's real path (it is usually symlinked into the agent's global skills directory); the rules live two levels up, at the repository root. Read `rules/coding.md` before writing code and `rules/testing.md` before writing tests.
+**Central rules:** this skill ships with the Kata Engineering repository. Resolve this skill directory's real path (it is usually symlinked into the agent's global skills directory); the rules live two levels up, at the repository root. Read `rules/coding.md` before writing code and `rules/testing.md` before writing tests. This skill gives the flow; the rules give the how.
 
 ---
 
 ## Phases
 
-Every coding task follows these phases. No phase is optional — but some are fast.
+Scale each phase to the change: a one-line fix is Orient, Build, Verify and Close in minutes.
 
 ```
-BOOTSTRAP → only when project lacks architecture docs
+BOOTSTRAP → only when starting or restructuring a project
 ORIENT    → read project context, understand scope
 BUILD     → implement the change
 VERIFY    → check contracts, run tests, impact check
-CLOSE     → update docs, capture lessons, verify completion
+CLOSE     → update docs, capture lessons, commit
 ```
 
 ---
 
 ## Phase 0 — Bootstrap
 
-**Trigger:** The project has no `ARCHITECTURE.md` (or equivalent architecture doc) at its root.
+**Trigger:** the project has no `ARCHITECTURE.md` (or equivalent architecture doc) at its root, and you are starting a new project, restructuring an existing one, or the human asks for it.
 
-If the project already has architecture docs, skip to Phase 1.
+A small change in a repo without architecture docs skips Bootstrap: make the change, and mention at the end that the project could use one. If the project already has architecture docs, skip to Phase 1.
 
-> **Coming from `project-kickoff`?** If the kickoff skill was already run and produced a Project Brief, Execution Plan, or Research Brief — read them before starting Bootstrap. They answer the questions in Step 2, so skip straight to Step 3. Your job here is scaffolding the project structure, not revisiting strategy. The kickoff's Refined Kickoff Prompt, if present, is the right input for this phase.
+> **Coming from `project-kickoff`?** Its brief is at the top of `PLAN.md` (or in the conversation) — read it before starting Bootstrap. It answers the questions in Step 2, so skip straight to Step 3. Your job here is scaffolding the project structure, not revisiting strategy. The kickoff prompt, if present, is the right input for this phase.
 
 ### Step 1: Detect project state
 
@@ -57,11 +57,11 @@ Ask (or read from README/brief):
 
 ### Step 3: Select tier
 
-Three tiers scale ceremony with complexity. Present them and recommend based on project intent:
+Three tiers scale ceremony with complexity. Recommend one based on project intent:
 
 **Light** — scripts, utilities, experiments, weekend projects
 - `ARCHITECTURE.md` with project purpose, structure overview, and how to run/test
-- Basic test file with at minimum happy-path coverage
+- Tests covering the any-tier baseline in `rules/testing.md`
 - Minimal ceremony, maximum speed
 
 **Standard** — personal projects with persistence, APIs, or multiple modules
@@ -74,8 +74,7 @@ Three tiers scale ceremony with complexity. Present them and recommend based on 
 - Everything in Standard
 - Coupling guardrail tests verifying import boundaries
 - Structural integrity tests verifying docs match code
-- Change classification (major/minor) with governance rules
-- Evaluation gates for major changes
+- Change governance: what makes a change major in this project, and what it requires before it ships
 - Detailed invariant registry with cross-references to tests
 
 The tier is recorded in `ARCHITECTURE.md` frontmatter:
@@ -108,7 +107,7 @@ Use the templates in `skills/build/templates/` as guides (not copy-paste). Adapt
 - Complete test baseline
 
 **Any tier, optionally:**
-- `PLAN.md` (from `templates/plan.md`) — when the project has phased work, sequencing, deferred scope, or meaningful unknowns. Create it if the human asks for planning, or if the project clearly has multiple phases ahead. If a Research Brief was produced during kickoff, fold its unknowns into the plan's Open Questions section. Not required by default.
+- `PLAN.md` (from `templates/plan.md`) — when the project has phased work, sequencing, deferred scope, or meaningful unknowns. Create it if the human asks for planning, or if the project clearly has multiple phases ahead. If the kickoff brief lists unknowns, fold them into the plan's Open Questions section. Not required by default. A project that keeps its work in a `TRACKER.json` (`tracker` skill) uses the tracker for the tracking half.
 - `DECISIONS.md` (from `templates/decisions.md`) — when the project will involve multiple sessions or non-obvious design choices. Lightweight: a running log of choices and their reasoning. Not required by default, but worth creating for anything beyond a simple script.
 
 ### Writing architecture docs — the narrative principle
@@ -142,7 +141,7 @@ When upgrading from a lower tier (e.g., light → standard):
 - Read `CONTRACTS.md` — understand invariants and quality gates
 
 **Living docs — describe current state and recent thinking:**
-- If `PLAN.md` exists — check what's been completed, what's next, and any open questions touching your task. This tells you where the project stands.
+- If `PLAN.md` or `TRACKER.json` exists — check what's been completed, what's next, and any open questions touching your task. This tells you where the project stands.
 - If `DECISIONS.md` exists — scan recent entries. They tell you why earlier choices were made and what was rejected, so you don't re-litigate solved problems.
 
 **Task-specific:**
@@ -157,13 +156,7 @@ When upgrading from a lower tier (e.g., light → standard):
 
 ### Step 3: Decide the approach
 
-**If the approach is clear:** proceed to Phase 2.
-
-**If the approach is unclear:**
-- Research options FIRST — do not start implementing while still exploring
-- If research requires significant context (reading docs, evaluating libraries, comparing approaches), do it as a separate step
-- Settle on an approach, state it clearly, then proceed to Phase 2 with clean focus
-- Do not carry exploration context (rejected alternatives, comparison notes) into the implementation
+If the approach is clear, proceed to Phase 2. If not, explore — read, spike, try alternatives in code — and converge before you finish (`rules/coding.md`, "Clarify, then explore freely").
 
 ### Step 4: Check for tier-specific requirements
 
@@ -179,27 +172,7 @@ When upgrading from a lower tier (e.g., light → standard):
 
 **Goal:** Implement the change. Minimal, focused, tested.
 
-### Core discipline
-
-1. **Schema-first** — if the change involves data structures, define types/schemas before writing logic
-2. **Tests alongside code** — write tests as you implement, not after. See `rules/testing.md`
-3. **Follow existing patterns** — read similar code in the project first. Match conventions exactly
-4. **Minimal changes** — do the least that solves the problem. Touch the fewest files
-5. **No premature abstraction** — don't build for hypothetical future needs
-
-### While building
-
-- If something could be simpler, make it simpler
-- If you're creating a new file, ask: does this concern already have a home?
-- If you're adding a dependency, ask: is this worth the coupling?
-- If you find an unrelated issue, note it — don't fix it now. Scope creep kills quality
-
-### Incremental commits
-
-Commit when a logical unit is complete and tests pass:
-- Meaningful commit message describing the complete change
-- Stage only related files
-- Don't batch unrelated changes
+Follow `rules/coding.md` "While Writing Code" (schema-first, tests alongside code, existing patterns, minimal changes, no premature abstraction) and `rules/testing.md`. Note unrelated issues instead of fixing them. Commit each complete chunk of work as you go (`rules/coding.md`, "Commit discipline").
 
 ---
 
@@ -225,23 +198,14 @@ Commit when a logical unit is complete and tests pass:
 **Full tier:**
 - Everything in Standard
 - Run coupling guardrail tests
-- If this is a major change: verify governance requirements are met (evidence, evaluation metadata)
+- If this is a major change: verify the project's requirements for major changes are met
 - Check structural integrity: does `ARCHITECTURE.md` still accurately describe the system?
 
-### Step 3: System-wide impact
+### Step 3: System-wide impact and simplicity
 
-Ask yourself (see `rules/coding.md` for the full checklist):
-- What fires when this runs? (hooks, callbacks, middleware — two levels out)
-- Can failure leave broken state? (partial writes, orphaned records)
-- What other interfaces need the same change? (parity check)
+Run the system-wide impact check and the Simplify checklist from `rules/coding.md` against the diff as a whole. Fix anything that fails before declaring done.
 
-Skip for leaf-node changes with no callbacks, state, or parallel interfaces.
-
-### Step 4: Simplicity check
-
-Run the Simplify checklist from `rules/coding.md` (First Principle section) against the diff as a whole. If any answer fails, fix before declaring done.
-
-### Step 5: Task contract verification
+### Step 4: Task contract verification
 
 If a task contract exists (`{TASK}_CONTRACT.md`):
 - Walk through every criterion. Each must be satisfied
@@ -265,6 +229,7 @@ Stable vs. living doc discipline is canonical in `rules/coding.md` ("Two kinds o
 
 **Living** (check every Close):
 - `PLAN.md` — mark completed, update "Up Next", move deferred, close answered open questions
+- `TRACKER.json` (if the project has one) — move items, write outcomes and refs, rebuild its page (`tracker` skill)
 - `DECISIONS.md` — add entry for non-obvious choices a future agent might re-litigate
 
 All doc updates ship in the same commit as the code they document.
@@ -280,11 +245,9 @@ The bar: the lesson must generalize. Ask "would this have changed how I approach
 
 Most tasks have no corrections. Then this step is a no-op — do not manufacture lessons.
 
-### Step 3: Final commit
+### Step 3: Commit
 
-- Ensure all changes (code + tests + docs) are committed
-- Commit message describes the complete change
-- No uncommitted work left behind
+Commit the finished work — code, tests and docs together — if it isn't committed yet. Don't leave finished work uncommitted.
 
 ### Step 4: Summary
 
@@ -293,10 +256,3 @@ Briefly state:
 - Which contracts/invariants were verified
 - Any new invariants or architecture decisions added
 - Any observations or follow-up work noted (but not done — no scope creep)
-
----
-
-## After Context Compaction and Anti-Patterns
-
-See `rules/coding.md` "After context compaction". Re-read scope, relevant files, and task contract — don't trust memory.
-See `rules/coding.md` "Anti-Patterns" for the canonical list.

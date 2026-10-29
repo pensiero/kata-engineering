@@ -24,6 +24,12 @@ What we're building, in what order, and what's done.
 
 ---
 
+## What We're Building
+
+[Optional — the brief from `project-kickoff`: problem, users, goals and non-goals, constraints, success criteria. Fold it into `ARCHITECTURE.md`'s story once Bootstrap has written one, and keep here only what still steers the work.]
+
+---
+
 ## Completed
 
 ### [Phase/Milestone 1 — Name]

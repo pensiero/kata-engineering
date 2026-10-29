@@ -101,13 +101,9 @@ A change is **major** if any apply:
 2. [Criterion 2]
 3. [Criterion 3]
 
-**Major changes require:**
-- Evidence and rationale
-- Evaluation metadata (reviewer, deadline)
-- Event log entry
-- Evaluation closure before proceeding
+**Major changes require:** [what this project needs before a major change ships — e.g. a written rationale, a second reviewer, a migration plan, a rollback path]
 
-Everything else is **minor** — auto-applies after validation.
+Everything else is **minor** — it ships once the quality gates in `CONTRACTS.md` pass.
 
 ## The Decisions
 
@@ -169,7 +165,7 @@ Every meaningful change updates:
 3. Impacted docs (this file, CONTRACTS.md, schemas)
 
 No silent drift. Code and docs ship together.
-Major changes require evidence and evaluation closure before commit.
+Major changes meet the requirements in The Governance before they ship.
 ```
 
 ---
