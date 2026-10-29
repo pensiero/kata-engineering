@@ -68,7 +68,7 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 
 | Field | Required | Meaning |
 |---|:-:|---|
-| `id` | ✓ | Unique, short, stable. Letters, digits and `_ - . ~ : @ +` only (it heads the owner's copied replies as `[id]`). Never reused. |
+| `id` | ✓ | Unique, short, stable. Letters, digits and `_ - . ~ : @ +` only (it heads the owner's copied replies as `[id]`). Never reused. `new` is reserved: the owner's new items arrive as `[new]` and get the id `new-<n>`. |
 | `group` | ✓ | One of the group ids. |
 | `title` | ✓ | What the item is, in the owner's words, not the code's. |
 | `kind` | | `task` (default): the agent can just do it. `decision`: needs the owner's view. `check`: needs something only the owner can look at. |
@@ -87,7 +87,7 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 
 | From | To | When | Who |
 |---|---|---|---|
-| — | `todo` | An item is added | agent |
+| — | `todo` | An item is added | agent, or the owner through `[new]` |
 | `todo` | `doing` | Work starts | agent |
 | any open | `waiting` | The agent needs the owner; `question` is set | agent |
 | `waiting` | `todo` / `doing` | A reply settles it; `decision` is written, `question` cleared | agent |

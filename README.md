@@ -154,7 +154,7 @@ Bootstraps a project whose deliverable is current knowledge rather than code: ra
 
 Keeps the tracking half of `PLAN.md` exact, in a versioned `TRACKER.json`: every item has a status (to do, in progress, needs you, done, dropped), the plan, the question it is waiting on, the conversation, the decision taken and what was finally done, with commit references. Several trackers per project: `TRACKER.json` for the long-lived one, `trackers/<name>.json` for one effort.
 
-Beside each tracker sits a generated page (`TRACKER.html`): a static file the owner opens from disk, with no server and nothing uploaded. It filters items by status and takes replies item by item; a "Copy for the agent" button hands them over, and the agent writes them into the file and rebuilds the page. The file stays the record and both are committed together. It can also propose turning an existing `PLAN.md` into a tracker, leaving the reasoning in the docs where it belongs.
+Beside each tracker sits a generated page (`TRACKER.html`): a static file the owner opens from disk, with no server and nothing uploaded. It filters items by status, takes replies item by item and new items from the owner; a "Copy for the agent" button hands them over, and the agent writes them into the file and rebuilds the page. The file stays the record and both are committed together. It can also propose turning an existing `PLAN.md` into a tracker, leaving the reasoning in the docs where it belongs.
 
 The skill ships a small Python script (standard library only) that validates the file, builds the page and takes the owner's replies, so every project works the same way. The format is specified in plain markdown, so an agent can work the file by hand.
 

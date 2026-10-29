@@ -34,9 +34,9 @@ into the agent's global skills directory). Everything below is relative to it:
 
 1. **The file is the record.** Edit `TRACKER.json`, then run `build`. The page
    is generated: never edit it, and if it disagrees with the file, rebuild it.
-2. **The owner only replies.** The page lets the owner type a reply to an item
-   and copy their replies for the agent, nothing else. Every status change,
-   decision and outcome is written by the agent, in the file.
+2. **The owner only replies.** The page lets the owner reply to an item, ask
+   for new ones, and copy both for the agent, nothing else. Every status
+   change, decision and outcome is written by the agent, in the file.
 3. **Everything stays local.** Never publish a tracker or its page anywhere
    (no artifacts, no gists, no hosted pages). It is shared the way the
    repository is shared, and a private tracker not at all.
@@ -80,13 +80,16 @@ from disk in any browser and reloads it after the agent rebuilds.
 - The status counts on top filter the list; "How the next item is chosen"
   shows `principles`.
 - Each waiting item has a reply box; other items take replies inside their
-  conversation. What the owner types is kept in that browser only.
+  conversation. Below the list, "Something new?" takes new items, one per
+  paragraph. What the owner types is kept in that browser only.
 - **Copy for the agent** copies every pending reply as text:
 
   ```text
   /tracker Replies to Compass · Plan (TRACKER.json):
 
   [paper-trial] Not running yet. Start it.
+
+  [new] Add a weekly summary of what moved.
   ```
 
   It starts with `/tracker`, so pasting it into the chat invokes this skill,
@@ -107,8 +110,10 @@ arguments, starting "Replies to …"), or answers in chat directly.
    `python3 scripts/tracker.py reply <file> --from <scratch file>`. For an
    answer given in chat, `python3 scripts/tracker.py reply <file> <id> "<their words>"`.
    Each reply is appended to its item's `thread` as an `owner` entry, the page
-   is rebuilt, and a reply already there word for word is skipped. Nothing
-   else changes.
+   is rebuilt, and a reply already there word for word is skipped. A `[new]`
+   reply becomes a new item: `todo` in the first group, id `new-<n>`, the
+   owner's words as its title, context and first thread entry. Nothing else
+   changes.
 2. Process them (below).
 
 ## Process the owner's replies
@@ -121,6 +126,8 @@ For each new reply, decide what it means and write it into the item:
   still unclear, set a new `question`, keep it `waiting`.
 - **It asks for something new.** Add a new item; reference it in a thread
   entry.
+- **It is a new item** (`new-<n>`). Give it a real title, the right group and
+  kind, and a plan, or a question if it is the owner's call.
 - **It drops the item.** Move it to `dropped` with the reason as `outcome`.
 
 Then run `build`, and tell the owner in chat what you understood from each

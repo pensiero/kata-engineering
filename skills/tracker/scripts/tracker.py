@@ -12,6 +12,9 @@ to read or write it — any agent can edit the JSON by hand and run `check`.
     tracker.py reply   PATH ID TEXT          # one owner reply
     tracker.py reply   PATH --from FILE      # replies copied from the page ('-' = stdin)
 
+A reply addressed to "new" ("[new] …") is a new item from the owner: it is
+added as a `todo` in the first group, for the agent to title and place.
+
 The page is PATH with an .html suffix, written next to it: a static file with
 the tracker embedded, opened from disk. `new`, `build` and `reply` rewrite it,
 so it always matches the file it sits beside.
@@ -35,6 +38,8 @@ MAX_SUMMARY = 240     # two sentences: what it holds, how long it lives
 # "[id] reply" lines: letters, digits and _ - . ~ : @ + only.
 ID_RE = re.compile(r"^[A-Za-z0-9_\-.~:@+]{1,64}$")
 REPLY_RE = re.compile(r"^\[([A-Za-z0-9_\-.~:@+]{1,64})\]\s?(.*)$")
+NEW = "new"           # the reply id the page uses for a new item; never an item's id
+MAX_NEW_TITLE = 80
 TEMPLATE = Path(__file__).resolve().parent.parent / "assets" / "page.html"
 
 STATUS_LABEL = {"todo": "To do", "doing": "In progress", "waiting": "Needs you",
@@ -99,6 +104,8 @@ def problems(t):
             out.append(f"{where} needs a string 'id'.")
         elif not ID_RE.match(iid) or iid in (".", ".."):
             out.append(f"{where}: ids may use letters, digits and _ - . ~ : @ + only.")
+        elif iid == NEW:
+            out.append(f"{where}: '{NEW}' is reserved for the owner's new items; pick another id.")
         elif iid in seen:
             out.append(f"{where}: the id is used twice.")
         seen.add(iid)
@@ -213,14 +220,38 @@ def parse_replies(text):
     return [(iid, "\n".join(lines).strip()) for iid, lines in out if "\n".join(lines).strip()]
 
 
+def new_item(t, text, at):
+    """A `todo` in the first group holding the owner's words: the first line as
+    a provisional title, the whole text as context and as the thread's first
+    entry. The agent gives it its real title, group and kind."""
+    taken = {i["id"] for i in t["items"]}
+    n = 1
+    while f"{NEW}-{n}" in taken:
+        n += 1
+    first = text.splitlines()[0].strip()
+    title = first if len(first) <= MAX_NEW_TITLE else first[:MAX_NEW_TITLE - 1].rstrip() + "…"
+    today = date.today().isoformat()
+    item = {"id": f"{NEW}-{n}", "group": t["groups"][0]["id"], "title": title, "kind": "task",
+            "status": "todo", "context": text if text != title else "",
+            "thread": [{"by": "owner", "at": at, "text": text}], "created": today, "updated": today}
+    t["items"].append(item)
+    return item
+
+
 def add_replies(t, replies, at=None):
-    """Append each reply to its item's thread as an owner entry. A reply already
-    in the thread word for word is skipped, so pasting the same text twice is
+    """Append each reply to its item's thread as an owner entry; a reply to
+    "new" becomes a new item. A reply already in the thread word for word (for
+    a new item: in any thread) is skipped, so pasting the same text twice is
     harmless. Statuses are NOT changed: deciding what a reply means is the
     agent's job. Returns (added [(id, text)], unknown ids)."""
     by_id = {i["id"]: i for i in t["items"]}
     added, unknown = [], []
     for iid, text in replies:
+        if iid == NEW:
+            if not any(m.get("by") == "owner" and m.get("text", "").strip() == text
+                       for i in t["items"] for m in i.get("thread", [])):
+                added.append((new_item(t, text, at or now_iso())["id"], text))
+            continue
         item = by_id.get(iid)
         if item is None:
             unknown.append(iid)

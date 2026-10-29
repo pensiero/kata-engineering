@@ -82,12 +82,13 @@ button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent);
 .msg { font-size: 14px; padding: 6px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); white-space: pre-wrap; }
 .msg .who { font-size: 11.5px; color: var(--muted); display: block; margin-bottom: 2px; }
 .msg.pending { border-style: dashed; }
-.q textarea { width: 100%; min-height: 64px; margin-top: 8px; font: 14px/1.45 var(--sans); color: var(--ink); background: var(--surface);
+.q textarea, .newbox textarea { width: 100%; min-height: 64px; margin-top: 8px; font: 14px/1.45 var(--sans); color: var(--ink); background: var(--surface);
   border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical; }
 .row { display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
 .row button { font: 500 13px var(--sans); background: var(--accent); color: var(--bg); border: 0; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
 .row button[disabled] { opacity: .5; cursor: default; }
 .note { font-size: 12.5px; color: var(--muted); }
+.newbox { margin-top: 24px; }
 .outcome { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
 .outcome .lbl { color: var(--done); }
 .item.dropped .outcome .lbl { color: var(--drop); }
@@ -119,6 +120,7 @@ table.mini td:first-child, table.mini th:first-child { text-align: left; }
   <div class="bar" id="bar"></div>
   <p class="showing" id="showing" aria-live="polite"></p>
   <div id="list"><p class="empty">Loading the tracker…</p></div>
+  <section class="newbox" id="newbox" hidden></section>
   <div class="outbox" id="outbox" hidden></div>
 </div>
 <script type="application/json" id="tracker-data">__TRACKER_DATA__</script>
@@ -138,7 +140,8 @@ if (filter !== "all" && !ORDER.includes(filter)) filter = "all";
    live in this browser only (localStorage, keyed by this file's path) and
    leave it only when copied to the agent. */
 const DRAFT_KEY = "tracker-drafts:" + location.pathname;
-let drafts = {};           // item id -> {text, at}
+let drafts = {};           // item id -> {text, at}; NEW -> the owner's new items
+const NEW = "new";         // tracker.py turns "[new] …" into a new item
 try { drafts = JSON.parse(localStorage.getItem(DRAFT_KEY) || "{}") || {}; } catch (e) {}
 const saveDrafts = () => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts)); } catch (e) {} };
 
@@ -156,14 +159,21 @@ const el = (tag, attrs = {}, ...kids) => {
 const when = (iso) => { const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }); };
 const items = () => (state && state.items) || [];
 
+/* New items: one per paragraph of the "Something new?" box. */
+const newParts = () => ((drafts[NEW] || {}).text || "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+const ownerSaid = (it, text) => (it.thread || []).some((m) => m.by === "owner" && m.text.trim() === text);
+
 /* A draft is done with once the rebuilt tracker carries it as an owner entry. */
 function forgetMerged() {
   const byId = Object.fromEntries(items().map((i) => [i.id, i]));
   for (const [id, d] of Object.entries(drafts)) {
+    if (id === NEW) continue;
     const it = byId[id];
     const text = (d.text || "").trim();
-    if (!it || !text || (it.thread || []).some((m) => m.by === "owner" && m.text.trim() === text)) delete drafts[id];
+    if (!it || !text || ownerSaid(it, text)) delete drafts[id];
   }
+  const left = newParts().filter((p) => !items().some((i) => ownerSaid(i, p)));
+  if (left.length) drafts[NEW] = { text: left.join("\n\n"), at: drafts[NEW].at }; else delete drafts[NEW];
   saveDrafts();
 }
 const ready = () => items().filter((i) => drafts[i.id] && drafts[i.id].text.trim());
@@ -211,8 +221,24 @@ function replyBox(it) {
   return [ta, el("div", { class: "row" }, note)];
 }
 
+function newBox() {
+  const note = el("span", { class: "note" });
+  const ta = el("textarea", { id: "reply-" + NEW, "aria-label": "New items for the agent",
+    placeholder: "A task, a bug, an idea… One item per paragraph: leave a blank line between items.",
+    oninput: (e) => {
+      const text = e.target.value;
+      if (text.trim()) drafts[NEW] = { text, at: new Date().toISOString() }; else delete drafts[NEW];
+      saveDrafts(); renderOutbox();
+    } });
+  ta.value = (drafts[NEW] || {}).text || "";
+  note.textContent = "Kept in this browser until you copy it for the agent, who adds it to the tracker.";
+  $("newbox").replaceChildren(el("h2", {}, "Something new?"), ta, el("div", { class: "row" }, note));
+  $("newbox").hidden = false;
+}
+
 function copyText() {
-  const blocks = ready().map((i) => `[${i.id}] ${drafts[i.id].text.trim()}`);
+  const blocks = ready().map((i) => `[${i.id}] ${drafts[i.id].text.trim()}`)
+    .concat(newParts().map((p) => `[${NEW}] ${p}`));
   // Starts with the skill's command, so the agent loads the tracker skill at once.
   return `/tracker Replies to ${state.title} (${source}):\n\n` + blocks.join("\n\n") + "\n";
 }
@@ -228,11 +254,12 @@ async function copy() {
 }
 
 function renderOutbox() {
-  const n = ready().length;
-  $("outbox").hidden = !n;
-  if (!n) return;
+  const n = ready().length, k = newParts().length;
+  $("outbox").hidden = !(n + k);
+  if (!(n + k)) return;
+  const said = [n ? `${n} ${n === 1 ? "reply" : "replies"}` : "", k ? `${k} new ${k === 1 ? "item" : "items"}` : ""];
   $("outbox").replaceChildren(
-    el("span", {}, `${n} ${n === 1 ? "reply" : "replies"} ready for the agent.`),
+    el("span", {}, `${said.filter(Boolean).join(" and ")} ready for the agent.`),
     el("button", { type: "button", onclick: copy }, "Copy for the agent"),
     el("span", { class: "note", id: "outbox-note" }));
 }
@@ -288,7 +315,7 @@ function render() {
 try {
   const data = JSON.parse($("tracker-data").textContent);
   state = data.tracker; source = data.source || "the tracker file";
-  forgetMerged(); render();
+  forgetMerged(); newBox(); render();
 } catch (e) {
   $("list").replaceChildren(el("p", { class: "empty" }, "This is the template. Open the page that `tracker.py build` writes next to a tracker."));
 }

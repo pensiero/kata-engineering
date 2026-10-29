@@ -81,6 +81,24 @@ class Replies(unittest.TestCase):
         self.assertEqual(tracker.add_replies(t, [("T2", "Green.")]), ([], []))
         self.assertEqual(len(t["items"][1]["thread"]), 1)
 
+    def test_a_reply_to_new_becomes_a_todo_in_the_first_group_once(self):
+        t = sample()
+        text = "Add a dark mode.\nOnly for the settings page."
+        added, _ = tracker.add_replies(t, [("new", text), ("new", "Ship it")], at="2026-10-05T10:00:00+00:00")
+        self.assertEqual([i for i, _ in added], ["new-1", "new-2"])
+        item = t["items"][3]
+        self.assertEqual((item["group"], item["status"], item["title"]), ("now", "todo", "Add a dark mode."))
+        self.assertEqual(item["context"], text)
+        self.assertEqual(item["thread"][0]["text"], text)
+        self.assertEqual(tracker.problems(t), [])
+        self.assertEqual(tracker.add_replies(t, [("new", text)]), ([], []))   # pasted twice
+        self.assertEqual(len(t["items"]), 5)
+
+    def test_new_is_not_an_item_id(self):
+        t = sample()
+        t["items"][0]["id"] = "new"
+        self.assertIn("'new' is reserved", " ".join(tracker.problems(t)))
+
     def test_replies_for_unknown_items_are_reported(self):
         self.assertEqual(tracker.add_replies(sample(), [("GONE", "hi")]), ([], ["GONE"]))
 
