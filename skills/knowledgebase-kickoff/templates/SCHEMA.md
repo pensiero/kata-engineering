@@ -17,7 +17,7 @@ Technical specification for the {{PROJECT_NAME}} knowledge base. Defines folder 
 ### Top-level files (always present)
 ```
 README.md                  Human narrative overview.
-CLAUDE.md / AGENTS.md      Agent behavioral contract (identical).
+AGENTS.md                  Agent behavioral contract (CLAUDE.md imports it).
 SCHEMA.md                  This file — technical spec.
 LOG.md                     Append-only ingest log + flags.
 PLAN.md                    Project-level todo checklist (PM action list).

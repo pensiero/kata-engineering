@@ -16,14 +16,14 @@ You are maintaining a structured knowledge base for {{PROJECT_NAME}}. See `SCHEM
    - `sources/documents/` — `.pdf`, `.docx`, `.pptx`, `.xlsx`, `.md`, `.txt`
    - Ignore anything under `sources/ingested/`.
 3. If multiple sources are pending, process oldest first (by filename date if present, else mtime).
-4. **Tool availability check** (first ingest only, or if tools have never been verified this session): run `which pandoc python3` via Bash. If either is missing AND the pending batch contains `.docx`/`.pptx`/`.xlsx`, stop and tell the user which tool to install (e.g., `brew install pandoc`, `pip install python-docx python-pptx docx2txt pandas openpyxl`). Record the check result in `LOG.md`.
+4. **Tool availability check** (first ingest only, or if tools have never been verified this session): run `which pandoc python3 pdftotext` via Bash. If pandoc or python3 is missing AND the pending batch contains `.docx`/`.pptx`/`.xlsx`, stop and tell the user which tool to install (e.g., `brew install pandoc`, `pip install python-docx python-pptx docx2txt pandas openpyxl`). If `pdftotext` is missing, suggest `brew install poppler` and read PDFs with the `Read` tool meanwhile. Record the check result in `LOG.md`.
 
 ## Document reading (before extraction)
 
 Read the source using the appropriate method:
 
 - **`.md` / `.txt` / `.eml` / `.vtt`**: use the `Read` tool directly.
-- **`.pdf`**: use the `Read` tool directly (up to 20 pages per call; for larger PDFs, read in page chunks).
+- **`.pdf`**: `pdftotext -layout <filepath> -`. Fallback for scanned or visual PDFs (no text layer, or charts that matter): the `Read` tool, up to 20 pages per call.
 - **`.docx`**: `pandoc <filepath> -t markdown --wrap=none`. Fallback: `python3 -c "import docx2txt; print(docx2txt.process('<filepath>'))"`.
 - **`.pptx`**: `pandoc <filepath> -t markdown --wrap=none`. Fallback: `python3 -c "from pptx import Presentation; prs=Presentation('<filepath>'); [print(s.text) for sl in prs.slides for s in sl.shapes if hasattr(s,'text')]"`.
 - **`.xlsx`**: `python3 -c "import pandas as pd; print(pd.read_excel('<filepath>').to_markdown())"`.

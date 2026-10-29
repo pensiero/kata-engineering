@@ -37,7 +37,7 @@ The full technical specification — naming conventions, frontmatter, citation f
 - *"What are the top three open risks right now?"*
 - *"Draft an agenda for tomorrow's governance call."*
 
-**As an agent**: read `CLAUDE.md` (or `AGENTS.md`) first. It tells you what your role is, what to read, and how to behave.
+**As an agent**: read `AGENTS.md` first (`CLAUDE.md` points to it). It tells you what your role is, what to read, and how to behave.
 
 ## Who owns this
 

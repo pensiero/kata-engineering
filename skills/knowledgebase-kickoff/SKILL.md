@@ -1,6 +1,6 @@
 ---
 name: knowledgebase-kickoff
-description: Bootstrap a project knowledge base — folder skeleton, entity-page design, SCHEMA/CLAUDE/README scaffolding, an ingest-sources skill, .gitignore, git init, and initial commit. Use when the user wants to set up a knowledge base or queryable source of truth for a stakeholder-heavy project with meetings, emails, and documents.
+description: Bootstrap a project knowledge base — folder skeleton, entity-page design, SCHEMA/AGENTS/README scaffolding, an ingest-sources skill, .gitignore, git init, and initial commit. Use when the user wants to set up a knowledge base or queryable source of truth for a stakeholder-heavy project with meetings, emails, and documents.
 ---
 
 # Kickoff Knowledge Base Project
@@ -43,7 +43,8 @@ meetings/
 
 ### Files (from `templates/`)
 - `README.md`
-- `CLAUDE.md` — copy to `AGENTS.md` as well (identical)
+- `AGENTS.md` — the agent guide
+- `CLAUDE.md` — a single line, `@AGENTS.md`, so Claude loads the same guide (no second copy to drift)
 - `SCHEMA.md`
 - `LOG.md`
 - `PLAN.md` — the PM action checklist
@@ -67,7 +68,7 @@ Template files contain `{{PLACEHOLDER}}` tokens. Substitute with user-provided v
 ### Post-creation steps
 
 1. `git init -q` in the target directory.
-2. `git add -A` and commit with message `chore: initial knowledge base skeleton` (Co-Authored-By: Claude).
+2. `git add -A` and commit with message `chore: initial knowledge base skeleton`.
 3. Report to the user:
    - What was created.
    - Confirmed owner + project name.
