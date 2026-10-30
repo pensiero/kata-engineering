@@ -98,8 +98,9 @@ kata-engineering/
 │   └── tracker/
 │       ├── SKILL.md                   # Track work, owner questions and outcomes in TRACKER.json
 │       ├── reference/schema.md        # The file format and who moves each status
-│       ├── scripts/tracker.py         # new / check / build / render / reply (stdlib only) + tests
-│       └── assets/page.html           # The template every tracker's page is built from
+│       ├── scripts/tracker.py         # new / check / build / brief / show / render / reply, owner actions (stdlib only) + tests
+│       ├── assets/page.html           # The template every tracker's page is built from
+│       └── assets/style.css           # The look shared by the pages and the Kata hub
 ```
 
 ## Skills
@@ -152,11 +153,13 @@ Bootstraps a project whose deliverable is current knowledge rather than code: ra
 
 ### `tracker` — work, questions and outcomes, one item at a time
 
-Keeps the tracking half of `PLAN.md` exact, in a versioned `TRACKER.json`: every item has a status (to do, in progress, needs you, done, dropped), the plan, the question it is waiting on, the conversation, the decision taken and what was finally done, with commit references. Several trackers per project: `TRACKER.json` for the long-lived one, `trackers/<name>.json` for one effort.
+Keeps the tracking half of `PLAN.md` exact, in a versioned `TRACKER.json`: every item has a status (draft, to do, in progress, needs you, done, dropped), the plan, the question it is waiting on, the conversation, the decision taken and what was finally done, with commit references. Several trackers per project: `TRACKER.json` for the long-lived one, `trackers/<name>.json` for one effort. The agent sizes each item itself: it does it, splits it, or grows it into a tracker of its own.
 
 Beside each tracker sits a generated page (`TRACKER.html`): a static file the owner opens from disk, with no server and nothing uploaded. It filters items by status, takes replies item by item and new items from the owner; a "Copy for the agent" button hands them over, and the agent writes them into the file and rebuilds the page. The file stays the record and both are committed together. It can also propose turning an existing `PLAN.md` into a tracker, leaving the reasoning in the docs where it belongs.
 
-The skill ships a small Python script (standard library only) that validates the file, builds the page and takes the owner's replies, so every project works the same way. The format is specified in plain markdown, so an agent can work the file by hand.
+The owner writes intents (new items and drafts, order, replies, reopening, their own to-dos); the agent writes the record. Those writes can also come from the Kata hub (`kata-tracker`), a local app over every registered project's trackers, which applies them through the same script.
+
+The skill ships a small Python script (standard library only) that validates the file, builds the page, takes the owner's replies and gives an agent a short `brief` of what needs it, so every project works the same way. The format is specified in plain markdown, so an agent can work the file by hand.
 
 ## Docs: stable vs living
 

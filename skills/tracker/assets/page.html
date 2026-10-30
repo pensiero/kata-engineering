@@ -5,143 +5,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TRACKER_TITLE__</title>
 <style>
+/*__TRACKER_STYLE__*/
 /* A tracker's page, built by `tracker.py build` next to its JSON file, with
    the tracker embedded below. It opens from disk with no server and loads
    nothing from the network; replies typed here stay in this browser until
-   they are copied to the agent.
-   Layout: one reading column. The status counts on top double as the filter,
-   then the tracker's
-   own groups in order, each item a card with its thread and a reply box.
-   Generic on purpose: every tracker is built from this same template. */
-:root {
-  --bg: #f6f7f5; --surface: #ffffff; --ink: #1c2421; --muted: #5d6964; --line: #dde2de;
-  --accent: #1f5f5b; --accent-soft: #e3efed;
-  --todo: #6b7570; --todo-bg: #eef0ee; --doing: #245a9c; --doing-bg: #e4edf8;
-  --wait: #8a5a00; --wait-bg: #fbf0d9; --done: #2d6b3a; --done-bg: #e2f1e5;
-  --drop: #7a6a6a; --drop-bg: #f0ecec; --q-bg: #fff8e8; --q-line: #ecd9a8;
-  --display: "Iowan Old Style", Charter, Georgia, serif;
-  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: ui-monospace, Menlo, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #121614; --surface: #1a201d; --ink: #e4e9e6; --muted: #9aa7a1; --line: #2c3531;
-  --accent: #7cc4bc; --accent-soft: #1d3330; --todo: #a6b0ab; --todo-bg: #252c29;
-  --doing: #8db8ec; --doing-bg: #1b2a3d; --wait: #f0c46a; --wait-bg: #3a2e14;
-  --done: #8fd19c; --done-bg: #1b3221; --drop: #b9aaaa; --drop-bg: #2c2626;
-  --q-bg: #2a2416; --q-line: #4d4022; color-scheme: dark; } }
-:root[data-theme="dark"] {
-  --bg: #121614; --surface: #1a201d; --ink: #e4e9e6; --muted: #9aa7a1; --line: #2c3531;
-  --accent: #7cc4bc; --accent-soft: #1d3330; --todo: #a6b0ab; --todo-bg: #252c29;
-  --doing: #8db8ec; --doing-bg: #1b2a3d; --wait: #f0c46a; --wait-bg: #3a2e14;
-  --done: #8fd19c; --done-bg: #1b3221; --drop: #b9aaaa; --drop-bg: #2c2626;
-  --q-bg: #2a2416; --q-line: #4d4022; color-scheme: dark; }
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); }
-.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; }
-h1 { font: 600 2rem/1.15 var(--display); margin: 0 0 6px; text-wrap: balance; }
-.lede { color: var(--muted); margin: 0 0 8px; max-width: 65ch; white-space: pre-line; }
-.synced { color: var(--muted); font-size: 12.5px; margin: 0 0 20px; }
-.plabel { margin: 0 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
-.principles { margin: 0 0 20px; padding-left: 18px; color: var(--muted); font-size: 13.5px; max-width: 65ch; }
-.summary { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
-.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0;
-  font: inherit; color: inherit; text-align: left; cursor: pointer; }
-.stat:hover { border-color: var(--muted); }
-.stat[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.stat .n { font: 500 1.6rem/1 var(--mono); font-variant-numeric: tabular-nums; }
-.stat .k { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
-.stat.waiting .n { color: var(--wait); } .stat.done .n { color: var(--done); } .stat.doing .n { color: var(--doing); }
-.bar { height: 6px; border-radius: 3px; background: var(--todo-bg); overflow: hidden; display: flex; margin-bottom: 18px; }
-.bar span { display: block; height: 100%; }
-.showing { color: var(--muted); font-size: 13px; margin: -8px 0 26px; }
-.showing button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
-button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.group { margin-bottom: 30px; }
-.group h2 { font: 600 1.25rem/1.25 var(--display); margin: 0 0 2px; }
-.group .gsub { color: var(--muted); font-size: 13.5px; margin: 0 0 4px; max-width: 70ch; }
-.group .gate { font-size: 13px; color: var(--muted); margin: 0 0 12px; }
-.group .gate b { font-weight: 600; color: var(--ink); }
-.items { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-.item { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
-.item.done, .item.dropped { opacity: .8; }
-.ihead { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
-.code { font: 500 12.5px var(--mono); color: var(--accent); background: var(--accent-soft); border-radius: 4px; padding: 2px 6px; flex: none; }
-.ititle { font-weight: 600; flex: 1 1 260px; min-width: 0; }
-.pills { display: flex; gap: 6px; flex: none; }
-.pill { font: 500 11.5px var(--sans); letter-spacing: .03em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
-.pill.todo { color: var(--todo); background: var(--todo-bg); } .pill.doing { color: var(--doing); background: var(--doing-bg); }
-.pill.waiting { color: var(--wait); background: var(--wait-bg); } .pill.done { color: var(--done); background: var(--done-bg); }
-.pill.dropped { color: var(--drop); background: var(--drop-bg); }
-.pill.kind { color: var(--muted); background: transparent; border: 1px solid var(--line); }
-.sec { margin-top: 10px; }
-.lbl { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
-.sec p { margin: 0; max-width: 72ch; white-space: pre-line; }
-.q { margin-top: 12px; background: var(--q-bg); border: 1px solid var(--q-line); border-radius: 6px; padding: 10px 12px; }
-.q > .lbl { color: var(--wait); }
-.thread { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-.msg { font-size: 14px; padding: 6px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); white-space: pre-wrap; }
-.msg .who { font-size: 11.5px; color: var(--muted); display: block; margin-bottom: 2px; }
-.msg.pending { border-style: dashed; }
-.q textarea, .newbox textarea { width: 100%; min-height: 64px; margin-top: 8px; font: 14px/1.45 var(--sans); color: var(--ink); background: var(--surface);
-  border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: vertical; }
-.row { display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
-.row button { font: 500 13px var(--sans); background: var(--accent); color: var(--bg); border: 0; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
-.row button[disabled] { opacity: .5; cursor: default; }
-.note { font-size: 12.5px; color: var(--muted); }
-.newbox { margin-top: 24px; }
-.outcome { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
-.outcome .lbl { color: var(--done); }
-.item.dropped .outcome .lbl { color: var(--drop); }
-.refs { margin-top: 4px; font: 12.5px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
-details.history { margin-top: 10px; font-size: 13.5px; }
-details.history summary { cursor: pointer; color: var(--muted); }
-.empty { color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 8px; padding: 18px; }
-.tw { overflow-x: auto; }
-table.mini { border-collapse: collapse; font: 13px var(--mono); font-variant-numeric: tabular-nums; margin-top: 6px; }
-table.mini td, table.mini th { padding: 2px 12px 2px 0; text-align: right; }
-table.mini th { font: 500 11.5px var(--sans); color: var(--muted); }
-table.mini td:first-child, table.mini th:first-child { text-align: left; }
-.outbox { position: sticky; bottom: 0; margin-top: 24px; background: var(--q-bg); border: 1px solid var(--q-line); border-radius: 8px;
-  padding: 10px 14px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.outbox button { font: 500 13px var(--sans); background: var(--accent); color: var(--bg); border: 0; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
-.outbox textarea { width: 100%; min-height: 120px; font: 13px var(--mono); }
-@media (max-width: 560px) { .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); } h1 { font-size: 1.6rem; } }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+   they are copied to the agent. One reading column: the title, the status
+   counts (which filter the list), then the tracker's groups in order, each
+   item a row that opens onto its detail and a reply box. */
+.wrap { max-width: 820px; margin: 0 auto; padding: 40px 20px 96px; }
+.lede { color: var(--muted); margin-top: 6px; max-width: 65ch; white-space: pre-line; }
+.how { margin-top: 10px; font-size: 13.5px; color: var(--muted); }
+.how summary { cursor: pointer; width: max-content; }
+.how ul { margin: 6px 0 0; padding-left: 18px; max-width: 65ch; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 26px 0 8px; }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line);
+  background: transparent; cursor: pointer; font-size: 13.5px; }
+.chip:hover { border-color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--surface); border-color: var(--accent); }
+.chip b { font-weight: 600; }
+.group { margin-top: 30px; }
+.group h2 { margin-bottom: 2px; padding-left: 12px; }
+.gnote { color: var(--muted); font-size: 13.5px; padding-left: 12px; max-width: 70ch; }
+.items { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+details.item > summary { list-style: none; }
+details.item > summary::-webkit-details-marker { display: none; }
+details.item[open] { background: var(--surface); border-radius: var(--radius); }
+details.item[open] > summary:hover { background: transparent; }
+details.item .detail { padding: 4px 12px 16px 33px; }
+.newbox { margin-top: 40px; padding-left: 12px; }
+.newbox p { color: var(--muted); font-size: 13.5px; margin: 4px 0 8px; }
+.outbox { position: sticky; bottom: 16px; margin-top: 28px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  background: var(--ink); color: var(--paper); border-radius: 10px; padding: 10px 12px 10px 16px; }
+.outbox .btn { background: var(--paper); color: var(--ink); border-color: var(--paper); margin-left: auto; }
+.outbox textarea { flex-basis: 100%; min-height: 120px; }
+.foot { margin-top: 48px; color: var(--muted); font-size: 12.5px; padding-left: 12px; }
+@media (max-width: 560px) { .wrap { padding-top: 24px; } .row .where { display: none; } }
 </style>
 </head>
 <body>
-
 <div class="wrap">
   <h1 id="title">Tracker</h1>
   <p class="lede" id="lede"></p>
-  <p class="synced" id="synced"></p>
-  <div id="principlesBox" hidden><p class="plabel">How the next item is chosen</p><ul class="principles" id="principles"></ul></div>
-  <div class="summary" id="summary" role="group" aria-label="Filter items by status"></div>
-  <div class="bar" id="bar"></div>
-  <p class="showing" id="showing" aria-live="polite"></p>
+  <details class="how" id="how" hidden><summary>How the next item is chosen</summary><ul id="principles"></ul></details>
+  <div class="filters" id="filters" role="group" aria-label="Show only one status"></div>
   <div id="list"><p class="empty">Loading the tracker…</p></div>
   <section class="newbox" id="newbox" hidden></section>
   <div class="outbox" id="outbox" hidden></div>
+  <p class="foot" id="foot"></p>
 </div>
 <script type="application/json" id="tracker-data">__TRACKER_DATA__</script>
 
 <script>
-const STATUS = { waiting: "Needs you", todo: "To do", doing: "In progress", done: "Done", dropped: "Dropped" };
-const ORDER = ["waiting", "todo", "doing", "done", "dropped"];
-const KIND = { task: "task", decision: "your call", check: "your check" };
-const BAR = [["done", "--done"], ["doing", "--doing"], ["waiting", "--wait"]];
+const STATUS = { waiting: "Needs you", draft: "Draft", todo: "To do", doing: "In progress", done: "Done", dropped: "Dropped" };
+const ORDER = ["waiting", "draft", "todo", "doing", "done", "dropped"];
+const KIND = { decision: "Your call", check: "Your check" };
+const NEW = "new";         // tracker.py turns "[new] …" into a new item
 
-let state = null;          // the tracker, as embedded by `tracker.py build`
-let source = "";           // its file, relative to the repository
-let filter = "all";
+let state = null, source = "", filter = "all";
 try { filter = localStorage.getItem("trackerFilter") || "all"; } catch (e) {}
 if (filter !== "all" && !ORDER.includes(filter)) filter = "all";
-/* Replies the owner typed and has not yet seen folded into the tracker. They
-   live in this browser only (localStorage, keyed by this file's path) and
-   leave it only when copied to the agent. */
+/* Replies typed here and not yet seen in the rebuilt tracker. They live in
+   this browser only (keyed by this file's path) and leave it only when
+   copied to the agent. */
 const DRAFT_KEY = "tracker-drafts:" + location.pathname;
-let drafts = {};           // item id -> {text, at}; NEW -> the owner's new items
-const NEW = "new";         // tracker.py turns "[new] …" into a new item
+let drafts = {};           // item id -> {text}; NEW -> the owner's new items
 try { drafts = JSON.parse(localStorage.getItem(DRAFT_KEY) || "{}") || {}; } catch (e) {}
 const saveDrafts = () => { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts)); } catch (e) {} };
 
@@ -158,22 +85,20 @@ const el = (tag, attrs = {}, ...kids) => {
 };
 const when = (iso) => { const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }); };
 const items = () => (state && state.items) || [];
-
-/* New items: one per paragraph of the "Something new?" box. */
+const said = (it) => (it.context || it.title || "").trim();
 const newParts = () => ((drafts[NEW] || {}).text || "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 const ownerSaid = (it, text) => (it.thread || []).some((m) => m.by === "owner" && m.text.trim() === text);
 
-/* A draft is done with once the rebuilt tracker carries it as an owner entry. */
+/* A typed reply is done with once the rebuilt tracker carries it. */
 function forgetMerged() {
   const byId = Object.fromEntries(items().map((i) => [i.id, i]));
   for (const [id, d] of Object.entries(drafts)) {
     if (id === NEW) continue;
-    const it = byId[id];
     const text = (d.text || "").trim();
-    if (!it || !text || ownerSaid(it, text)) delete drafts[id];
+    if (!byId[id] || !text || ownerSaid(byId[id], text)) delete drafts[id];
   }
-  const left = newParts().filter((p) => !items().some((i) => ownerSaid(i, p)));
-  if (left.length) drafts[NEW] = { text: left.join("\n\n"), at: drafts[NEW].at }; else delete drafts[NEW];
+  const left = newParts().filter((p) => !items().some((i) => said(i) === p));
+  if (left.length) drafts[NEW] = { text: left.join("\n\n") }; else delete drafts[NEW];
   saveDrafts();
 }
 const ready = () => items().filter((i) => drafts[i.id] && drafts[i.id].text.trim());
@@ -182,133 +107,111 @@ function renderHead() {
   document.title = state.title || "Tracker";
   $("title").textContent = state.title || "Tracker";
   $("lede").textContent = state.summary || "";
-  const last = items().map((i) => i.updated || "").sort().pop();
-  $("synced").textContent = `Built from ${source}` + (last ? `, last changed ${last}` : "") + ". Rebuilt by the agent after every change; reload to see it.";
   const pr = state.principles || [];
-  $("principlesBox").hidden = !pr.length;
+  $("how").hidden = !pr.length;
   $("principles").replaceChildren(...pr.map((p) => el("li", {}, p)));
   const count = (s) => items().filter((i) => i.status === s).length;
-  const total = items().length || 1;
-  const pick = (id) => { filter = id; try { localStorage.setItem("trackerFilter", id); } catch (e) {} render(); };
-  $("summary").replaceChildren(...ORDER.map((s) =>
-    el("button", { type: "button", class: "stat " + s, "aria-pressed": filter === s ? "true" : "false",
-      onclick: () => pick(filter === s ? "all" : s) },
-      el("div", { class: "n" }, String(count(s))), el("div", { class: "k" }, STATUS[s].toLowerCase()))));
-  $("bar").replaceChildren(...BAR.map(([s, v]) =>
-    el("span", { style: `width:${count(s) / total * 100}%;background:var(${v})`, title: `${count(s)} ${STATUS[s].toLowerCase()}` })));
-  $("showing").replaceChildren(...(filter === "all"
-    ? [`Showing all ${items().length} items. Pick a count to see only those.`]
-    : [`Showing only ${STATUS[filter].toLowerCase()}. `, el("button", { type: "button", onclick: () => pick("all") }, "Show all")]));
+  const pick = (s) => { filter = s; try { localStorage.setItem("trackerFilter", s); } catch (e) {} render(); };
+  $("filters").replaceChildren(...ORDER.filter((s) => count(s)).map((s) =>
+    el("button", { type: "button", class: "chip", "aria-pressed": filter === s ? "true" : "false",
+      onclick: () => pick(filter === s ? "all" : s) }, el("span", { class: "dot " + s }), STATUS[s], el("b", {}, String(count(s))))));
+  const last = items().map((i) => i.updated || "").sort().pop();
+  $("foot").textContent = `Built from ${source}` + (last ? `, last changed ${last}` : "") + ". The agent rebuilds this page after every change: reload to see it.";
 }
 
-function threadEl(it) {
-  const msgs = it.thread || [];
-  if (!msgs.length) return null;
-  return el("div", { class: "thread" }, msgs.map((m) => el("div", { class: "msg" },
-    el("span", { class: "who" }, (m.by === "owner" ? "You" : "Agent") + " · " + when(m.at)), m.text)));
+function section(label, text, cls = "") {
+  return text ? el("div", { class: cls }, el("div", { class: "lbl" }, label), el("p", { class: "text" }, text)) : null;
 }
 
 function replyBox(it) {
-  const note = el("span", { class: "note" }, drafts[it.id] ? "Kept in this browser, not given to the agent yet." : "");
-  const ta = el("textarea", { id: "reply-" + it.id, "aria-label": "Reply about " + it.id, placeholder: "Your reply…",
+  const ta = el("textarea", { id: "reply-" + it.id, "aria-label": "Reply about " + it.title,
+    placeholder: it.status === "waiting" ? "Your answer" : "Reply",
     oninput: (e) => {
-      const text = e.target.value;
-      if (text.trim()) drafts[it.id] = { text, at: new Date().toISOString() }; else delete drafts[it.id];
+      if (e.target.value.trim()) drafts[it.id] = { text: e.target.value }; else delete drafts[it.id];
       saveDrafts(); renderOutbox();
-      note.textContent = text.trim() ? "Kept in this browser, not given to the agent yet." : "";
     } });
   ta.value = (drafts[it.id] || {}).text || "";
-  return [ta, el("div", { class: "row" }, note)];
+  return ta;
+}
+
+function detail(it) {
+  const thread = (it.thread || []).map((m) => el("div", { class: "msg " + m.by },
+    el("span", { class: "who" }, (m.by === "owner" ? "You" : "Agent") + ", " + when(m.at)), m.text));
+  const table = it.table && it.table.length ? el("div", { class: "tw" }, el("table", { class: "mini" },
+    el("tr", {}, ...it.table[0].map((c) => el("th", {}, String(c)))),
+    ...it.table.slice(1).map((r) => el("tr", {}, ...r.map((c) => el("td", {}, String(c))))))) : null;
+  return el("div", { class: "detail" },
+    section("Context", it.context), table, section("Plan", it.plan),
+    it.status === "waiting" ? section("Question for you", it.question, "question") : null,
+    section("Decided", it.decision),
+    section(it.status === "dropped" ? "Why it was dropped" : it.status === "done" ? "What was done" : "Progress", it.outcome),
+    (it.refs || []).length ? el("p", { class: "refs" }, it.refs.join(", ")) : null,
+    thread.length ? el("div", { class: "thread" }, thread) : null,
+    it.for === "me" ? null : replyBox(it));
+}
+
+function itemEl(it) {
+  const open = it.status === "waiting" || !!drafts[it.id];
+  return el("details", { class: "item", id: it.id, open },
+    el("summary", { class: "row " + it.status },
+      el("span", { class: "dot " + it.status, title: STATUS[it.status] }),
+      el("span", { class: "title" }, it.title),
+      it.for === "me" ? el("span", { class: "flag me" }, "Yours") : null,
+      KIND[it.kind] ? el("span", { class: "flag" }, KIND[it.kind]) : null,
+      el("span", { class: "where" }, it.id)),
+    detail(it));
 }
 
 function newBox() {
-  const note = el("span", { class: "note" });
-  const ta = el("textarea", { id: "reply-" + NEW, "aria-label": "New items for the agent",
-    placeholder: "A task, a bug, an idea… One item per paragraph: leave a blank line between items.",
+  const ta = el("textarea", { id: "reply-" + NEW, "aria-label": "New items for the agent", placeholder: "One item per paragraph",
     oninput: (e) => {
-      const text = e.target.value;
-      if (text.trim()) drafts[NEW] = { text, at: new Date().toISOString() }; else delete drafts[NEW];
+      if (e.target.value.trim()) drafts[NEW] = { text: e.target.value }; else delete drafts[NEW];
       saveDrafts(); renderOutbox();
     } });
   ta.value = (drafts[NEW] || {}).text || "";
-  note.textContent = "Kept in this browser until you copy it for the agent, who adds it to the tracker.";
-  $("newbox").replaceChildren(el("h2", {}, "Something new?"), ta, el("div", { class: "row" }, note));
+  $("newbox").replaceChildren(el("h2", {}, "Something new?"),
+    el("p", {}, "A task, a bug or an idea. Leave a blank line between items."), ta);
   $("newbox").hidden = false;
 }
 
 function copyText() {
-  const blocks = ready().map((i) => `[${i.id}] ${drafts[i.id].text.trim()}`)
-    .concat(newParts().map((p) => `[${NEW}] ${p}`));
+  const blocks = ready().map((i) => `[${i.id}] ${drafts[i.id].text.trim()}`).concat(newParts().map((p) => `[${NEW}] ${p}`));
   // Starts with the skill's command, so the agent loads the tracker skill at once.
   return `/tracker Replies to ${state.title} (${source}):\n\n` + blocks.join("\n\n") + "\n";
 }
 
 async function copy() {
   const text = copyText();
-  const done = (msg) => { $("outbox-note").textContent = msg; };
-  try { await navigator.clipboard.writeText(text); done("Copied. Paste it to the agent; each reply stays here until the rebuilt page shows it."); return; }
-  catch (e) {}
+  try { await navigator.clipboard.writeText(text); $("outbox-note").textContent = "Copied. Paste it to the agent."; return; } catch (e) {}
   const ta = el("textarea", { readonly: true, "aria-label": "Replies to copy" }); ta.value = text;
   $("outbox").append(ta); ta.select();
-  done("This browser blocked copying. Select the text below and copy it yourself.");
+  $("outbox-note").textContent = "Copying was blocked: copy the text below.";
 }
 
 function renderOutbox() {
   const n = ready().length, k = newParts().length;
   $("outbox").hidden = !(n + k);
   if (!(n + k)) return;
-  const said = [n ? `${n} ${n === 1 ? "reply" : "replies"}` : "", k ? `${k} new ${k === 1 ? "item" : "items"}` : ""];
-  $("outbox").replaceChildren(
-    el("span", {}, `${said.filter(Boolean).join(" and ")} ready for the agent.`),
-    el("button", { type: "button", onclick: copy }, "Copy for the agent"),
-    el("span", { class: "note", id: "outbox-note" }));
-}
-
-function itemEl(it) {
-  const kids = [el("div", { class: "ihead" },
-    el("span", { class: "code" }, it.id),
-    el("span", { class: "ititle" }, it.title),
-    el("span", { class: "pills" },
-      it.kind && it.kind !== "task" ? el("span", { class: "pill kind" }, KIND[it.kind] || it.kind) : null,
-      el("span", { class: "pill " + it.status }, STATUS[it.status] || it.status)))];
-  if (it.context) kids.push(el("div", { class: "sec" }, el("div", { class: "lbl" }, "Context"), el("p", {}, it.context)));
-  if (it.table && it.table.length) kids.push(el("div", { class: "tw" }, el("table", { class: "mini" },
-    el("tr", {}, ...it.table[0].map((c) => el("th", {}, String(c)))),
-    ...it.table.slice(1).map((r) => el("tr", {}, ...r.map((c) => el("td", {}, String(c))))))));
-  if (it.plan) kids.push(el("div", { class: "sec" }, el("div", { class: "lbl" }, "Plan"), el("p", {}, it.plan)));
-  if (it.decision) kids.push(el("div", { class: "sec" }, el("div", { class: "lbl" }, "Decided"), el("p", {}, it.decision)));
-  const open = it.status === "waiting";
-  if (open) {
-    kids.push(el("div", { class: "q" }, el("div", { class: "lbl" }, "Question for you"),
-      el("p", {}, it.question), threadEl(it), replyBox(it)));
-  } else if ((it.thread || []).length || drafts[it.id]) {
-    kids.push(el("details", { class: "history", open: !!drafts[it.id] },
-      el("summary", {}, `Conversation (${(it.thread || []).length})`), threadEl(it), replyBox(it)));
-  }
-  if (it.outcome) kids.push(el("div", { class: "outcome" },
-    el("div", { class: "lbl" }, it.status === "dropped" ? "Dropped" : it.status === "done" ? "Done" : "Progress"),
-    el("p", {}, it.outcome),
-    (it.refs || []).length ? el("div", { class: "refs" }, it.refs.join(" · ")) : null));
-  return el("article", { class: "item " + it.status, id: it.id }, ...kids);
+  const what = [n ? `${n} ${n === 1 ? "reply" : "replies"}` : "", k ? `${k} new ${k === 1 ? "item" : "items"}` : ""].filter(Boolean).join(" and ");
+  $("outbox").replaceChildren(el("span", { id: "outbox-note" }, `${what} for the agent`),
+    el("button", { type: "button", class: "btn", onclick: copy }, "Copy for the agent"));
 }
 
 function render() {
   if (!state) return;
-  renderHead();
+  renderHead(); renderOutbox();
   const focused = document.activeElement && document.activeElement.id;
   const caret = focused && document.activeElement.selectionStart;
-  renderOutbox();
-  if (!items().length) { $("list").replaceChildren(el("p", { class: "empty" }, "No items yet.")); return; }
   const shown = items().filter((i) => filter === "all" || i.status === filter);
   const groups = (state.groups || []).map((g) => {
     const rows = shown.filter((i) => i.group === g.id);
     if (!rows.length) return null;
     return el("section", { class: "group" }, el("h2", {}, g.title),
-      g.note ? el("p", { class: "gsub" }, g.note) : null,
-      g.gate ? el("p", { class: "gate" }, el("b", {}, "Starts when: "), g.gate) : null,
+      g.note ? el("p", { class: "gnote" }, g.note) : null,
+      g.gate ? el("p", { class: "gnote" }, "Starts when: " + g.gate) : null,
       el("div", { class: "items" }, rows.map(itemEl)));
   }).filter(Boolean);
-  $("list").replaceChildren(...(groups.length ? groups : [el("p", { class: "empty" }, "Nothing in this filter.")]));
+  $("list").replaceChildren(...(groups.length ? groups : [el("p", { class: "empty" }, items().length ? "Nothing with this status." : "No items yet.")]));
   if (focused) { const f = document.getElementById(focused); if (f) { f.focus(); try { f.setSelectionRange(caret, caret); } catch (e) {} } }
 }
 

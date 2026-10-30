@@ -34,6 +34,6 @@ When there are several valid paths, present the best ones and recommend one. Pre
 
 ## 4. Hand off
 
-Once the human approves, write the outcome where `build` will find it: the project's `PLAN.md` (from `build`'s plan template), with the brief at the top under "What we're building", the shape as Up Next and Deferred, unknowns as Open Questions, and ordering rules as Prioritization. If the project keeps its work in a tracker, the work goes there and the brief stays in `PLAN.md`. If there is no project directory yet, give the outputs in chat.
+Once the human approves, write the outcome where `build` will find it: the project's `PLAN.md` (from `build`'s plan template), with the brief at the top under "What we're building", the shape as Up Next and Deferred, unknowns as Open Questions, and ordering rules as Prioritization. If the project keeps its work in a tracker, the work goes there and the brief stays in `PLAN.md`. If there is no project directory yet, give the outputs in chat. When the idea came from the owner's inbox (`~/.kata/INBOX.json`) and the project now has a directory, register it with `kata register <path>` (when the `kata` command exists) and remove the inbox item, saying where it went.
 
 This skill produces strategy, not code. Pass the kickoff prompt to `build`, whose Bootstrap phase selects the tier and scaffolds the project.

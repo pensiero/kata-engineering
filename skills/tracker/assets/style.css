@@ -1,0 +1,111 @@
+/* The tracker's visual language, shared by every tracker's page (inlined by
+   `tracker.py build`) and by the Kata hub (served as-is). Tokens first, then
+   the pieces both use: the status dot, the info tip, buttons and fields, a
+   row, an item's detail and its conversation. Layout belongs to each page. */
+:root {
+  --paper: #eceef3; --side: #e2e5ed; --surface: #ffffff; --ink: #1d2333; --muted: #646b7d;
+  --line: #d5d9e3; --hover: #e3e6ee;
+  --accent: #34459a; --accent-ink: #ffffff; --accent-soft: #dfe3f4;
+  --draft: #8c92a3; --todo: #7a8090; --doing: #34459a; --waiting: #b7791f; --done: #5b7b45; --dropped: #a3a7b2;
+  --waiting-soft: #f6ecd9; --error: #b4413a;
+  --ui: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
+  --display: Optima, Candara, "Gill Sans", "Segoe UI", sans-serif;
+  --radius: 6px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #161a26; --side: #121520; --surface: #1e2333; --ink: #e6e8ef; --muted: #9aa0b3;
+  --line: #2c3246; --hover: #232941;
+  --accent: #8e9df0; --accent-ink: #161a26; --accent-soft: #283160;
+  --draft: #7c8296; --todo: #8c92a3; --doing: #8e9df0; --waiting: #e2a94b; --done: #94bc7a; --dropped: #5e6476;
+  --waiting-soft: #3a2f1c; --error: #e0776f; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #161a26; --side: #121520; --surface: #1e2333; --ink: #e6e8ef; --muted: #9aa0b3;
+  --line: #2c3246; --hover: #232941;
+  --accent: #8e9df0; --accent-ink: #161a26; --accent-soft: #283160;
+  --draft: #7c8296; --todo: #8c92a3; --doing: #8e9df0; --waiting: #e2a94b; --done: #94bc7a; --dropped: #5e6476;
+  --waiting-soft: #3a2f1c; --error: #e0776f; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--ui); font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-family: var(--display); font-weight: 500; margin: 0; text-wrap: balance; }
+h1 { font-size: 29px; line-height: 1.2; letter-spacing: -.005em; }
+h2 { font-size: 18.75px; line-height: 1.3; }
+p { margin: 0; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* Status: one dot, its colour the status. A draft is only a ring. */
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; display: inline-block; background: var(--todo); }
+.dot.draft { background: transparent; box-shadow: inset 0 0 0 1.5px var(--draft); }
+.dot.doing { background: var(--doing); }
+.dot.waiting { background: var(--waiting); }
+.dot.done { background: var(--done); }
+.dot.dropped { background: transparent; box-shadow: inset 0 0 0 1.5px var(--dropped); }
+.dot.stale { box-shadow: 0 0 0 3px var(--waiting-soft); }
+
+/* Info tip: a small "i" that explains a term on hover or focus. */
+.tip { position: relative; display: inline-grid; place-items: center; width: 15px; height: 15px; margin-left: 4px;
+  border-radius: 50%; border: 1px solid var(--line); color: var(--muted); font: italic 600 10px/1 Georgia, serif;
+  cursor: help; vertical-align: 1px; flex: none; }
+.tip::before { content: "i"; }
+.tip::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+  width: max-content; max-width: 260px; padding: 7px 10px; border-radius: var(--radius); background: var(--ink); color: var(--paper);
+  font: 400 12.5px/1.45 var(--ui); white-space: normal; text-align: left; pointer-events: none; opacity: 0; visibility: hidden; z-index: 30; }
+.tip:hover::after, .tip:focus-visible::after { opacity: 1; visibility: visible; }
+.tip.below::after { bottom: auto; top: calc(100% + 8px); }
+.tip.left::after { left: auto; right: -6px; transform: none; }
+
+/* Buttons and fields */
+button { font: inherit; color: inherit; }
+.btn { font: 500 13.5px/1 var(--ui); border-radius: var(--radius); padding: 8px 14px; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
+.btn.quiet { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.quiet:hover { border-color: var(--muted); }
+.btn.link { background: none; border: 0; padding: 4px 2px; color: var(--accent); }
+.btn.danger { background: transparent; color: var(--error); border-color: transparent; }
+.btn[disabled] { opacity: .45; cursor: default; }
+textarea, input[type="text"], select {
+  width: 100%; font: 14.5px/1.45 var(--ui); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; }
+textarea { resize: vertical; min-height: 64px; }
+textarea:focus, input[type="text"]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+
+/* A row: one item in a list. */
+.row { display: flex; gap: 12px; align-items: center; padding: 9px 12px; border-radius: var(--radius); min-width: 0; cursor: pointer; }
+.row:hover { background: var(--hover); }
+.row .title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row.done .title, .row.dropped .title { color: var(--muted); }
+.row.dropped .title { text-decoration: line-through; text-decoration-color: var(--dropped); }
+.row .where { color: var(--muted); font-size: 13px; white-space: nowrap; flex: none; max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
+.flag { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; white-space: nowrap; flex: none; }
+.flag.unread { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+.flag.me { color: var(--waiting); border-color: var(--waiting-soft); background: var(--waiting-soft); }
+
+/* An item's detail: context, plan, the question, the conversation. */
+.detail { display: flex; flex-direction: column; gap: 16px; }
+.detail .lbl { font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 3px; }
+.detail .text { white-space: pre-line; max-width: 68ch; overflow-wrap: anywhere; }
+.detail .question { background: var(--waiting-soft); border-radius: var(--radius); padding: 12px 14px; }
+.detail .question .lbl { color: var(--waiting); }
+.detail .refs { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.status-line { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13.5px; flex-wrap: wrap; }
+.thread { display: flex; flex-direction: column; gap: 8px; }
+.msg { max-width: 88%; padding: 8px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line);
+  white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14.5px; }
+.msg.owner { align-self: flex-end; background: var(--accent-soft); border-color: transparent; }
+.msg.pending { border-style: dashed; border-color: var(--accent); background: transparent; }
+.msg .who { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+table.mini { border-collapse: collapse; font-size: 13.5px; }
+table.mini td, table.mini th { padding: 3px 14px 3px 0; text-align: right; }
+table.mini th { font-weight: 600; color: var(--muted); }
+table.mini td:first-child, table.mini th:first-child { text-align: left; }
+.tw { overflow-x: auto; }
+.empty { color: var(--muted); padding: 14px 12px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

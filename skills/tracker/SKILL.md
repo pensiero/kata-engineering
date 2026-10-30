@@ -1,6 +1,6 @@
 ---
 name: tracker
-description: Track a project's work items, the questions waiting on the owner, and what was done, in a versioned TRACKER.json with a static HTML page beside it that the owner opens from disk and replies on. Use when asked to track work or progress, keep a backlog or to-do list, list findings to fix one by one, collect the owner's answers, check whether the owner replied, or turn a PLAN.md into a tracker. Use it unasked whenever many things need the owner's check or decision together — a review's findings, a before/after list of changes, several open questions — instead of a long list in chat. Also use at the start of a session in a repository that has a TRACKER.json, and whenever the owner pastes replies copied from a tracker page.
+description: Track a project's work items, the questions waiting on the owner, and what was done, in a versioned TRACKER.json with a static HTML page beside it that the owner opens from disk and replies on. Use when asked to track work or progress, keep a backlog or to-do list, list findings to fix one by one, collect the owner's answers, check whether the owner replied, work an item the owner launched ("/tracker work …"), or turn a PLAN.md into a tracker. Use it unasked whenever many things need the owner's check or decision together — a review's findings, a before/after list of changes, several open questions — instead of a long list in chat. Also use at the start of a session in a repository that has a TRACKER.json, and whenever the owner pastes replies copied from a tracker page.
 ---
 
 # Tracker
@@ -10,7 +10,9 @@ status, a plan, the question it is waiting on and what was finally done. It
 lives in the repository as `TRACKER.json` and is versioned like code. Beside
 it sits `TRACKER.html`: a static page built from the file, which the owner
 opens straight from disk (no server, nothing loaded from the network, nothing
-uploaded) to read the tracker and type replies.
+uploaded) to read the tracker and type replies. The owner may also use the
+Kata hub (`kata-tracker`), a local app over every project's trackers that
+writes their intents straight into the files.
 
 NOT for: why a decision was made (`DECISIONS.md`), what the system is
 (`ARCHITECTURE.md`), hand-off instructions or design write-ups (ordinary docs).
@@ -22,11 +24,11 @@ into the agent's global skills directory). Everything below is relative to it:
 - `reference/schema.md`: the file format, the statuses and who moves them,
   the page's database layout. Read it before writing a tracker.
 - `scripts/tracker.py`: Python 3 standard library only. `new`, `check`,
-  `build`, `render`, `reply`. Run `build` after every hand edit: it checks the
-  file, then rewrites its page.
-- `assets/page.html`: the template every tracker's page is built from. Never
-  edit a built page or the template per project; everything a page shows comes
-  from its tracker.
+  `build`, `brief`, `show`, `render`, `reply`. Run `build` after every hand
+  edit: it checks the file, then rewrites its page.
+- `assets/page.html` and `assets/style.css`: the template every tracker's page
+  is built from, and the look it shares with the hub. Never edit a built page
+  or the template per project; everything a page shows comes from its tracker.
 
 ---
 
@@ -34,9 +36,12 @@ into the agent's global skills directory). Everything below is relative to it:
 
 1. **The file is the record.** Edit `TRACKER.json`, then run `build`. The page
    is generated: never edit it, and if it disagrees with the file, rebuild it.
-2. **The owner only replies.** The page lets the owner reply to an item, ask
-   for new ones, and copy both for the agent, nothing else. Every status
-   change, decision and outcome is written by the agent, in the file.
+2. **The owner writes intents, the agent writes the record.** The owner adds
+   items and drafts, rewrites their own items until you first work them,
+   promotes drafts, reorders, replies, reopens, and ticks their own to-dos
+   (`reference/schema.md`, "Who writes what"). Every other status change,
+   decision and outcome is yours, in the file. Never act on a `draft` or a
+   `for: me` item: they are the owner's.
 3. **Everything stays local.** Never publish a tracker or its page anywhere
    (no artifacts, no gists, no hosted pages). It is shared the way the
    repository is shared, and a private tracker not at all.
@@ -112,7 +117,7 @@ arguments, starting "Replies to …"), or answers in chat directly.
    Each reply is appended to its item's `thread` as an `owner` entry, the page
    is rebuilt, and a reply already there word for word is skipped. A `[new]`
    reply becomes a new item: `todo` in the first group, id `new-<n>`, the
-   owner's words as its title, context and first thread entry. Nothing else
+   owner's words as its title and context, `fresh` and `unread`. Nothing else
    changes.
 2. Process them (below).
 
@@ -130,22 +135,39 @@ For each new reply, decide what it means and write it into the item:
   kind, and a plan, or a question if it is the owner's call.
 - **It drops the item.** Move it to `dropped` with the reason as `outcome`.
 
-Then run `build`, and tell the owner in chat what you understood from each
+Clear `unread` (and `fresh`) on every item you processed, so neither you nor
+the owner sees it as unseen again. Then run `build`, and tell the owner in chat what you understood from each
 reply and what happens next. If a reply contradicts the project's own rules,
 say so rather than following it silently.
 
 ## Work an item
 
-- Starting: `doing`. Finishing: `done`, `outcome`, `refs`, `updated`.
+- Starting: `doing`, and clear `fresh` and `unread`. Finishing: `done`,
+  `outcome`, `refs`, `updated`.
+- Size it yourself, and pick the smallest shape that fits:
+  1. do it directly;
+  2. split it into items in the same tracker;
+  3. grow it into its own tracker, `trackers/<name>.json`: the item stays
+     `doing` with `spawned` set to that path, and closes when that tracker does;
+  4. an inbox item (`~/.kata/INBOX.json`) that is a project of its own: move
+     it there with `project-kickoff`, and register the new project
+     (`kata register <path>`, when the `kata` command exists).
 - Discovered on the way: a new item, never a silent fix outside the tracker.
 - Blocked on the owner: `waiting` with a `question` and your recommendation.
+- Something only the owner can do: a `for: me` item, with what they need.
 - Run `build` after every change, so the page never lags the file.
+
+When invoked as `/tracker work <file> <id>` (the hub's Launch button), run
+`tracker.py show <file> <id>` and work that item as above.
 
 ## At the start of a session
 
-If the repository has `TRACKER.json` or `trackers/*.json`, read it and mention
-the `waiting` items when they bear on the task. If a page is older than its
-tracker or missing, run `build`.
+If the repository has `TRACKER.json` or `trackers/*.json`, run
+`tracker.py brief` from the repository root: a few lines per tracker, with
+what the owner added or said that you have not processed yet. Read the whole
+file only when you edit it, and an item with `show`. Mention the owner's news
+and the `waiting` items when they bear on the task. If a page is older than
+its tracker or missing, run `build`.
 
 ## Close a tracker
 

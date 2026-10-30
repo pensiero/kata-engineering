@@ -8,12 +8,20 @@ to read or write it — any agent can edit the JSON by hand and run `check`.
     tracker.py new     PATH --title T --summary S [--groups now,next,later]
     tracker.py check   PATH
     tracker.py build   PATH                  # check, then write PATH's page
+    tracker.py brief   [PATH]                # what needs the agent, in a few lines
+    tracker.py show    PATH ID               # one item in full
     tracker.py render  PATH [--status waiting] [--group G]
     tracker.py reply   PATH ID TEXT          # one owner reply
     tracker.py reply   PATH --from FILE      # replies copied from the page ('-' = stdin)
 
 A reply addressed to "new" ("[new] …") is a new item from the owner: it is
 added as a `todo` in the first group, for the agent to title and place.
+`brief` without a PATH reads TRACKER.json and trackers/*.json in the current
+directory.
+
+The owner's actions (add, edit, delete, promote, move, reply, reopen, tick)
+are functions here too, for the hub that writes them; `act` applies one to a
+file. Each refuses, with a reason, when it no longer applies to the file.
 
 The page is PATH with an .html suffix, written next to it: a static file with
 the tracker embedded, opened from disk. `new`, `build` and `reply` rewrite it,
@@ -22,14 +30,19 @@ so it always matches the file it sits beside.
 import argparse
 import html
 import json
+import os
 import re
 import sys
+import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-SCHEMA = 1
-STATUSES = ("todo", "doing", "waiting", "done", "dropped")
+SCHEMA = 2
+SCHEMAS = (1, 2)      # schema 2 only adds to schema 1; any write by this script sets 2
+STATUSES = ("draft", "todo", "doing", "waiting", "done", "dropped")
+CLOSED = ("done", "dropped")
 KINDS = ("task", "decision", "check")
+FOR = ("agent", "me")
 AUTHORS = ("owner", "agent")
 MAX_TITLE = 60        # "<Project> · <scope>"
 MAX_SUMMARY = 240     # two sentences: what it holds, how long it lives
@@ -40,10 +53,18 @@ ID_RE = re.compile(r"^[A-Za-z0-9_\-.~:@+]{1,64}$")
 REPLY_RE = re.compile(r"^\[([A-Za-z0-9_\-.~:@+]{1,64})\]\s?(.*)$")
 NEW = "new"           # the reply id the page uses for a new item; never an item's id
 MAX_NEW_TITLE = 80
-TEMPLATE = Path(__file__).resolve().parent.parent / "assets" / "page.html"
+ASSETS = Path(__file__).resolve().parent.parent / "assets"
+TEMPLATE = ASSETS / "page.html"
+STYLE = ASSETS / "style.css"      # shared with the Kata hub
 
-STATUS_LABEL = {"todo": "To do", "doing": "In progress", "waiting": "Needs you",
+STATUS_LABEL = {"draft": "Draft", "todo": "To do", "doing": "In progress", "waiting": "Needs you",
                 "done": "Done", "dropped": "Dropped"}
+BRIEF_LIST = 5        # items per list in `brief`
+BRIEF_TEXT = 90       # characters per line in `brief`
+
+
+class Refused(Exception):
+    """An owner action that no longer applies to the file, with the reason."""
 
 
 def now_iso():
@@ -56,8 +77,17 @@ def load(path):
 
 
 def save(path, tracker):
+    """Write atomically: a reader (the hub, an agent) never sees half a file."""
     text = json.dumps(tracker, indent=2, ensure_ascii=False) + "\n"
-    Path(path).write_text(text, encoding="utf-8")
+    path = Path(path)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix="." + path.name + ".")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        os.unlink(tmp)
+        raise
 
 
 # ---------------------------------------------------------------- check
@@ -67,7 +97,7 @@ def problems(t):
     out = []
     if not isinstance(t, dict):
         return ["The tracker must be a JSON object."]
-    if t.get("schema") != SCHEMA:
+    if t.get("schema") not in SCHEMAS:
         out.append(f"'schema' must be {SCHEMA}.")
     title, summary = str(t.get("title") or "").strip(), str(t.get("summary") or "").strip()
     if not title:
@@ -94,6 +124,7 @@ def problems(t):
     if not isinstance(items, list):
         return out + ["'items' must be a list."]
     seen = set()
+    all_ids = {i.get("id") for i in items if isinstance(i, dict)}
     for n, it in enumerate(items):
         where = f"Item {it.get('id') or '#' + str(n + 1)}" if isinstance(it, dict) else f"Item #{n + 1}"
         if not isinstance(it, dict):
@@ -118,6 +149,21 @@ def problems(t):
             out.append(f"{where}: status must be one of {', '.join(STATUSES)}.")
         if it.get("kind", "task") not in KINDS:
             out.append(f"{where}: kind must be one of {', '.join(KINDS)}.")
+        if it.get("for", "agent") not in FOR:
+            out.append(f"{where}: 'for' must be agent or me.")
+        for flag in ("fresh", "unread"):
+            if not isinstance(it.get(flag, False), bool):
+                out.append(f"{where}: '{flag}' must be true or false.")
+        if not isinstance(it.get("spawned", ""), str):
+            out.append(f"{where}: 'spawned' must be the path of the tracker it grew into.")
+        blocked = it.get("blocked_by", [])
+        if not (isinstance(blocked, list) and all(isinstance(b, str) and b for b in blocked)):
+            out.append(f"{where}: 'blocked_by' must be a list of item ids.")
+        else:
+            for b in blocked:
+                if "/" not in b and b not in all_ids:
+                    out.append(f"{where}: blocked by '{b}', which is not an item here "
+                               "(an item in another project is '<project>/<id>').")
         if status == "waiting" and not str(it.get("question") or "").strip():
             out.append(f"{where} is waiting on the owner but has no 'question'.")
         if status in ("done", "dropped") and not str(it.get("outcome") or "").strip():
@@ -184,6 +230,7 @@ def build_page(t, source):
     data = json.dumps({"source": source, "tracker": t}, ensure_ascii=False, indent=1)
     data = data.replace("<", "\\u003c")     # "<" only occurs inside strings; keeps </script> out
     return (TEMPLATE.read_text(encoding="utf-8")
+            .replace("/*__TRACKER_STYLE__*/", STYLE.read_text(encoding="utf-8"))
             .replace("__TRACKER_TITLE__", html.escape(t["title"]))
             .replace("__TRACKER_DATA__", data))
 
@@ -220,37 +267,196 @@ def parse_replies(text):
     return [(iid, "\n".join(lines).strip()) for iid, lines in out if "\n".join(lines).strip()]
 
 
-def new_item(t, text, at):
-    """A `todo` in the first group holding the owner's words: the first line as
-    a provisional title, the whole text as context and as the thread's first
-    entry. The agent gives it its real title, group and kind."""
+def free_id(t):
     taken = {i["id"] for i in t["items"]}
     n = 1
     while f"{NEW}-{n}" in taken:
         n += 1
+    return f"{NEW}-{n}"
+
+
+def owner_words(text):
+    """The owner's text as (title, context): the first line as a provisional
+    title, the whole text as context when there is more than that line."""
+    text = text.strip()
     first = text.splitlines()[0].strip()
     title = first if len(first) <= MAX_NEW_TITLE else first[:MAX_NEW_TITLE - 1].rstrip() + "…"
+    return title, (text if text != title else "")
+
+
+def said(it):
+    """What the owner wrote for an item of theirs: its context, else its title."""
+    return it.get("context") or it["title"]
+
+
+def pending(it):
+    """Whether the item holds something from the owner the agent has not
+    processed yet (`unread`). Drafts and the owner's own to-dos are never the
+    agent's to act on."""
+    return bool(it.get("unread")) and it["status"] != "draft" and it.get("for") != "me"
+
+
+def mark_unread(it):
+    if it["status"] != "draft" and it.get("for") != "me":
+        it["unread"] = True
+
+
+# ---------------------------------------------------------------- owner actions
+# What the owner may write (reference/schema.md, "Who writes what"). An item
+# the owner added stays theirs to edit or delete while it is `fresh`, that is
+# until an agent first works on it and clears the flag. Every owner write the
+# agent should look at sets `unread`; the agent clears it once processed.
+
+def find(t, iid):
+    for it in t["items"]:
+        if it["id"] == iid:
+            return it
+    raise Refused(f"There is no item '{iid}' any more; it may have been removed or renamed.")
+
+
+def touch(it):
+    it["updated"] = date.today().isoformat()
+
+
+def add(t, text, status="todo", for_me=False, group=None):
+    """A new item from the owner: `todo` (the agent may take it) or `draft`
+    (not yet), `fresh` until an agent works on it."""
+    if not text.strip():
+        raise Refused("An item needs some text.")
+    if status not in ("todo", "draft"):
+        raise Refused("A new item is either a draft or a to-do.")
+    gids = [g["id"] for g in t["groups"]]
+    if group is not None and group not in gids:
+        raise Refused(f"There is no group '{group}' any more.")
+    title, context = owner_words(text)
     today = date.today().isoformat()
-    item = {"id": f"{NEW}-{n}", "group": t["groups"][0]["id"], "title": title, "kind": "task",
-            "status": "todo", "context": text if text != title else "",
-            "thread": [{"by": "owner", "at": at, "text": text}], "created": today, "updated": today}
+    item = {"id": free_id(t), "group": group or gids[0], "title": title, "kind": "task",
+            "status": status, "context": context, "fresh": True, "created": today, "updated": today}
+    if for_me:
+        item["for"] = "me"
+    mark_unread(item)
     t["items"].append(item)
     return item
+
+
+def edit(t, iid, text):
+    """Rewrite an item of the owner's. Once an agent has worked on it the item
+    is the agent's record, so the new text becomes a reply instead.
+    Returns "edited" or "replied"."""
+    it = find(t, iid)
+    if not text.strip():
+        raise Refused("An item needs some text; delete it instead.")
+    if not it.get("fresh"):
+        reply(t, iid, text)
+        return "replied"
+    it["title"], it["context"] = owner_words(text)
+    touch(it)
+    return "edited"
+
+
+def delete(t, iid):
+    it = find(t, iid)
+    if not it.get("fresh"):
+        raise Refused(f"An agent has already worked on '{iid}'. Reply to ask for it to be dropped.")
+    t["items"].remove(it)
+    return it
+
+
+def promote(t, iid):
+    it = find(t, iid)
+    if it["status"] != "draft":
+        raise Refused(f"'{iid}' is not a draft any more.")
+    it["status"] = "todo"
+    mark_unread(it)
+    touch(it)
+
+
+def move(t, iid, group, before=None):
+    """Put the item in `group`, just before item `before`, or last in the group."""
+    it = find(t, iid)
+    if group not in [g["id"] for g in t["groups"]]:
+        raise Refused(f"There is no group '{group}' any more.")
+    if before == iid:
+        return
+    items = [i for i in t["items"] if i is not it]
+    if before is None:
+        at = max((n + 1 for n, i in enumerate(items) if i["group"] == group), default=len(items))
+    else:
+        at = next((n for n, i in enumerate(items) if i["id"] == before and i["group"] == group), None)
+        if at is None:
+            raise Refused(f"'{before}' is no longer in that group; reload and try again.")
+    it["group"] = group
+    items.insert(at, it)
+    t["items"] = items
+
+
+def reply(t, iid, text):
+    """One reply typed in the hub. Unlike pasted replies it is never skipped as
+    a duplicate: the owner may well say "yes" twice."""
+    it = find(t, iid)
+    if not text.strip():
+        raise Refused("A reply needs some text.")
+    it.setdefault("thread", []).append({"by": "owner", "at": now_iso(), "text": text.strip()})
+    mark_unread(it)
+    touch(it)
+
+
+def reopen(t, iid, reason=""):
+    """A closed item back to `todo`, the owner's reason in its thread."""
+    it = find(t, iid)
+    if it["status"] not in CLOSED:
+        raise Refused(f"'{iid}' is not closed.")
+    if not reason.strip() and it.get("for") != "me":
+        raise Refused("Say why it is reopened, so the agent knows what is still wrong.")
+    it["status"] = "todo"
+    if reason.strip():
+        reply(t, iid, reason)
+    touch(it)
+
+
+def tick(t, iid):
+    """The owner's own to-do, done."""
+    it = find(t, iid)
+    if it.get("for") != "me":
+        raise Refused(f"'{iid}' is the agent's to close.")
+    if it["status"] in CLOSED:
+        return
+    it["status"], it["outcome"] = "done", "Done by the owner."
+    touch(it)
+
+
+def act(path, action, *args, **kwargs):
+    """Apply one owner action to the tracker at `path`, reading it fresh, and
+    write it and its page back. Refuses rather than write over a file that is
+    unreadable or invalid (an agent may be halfway through an edit)."""
+    try:
+        t = load(path)
+    except (OSError, ValueError) as e:
+        raise Refused(f"{path} cannot be read right now ({e}).")
+    if problems(t):
+        raise Refused(f"{path} is not valid right now: {problems(t)[0]}")
+    result = action(t, *args, **kwargs)
+    issues = problems(t)
+    if issues:
+        raise Refused(issues[0])
+    t["schema"] = SCHEMA
+    save(path, t)
+    write_page(path, t)
+    return result
 
 
 def add_replies(t, replies, at=None):
     """Append each reply to its item's thread as an owner entry; a reply to
     "new" becomes a new item. A reply already in the thread word for word (for
-    a new item: in any thread) is skipped, so pasting the same text twice is
-    harmless. Statuses are NOT changed: deciding what a reply means is the
+    a new item: among the owner's unseen items) is skipped, so pasting the
+    same text twice is harmless. Statuses are NOT changed: deciding what a reply means is the
     agent's job. Returns (added [(id, text)], unknown ids)."""
     by_id = {i["id"]: i for i in t["items"]}
     added, unknown = [], []
     for iid, text in replies:
         if iid == NEW:
-            if not any(m.get("by") == "owner" and m.get("text", "").strip() == text
-                       for i in t["items"] for m in i.get("thread", [])):
-                added.append((new_item(t, text, at or now_iso())["id"], text))
+            if not any(said(i).strip() == text for i in t["items"] if i.get("fresh")):
+                added.append((add(t, text)["id"], text))
             continue
         item = by_id.get(iid)
         if item is None:
@@ -260,9 +466,66 @@ def add_replies(t, replies, at=None):
         if any(m.get("by") == "owner" and m.get("text", "").strip() == text for m in thread):
             continue
         thread.append({"by": "owner", "at": at or now_iso(), "text": text})
+        mark_unread(item)
         item["updated"] = date.today().isoformat()
         added.append((iid, text))
     return added, unknown
+
+
+# ---------------------------------------------------------------- brief, show
+
+def clip(text, n=BRIEF_TEXT):
+    text = " ".join(str(text).split())
+    return text if len(text) <= n else text[:n - 1].rstrip() + "…"
+
+
+def brief(t, source):
+    """What an agent needs at the start of a session, in a few lines whatever
+    the tracker's size: what the owner added or said, what waits on them,
+    what is in progress and what comes next. `show` gives an item in full."""
+    items = t["items"]
+    order = {g["id"]: n for n, g in enumerate(t["groups"])}
+    items = sorted(items, key=lambda i: order.get(i["group"], len(order)))   # stable: keeps file order
+    mine = [i for i in items if i.get("for") == "me" and i["status"] not in CLOSED]
+    agents = [i for i in items if i.get("for") != "me"]
+    new = [i for i in agents if pending(i)]
+    lists = [
+        ("From the owner, not yet seen", new, 10,
+         lambda i: "new: " + clip(said(i)) if i.get("fresh") or not i.get("thread")
+         else clip(i["title"], 40) + " · owner: " + clip(i["thread"][-1]["text"], 50)),
+        ("Waiting on the owner", [i for i in agents if i["status"] == "waiting" and not pending(i)], BRIEF_LIST,
+         lambda i: clip(i.get("question") or i["title"])),
+        ("In progress", [i for i in agents if i["status"] == "doing" and not pending(i)], BRIEF_LIST,
+         lambda i: clip(i["title"])),
+        ("Next to do", [i for i in agents if i["status"] == "todo" and not pending(i)], BRIEF_LIST,
+         lambda i: clip(i["title"]) + (" · blocked by " + ", ".join(i["blocked_by"]) if i.get("blocked_by") else "")),
+    ]
+    count = lambda s: sum(1 for i in agents if i["status"] == s)
+    tally = [f"{STATUS_LABEL[s].lower()} {count(s)}" for s in ("waiting", "doing", "todo") if count(s)]
+    tally += [f"closed {count('done') + count('dropped')}"] if count("done") + count("dropped") else []
+    tally += [f"drafts {count('draft')} (the owner's, not yet for you)"] if count("draft") else []
+    tally += [f"owner's own to-dos {len(mine)}"] if mine else []
+    lines = [f"{t['title']} ({source}): " + (", ".join(tally) or "empty")]
+    for head, rows, cap, fmt in lists:
+        if not rows:
+            continue
+        lines.append(f"{head}:")
+        lines += [f"  [{i['id']}] {fmt(i)}" for i in rows[:cap]]
+        if len(rows) > cap:
+            lines.append(f"  … and {len(rows) - cap} more")
+    if new:
+        lines.append(f"Read one in full: tracker.py show {source} <id>")
+    return "\n".join(lines) + "\n"
+
+
+def show(t, iid):
+    return json.dumps(find(t, iid), indent=2, ensure_ascii=False) + "\n"
+
+
+def found_trackers(root="."):
+    """The trackers of the repository at `root`: its main one, then its efforts."""
+    root = Path(root)
+    return [p for p in [root / "TRACKER.json"] + sorted((root / "trackers").glob("*.json")) if p.is_file()]
 
 
 # ---------------------------------------------------------------- new
@@ -289,6 +552,8 @@ def main(argv=None):
     a.add_argument("--groups", default="now,next,later")
     a = sub.add_parser("check");  a.add_argument("path")
     a = sub.add_parser("build");  a.add_argument("path")
+    a = sub.add_parser("brief");  a.add_argument("path", nargs="?")
+    a = sub.add_parser("show");   a.add_argument("path"); a.add_argument("id")
     a = sub.add_parser("render"); a.add_argument("path"); a.add_argument("--status"); a.add_argument("--group")
     a = sub.add_parser("reply");  a.add_argument("path"); a.add_argument("id", nargs="?"); a.add_argument("text", nargs="?")
     a.add_argument("--from", dest="source")
@@ -302,6 +567,13 @@ def main(argv=None):
         save(args.path, t)
         print(f"Created {args.path} and {write_page(args.path, t)}.")
         return 0
+
+    if args.cmd == "brief" and not args.path:
+        paths = found_trackers()
+        if not paths:
+            print("No TRACKER.json or trackers/*.json here.")
+            return 0
+        return max(main(["brief", str(p)]) for p in paths)
 
     t = load(args.path)
     issues = problems(t)
@@ -319,6 +591,16 @@ def main(argv=None):
         return 0
     if args.cmd == "render":
         sys.stdout.write(render(t, args.status, args.group))
+        return 0
+    if args.cmd == "brief":
+        sys.stdout.write(brief(t, args.path))
+        return 0
+    if args.cmd == "show":
+        try:
+            sys.stdout.write(show(t, args.id))
+        except Refused as e:
+            print(e, file=sys.stderr)
+            return 1
         return 0
     if args.cmd == "reply":
         if args.source:
