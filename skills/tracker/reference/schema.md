@@ -40,7 +40,7 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 | `title` | `<Project> · <scope>`: `Compass · Plan` for the main tracker, `Compass · Calculation review` for one effort. At most 60 characters. Also the page's title. |
 | `summary` | Two sentences, at most 240 characters. First what it holds, then how long it lives ("Long-lived: …" or "Temporary: deleted once every item is closed."). Pointers to other docs belong in the project's `CLAUDE.md`, not here. |
 | `principles` | Optional. How to choose what comes next when nobody is there to ask (a `PLAN.md`'s "Prioritization"). The page shows them under "How the next item is chosen". |
-| `groups` | Ordered sections. Their order is the order of work. `gate` says what must be true before a group starts; leave it empty when there is none. Typical sets: `now / next / later`, or one group per area for a review. |
+| `groups` | Ordered sections. Their order is the order of work. `gate` says what must be true before a group starts; leave it empty when there is none. Typical sets: `now / next / later`, or one group per area for a review. A section says what the work is or when it comes, never where it stands: no section repeats a status. |
 | `items` | The work, in display order within each group. |
 
 ## Items
@@ -123,7 +123,9 @@ when the action no longer applies:
 | rewrite or delete an item they added | only while `fresh`; after that a rewrite becomes a reply |
 | promote a draft | — |
 | move an item to a group, or before another item | — |
+| rename, add or reorder sections (groups); remove one | only an empty one |
 | reply on any item | — |
+| rewrite or delete their reply | only while no agent has read it: the item is `unread` and no agent entry follows |
 | reopen a closed item | with a reason, unless it is their own to-do |
 | tick their own to-do done | `for: me` only |
 

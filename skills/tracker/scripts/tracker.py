@@ -8,7 +8,7 @@ to read or write it — any agent can edit the JSON by hand and run `check`.
     tracker.py new     PATH --title T --summary S [--groups now,next,later]
     tracker.py check   PATH
     tracker.py build   PATH                  # check, then write PATH's page
-    tracker.py brief   [PATH]                # what needs the agent, in a few lines
+    tracker.py brief   [PATH]                # what needs the agent, in a few lines; refreshes a stale page
     tracker.py show    PATH ID               # one item in full
     tracker.py render  PATH [--status waiting] [--group G]
     tracker.py reply   PATH ID TEXT          # one owner reply
@@ -19,8 +19,9 @@ added as a `todo` in the first group, for the agent to title and place.
 `brief` without a PATH reads TRACKER.json and trackers/*.json in the current
 directory.
 
-The owner's actions (add, edit, delete, promote, move, reply, reopen, tick)
-are functions here too, for the hub that writes them; `act` applies one to a
+The owner's actions (add, edit, delete, promote, move, reply, edit_reply,
+delete_reply, reopen, tick, and the sections' add_group, rename_group,
+move_group, delete_group) are functions here too, for the hub that writes them; `act` applies one to a
 file. Each refuses, with a reason, when it no longer applies to the file.
 
 The page is PATH with an .html suffix, written next to it: a static file with
@@ -251,6 +252,19 @@ def write_page(path, t):
     return out
 
 
+def refresh_page(path, t):
+    """Rebuild the page if it is missing or no longer what `build` would
+    write (the tracker was edited by hand, or the template changed).
+    Returns the page's path when it was rewritten."""
+    out = page_path(path)
+    try:
+        if out.read_text(encoding="utf-8") == build_page(t, repo_relative(path)):
+            return None
+    except OSError:
+        pass
+    return write_page(path, t)
+
+
 # ---------------------------------------------------------------- replies
 
 def parse_replies(text):
@@ -401,6 +415,38 @@ def reply(t, iid, text):
     touch(it)
 
 
+def own_reply(t, iid, n, at):
+    """Thread entry `n` of an item, if it is an owner reply no agent has read
+    yet: the item is `unread` and no agent entry follows it. `at` must match,
+    so a thread that changed meanwhile is never edited in the wrong place."""
+    it = find(t, iid)
+    thread = it.get("thread") or []
+    if not (isinstance(n, int) and 0 <= n < len(thread)) or thread[n].get("at") != at or thread[n].get("by") != "owner":
+        raise Refused("That reply is not there any more; reload and try again.")
+    if not it.get("unread") or any(m.get("by") != "owner" for m in thread[n + 1:]):
+        raise Refused("An agent has already read that reply. Send a new one instead.")
+    return it, thread
+
+
+def edit_reply(t, iid, n, at, text):
+    it, thread = own_reply(t, iid, n, at)
+    if not text.strip():
+        raise Refused("A reply needs some text; delete it instead.")
+    thread[n]["text"] = text.strip()
+    touch(it)
+
+
+def delete_reply(t, iid, n, at):
+    """Delete an unread reply. When nothing of the owner's is left unseen (an
+    item of theirs still `fresh` always is), the item is no longer `unread`."""
+    it, thread = own_reply(t, iid, n, at)
+    del thread[n]
+    last_agent = max((k for k, m in enumerate(thread) if m.get("by") != "owner"), default=-1)
+    if not it.get("fresh") and not any(m.get("by") == "owner" for m in thread[last_agent + 1:]):
+        it.pop("unread", None)
+    touch(it)
+
+
 def reopen(t, iid, reason=""):
     """A closed item back to `todo`, the owner's reason in its thread."""
     it = find(t, iid)
@@ -423,6 +469,59 @@ def tick(t, iid):
         return
     it["status"], it["outcome"] = "done", "Done by the owner."
     touch(it)
+
+
+# Sections (groups) are the tracker's order of work. The agent sets them when
+# it starts the tracker; the owner may rename, add, reorder and remove empty ones.
+
+def group_of(t, gid):
+    for g in t["groups"]:
+        if g["id"] == gid:
+            return g
+    raise Refused(f"There is no section '{gid}' any more; reload and try again.")
+
+
+def add_group(t, title):
+    """A new section, last. Its id comes from its name."""
+    title = title.strip()
+    if not title:
+        raise Refused("A section needs a name.")
+    taken = {g["id"] for g in t["groups"]}
+    base = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40] or "section"
+    gid, n = base, 2
+    while gid in taken:
+        gid, n = f"{base}-{n}", n + 1
+    t["groups"].append({"id": gid, "title": title, "note": "", "gate": ""})
+    return gid
+
+
+def rename_group(t, gid, title):
+    if not title.strip():
+        raise Refused("A section needs a name.")
+    group_of(t, gid)["title"] = title.strip()
+
+
+def move_group(t, gid, before=None):
+    """Put section `gid` just before section `before`, or last."""
+    g = group_of(t, gid)
+    if before == gid:
+        return
+    rest = [x for x in t["groups"] if x is not g]
+    at = len(rest) if before is None else next((n for n, x in enumerate(rest) if x["id"] == before), None)
+    if at is None:
+        raise Refused(f"There is no section '{before}' any more; reload and try again.")
+    rest.insert(at, g)
+    t["groups"] = rest
+
+
+def delete_group(t, gid):
+    """Remove a section with nothing in it, closed items included."""
+    g = group_of(t, gid)
+    if any(i["group"] == gid for i in t["items"]):
+        raise Refused(f"'{g['title']}' still holds items. Move them out first.")
+    if len(t["groups"]) == 1:
+        raise Refused("A tracker keeps at least one section.")
+    t["groups"].remove(g)
 
 
 def act(path, action, *args, **kwargs):
@@ -492,7 +591,7 @@ def brief(t, source):
     lists = [
         ("From the owner, not yet seen", new, 10,
          lambda i: "new: " + clip(said(i)) if i.get("fresh") or not i.get("thread")
-         else clip(i["title"], 40) + " · owner: " + clip(i["thread"][-1]["text"], 50)),
+         else clip(i["title"], 40) + f" · {i['thread'][-1]['by']}: " + clip(i["thread"][-1]["text"], 50)),
         ("Waiting on the owner", [i for i in agents if i["status"] == "waiting" and not pending(i)], BRIEF_LIST,
          lambda i: clip(i.get("question") or i["title"])),
         ("In progress", [i for i in agents if i["status"] == "doing" and not pending(i)], BRIEF_LIST,
@@ -594,6 +693,9 @@ def main(argv=None):
         return 0
     if args.cmd == "brief":
         sys.stdout.write(brief(t, args.path))
+        rebuilt = refresh_page(args.path, t)
+        if rebuilt:
+            print(f"(Rebuilt {rebuilt}: it was out of date. Commit it with your work.)")
         return 0
     if args.cmd == "show":
         try:

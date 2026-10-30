@@ -48,17 +48,22 @@ a { color: var(--accent); }
 .dot.dropped { background: transparent; box-shadow: inset 0 0 0 1.5px var(--dropped); }
 .dot.stale { box-shadow: 0 0 0 3px var(--waiting-soft); }
 
-/* Info tip: a small "i" that explains a term on hover or focus. */
-.tip { position: relative; display: inline-grid; place-items: center; width: 15px; height: 15px; margin-left: 4px;
+/* Tooltips: any element with data-tip explains itself on hover or focus,
+   after a short pause. A .tip is the small "i" for a term with no control. */
+[data-tip] { position: relative; }
+[data-tip]::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+  width: max-content; max-width: 260px; padding: 7px 10px; border-radius: var(--radius); background: var(--ink); color: var(--paper);
+  font: 400 12.5px/1.45 var(--ui); font-style: normal; white-space: normal; text-align: left; letter-spacing: 0; text-transform: none;
+  pointer-events: none; opacity: 0; visibility: hidden; z-index: 30; transition: opacity .12s, visibility 0s .12s; }
+[data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; visibility: visible; transition: opacity .12s .35s, visibility 0s .35s; }
+.tip:hover::after, .tip:focus-visible::after { transition-delay: 0s; }
+.tip-below::after { bottom: auto; top: calc(100% + 8px); }
+.tip-left::after { left: auto; right: 0; transform: none; }
+.tip-right::after { left: 0; transform: none; }
+.tip { display: inline-grid; place-items: center; width: 15px; height: 15px; margin-left: 4px;
   border-radius: 50%; border: 1px solid var(--line); color: var(--muted); font: italic 600 10px/1 Georgia, serif;
   cursor: help; vertical-align: 1px; flex: none; }
 .tip::before { content: "i"; }
-.tip::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
-  width: max-content; max-width: 260px; padding: 7px 10px; border-radius: var(--radius); background: var(--ink); color: var(--paper);
-  font: 400 12.5px/1.45 var(--ui); white-space: normal; text-align: left; pointer-events: none; opacity: 0; visibility: hidden; z-index: 30; }
-.tip:hover::after, .tip:focus-visible::after { opacity: 1; visibility: visible; }
-.tip.below::after { bottom: auto; top: calc(100% + 8px); }
-.tip.left::after { left: auto; right: -6px; transform: none; }
 
 /* Buttons and fields */
 button { font: inherit; color: inherit; }

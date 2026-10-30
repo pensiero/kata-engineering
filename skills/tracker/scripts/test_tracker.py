@@ -202,6 +202,48 @@ class OwnerActions(unittest.TestCase):
         with self.assertRaises(tracker.Refused):
             tracker.tick(t, "T1")
 
+    def test_a_reply_no_agent_has_read_can_be_edited_or_deleted(self):
+        t = sample()
+        tracker.reply(t, "T2", "Blue.")
+        tracker.reply(t, "T2", "No, wait.")
+        first, second = t["items"][1]["thread"]
+        tracker.edit_reply(t, "T2", 0, first["at"], "Green.")
+        tracker.delete_reply(t, "T2", 1, second["at"])
+        self.assertEqual([m["text"] for m in t["items"][1]["thread"]], ["Green."])
+        with self.assertRaises(tracker.Refused):          # the thread changed under it
+            tracker.edit_reply(t, "T2", 1, second["at"], "x")
+        tracker.delete_reply(t, "T2", 0, first["at"])
+        self.assertFalse(tracker.pending(t["items"][1]))    # nothing unseen is left
+
+    def test_a_reply_the_agent_has_read_or_answered_stays(self):
+        t = sample()
+        tracker.reply(t, "T2", "Blue.")
+        at = t["items"][1]["thread"][0]["at"]
+        t["items"][1]["thread"].append({"by": "agent", "at": at, "text": "Blue it is."})
+        with self.assertRaises(tracker.Refused):
+            tracker.delete_reply(t, "T2", 0, at)
+        t["items"][1]["thread"].pop()
+        del t["items"][1]["unread"]                         # read, not answered
+        with self.assertRaises(tracker.Refused):
+            tracker.edit_reply(t, "T2", 0, at, "Green.")
+
+    def test_the_owner_renames_adds_reorders_and_removes_empty_sections(self):
+        t = sample()
+        tracker.rename_group(t, "later", "Someday")
+        self.assertEqual(tracker.add_group(t, "Ideas & bets"), "ideas-bets")
+        self.assertEqual(tracker.add_group(t, "Ideas & bets"), "ideas-bets-2")
+        tracker.move_group(t, "ideas-bets", before="now")
+        self.assertEqual([g["id"] for g in t["groups"]], ["ideas-bets", "now", "later", "ideas-bets-2"])
+        self.assertEqual(t["groups"][2]["title"], "Someday")
+        tracker.delete_group(t, "ideas-bets-2")
+        with self.assertRaises(tracker.Refused):          # holds a dropped item
+            tracker.delete_group(t, "later")
+        with self.assertRaises(tracker.Refused):
+            tracker.move_group(t, "now", before="GONE")
+        with self.assertRaises(tracker.Refused):
+            tracker.rename_group(t, "now", "  ")
+        self.assertEqual(tracker.problems(t), [])
+
     def test_act_writes_the_file_and_its_page_atomically_and_upgrades_the_schema(self):
         with tempfile.TemporaryDirectory() as d:
             path = Path(d) / "TRACKER.json"
@@ -287,6 +329,19 @@ class Brief(unittest.TestCase):
                 os.chdir(cwd)
             self.assertIn("Demo · Plan (TRACKER.json)", out.getvalue())
             self.assertIn("Demo · Review (trackers/review.json)", out.getvalue())
+
+    def test_brief_rebuilds_a_missing_or_stale_page_and_leaves_a_current_one(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "TRACKER.json"
+            tracker.save(path, sample())
+            (Path(d) / "TRACKER.html").write_text("<p>an older template</p>")
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                tracker.main(["brief", str(path)])
+            self.assertIn("Rebuilt", out.getvalue())
+            self.assertEqual((Path(d) / "TRACKER.html").read_text(), tracker.build_page(sample(), "TRACKER.json"))
+            with contextlib.redirect_stdout(io.StringIO()) as out:
+                tracker.main(["brief", str(path)])
+            self.assertNotIn("Rebuilt", out.getvalue())
 
     def test_show_prints_one_item_in_full(self):
         self.assertEqual(json.loads(tracker.show(sample(), "T2"))["question"], "Blue or green?")

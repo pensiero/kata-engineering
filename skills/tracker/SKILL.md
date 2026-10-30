@@ -38,7 +38,8 @@ into the agent's global skills directory). Everything below is relative to it:
    is generated: never edit it, and if it disagrees with the file, rebuild it.
 2. **The owner writes intents, the agent writes the record.** The owner adds
    items and drafts, rewrites their own items until you first work them,
-   promotes drafts, reorders, replies, reopens, and ticks their own to-dos
+   promotes drafts, reorders items and sections, renames and adds sections,
+   replies (and rewrites a reply until you read it), reopens, and ticks their own to-dos
    (`reference/schema.md`, "Who writes what"). Every other status change,
    decision and outcome is yours, in the file. Never act on a `draft` or a
    `for: me` item: they are the owner's.
@@ -68,7 +69,11 @@ into the agent's global skills directory). Everything below is relative to it:
    `trackers/<name>.json` for one effort (see `reference/schema.md`, "Where
    trackers live").
 2. `python3 scripts/tracker.py new <file> --title "<Project> · <scope>" --summary "<what it holds>. <how long it lives>." --groups now,next,later`
-   (or groups that fit, for example one per area of a review). Every tracker
+   (or groups that fit, for example one per area of a review). Groups are the
+   tracker's sections, in the order of work: they say what the work is or when
+   it comes, never where it stands. No "Waiting on you", "Running" or "Queued"
+   section: the status shows that, the same in every tracker and in the hub.
+   A section for closed items ("Settled") is fine. Every tracker
    follows the same title and summary shape (`reference/schema.md`), so two
    trackers' pages read alike. `new` writes the page too.
 3. Write `principles` if the order of work needs rules, the groups' `note` and
@@ -166,8 +171,8 @@ If the repository has `TRACKER.json` or `trackers/*.json`, run
 `tracker.py brief` from the repository root: a few lines per tracker, with
 what the owner added or said that you have not processed yet. Read the whole
 file only when you edit it, and an item with `show`. Mention the owner's news
-and the `waiting` items when they bear on the task. If a page is older than
-its tracker or missing, run `build`.
+and the `waiting` items when they bear on the task. `brief` also rebuilds a
+page that is missing or out of date; commit it with your work.
 
 ## Close a tracker
 
