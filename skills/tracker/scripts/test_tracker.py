@@ -229,7 +229,7 @@ class OwnerActions(unittest.TestCase):
 
     def test_the_owner_renames_adds_reorders_and_removes_empty_sections(self):
         t = sample()
-        tracker.rename_group(t, "later", "Someday")
+        tracker.edit_group(t, "later", "Someday", note="Not before spring.", gate="")
         self.assertEqual(tracker.add_group(t, "Ideas & bets"), "ideas-bets")
         self.assertEqual(tracker.add_group(t, "Ideas & bets"), "ideas-bets-2")
         tracker.move_group(t, "ideas-bets", before="now")
@@ -241,8 +241,16 @@ class OwnerActions(unittest.TestCase):
         with self.assertRaises(tracker.Refused):
             tracker.move_group(t, "now", before="GONE")
         with self.assertRaises(tracker.Refused):
-            tracker.rename_group(t, "now", "  ")
+            tracker.edit_group(t, "now", "  ")
+        self.assertEqual(t["groups"][2]["note"], "Not before spring.")
         self.assertEqual(tracker.problems(t), [])
+
+    def test_the_owner_rewrites_the_summary_and_the_rules_for_the_next_item(self):
+        t = sample()
+        tracker.edit_tracker(t, summary="What the demo needs.\nLong-lived.", principles=["Cheap first", " ", "Then the biggest"])
+        self.assertEqual((t["summary"], t["principles"]), ("What the demo needs. Long-lived.", ["Cheap first", "Then the biggest"]))
+        with self.assertRaises(tracker.Refused):
+            tracker.edit_tracker(t, summary=" ")
 
     def test_act_writes_the_file_and_its_page_atomically_and_upgrades_the_schema(self):
         with tempfile.TemporaryDirectory() as d:

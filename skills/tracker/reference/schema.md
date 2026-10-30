@@ -123,7 +123,8 @@ when the action no longer applies:
 | rewrite or delete an item they added | only while `fresh`; after that a rewrite becomes a reply |
 | promote a draft | — |
 | move an item to a group, or before another item | — |
-| rename, add or reorder sections (groups); remove one | only an empty one |
+| rename, add or reorder sections (groups), rewrite their `note` and `gate`; remove one | only an empty one |
+| rewrite the tracker's `summary` and `principles` | — |
 | reply on any item | — |
 | rewrite or delete their reply | only while no agent has read it: the item is `unread` and no agent entry follows |
 | reopen a closed item | with a reason, unless it is their own to-do |

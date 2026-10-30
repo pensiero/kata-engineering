@@ -38,7 +38,8 @@ into the agent's global skills directory). Everything below is relative to it:
    is generated: never edit it, and if it disagrees with the file, rebuild it.
 2. **The owner writes intents, the agent writes the record.** The owner adds
    items and drafts, rewrites their own items until you first work them,
-   promotes drafts, reorders items and sections, renames and adds sections,
+   promotes drafts, reorders items and sections, edits and adds sections,
+   rewrites the summary and `principles`,
    replies (and rewrites a reply until you read it), reopens, and ticks their own to-dos
    (`reference/schema.md`, "Who writes what"). Every other status change,
    decision and outcome is yours, in the file. Never act on a `draft` or a

@@ -20,8 +20,8 @@ added as a `todo` in the first group, for the agent to title and place.
 directory.
 
 The owner's actions (add, edit, delete, promote, move, reply, edit_reply,
-delete_reply, reopen, tick, and the sections' add_group, rename_group,
-move_group, delete_group) are functions here too, for the hub that writes them; `act` applies one to a
+delete_reply, reopen, tick, edit_tracker, and the sections' add_group,
+edit_group, move_group, delete_group) are functions here too, for the hub that writes them; `act` applies one to a
 file. Each refuses, with a reason, when it no longer applies to the file.
 
 The page is PATH with an .html suffix, written next to it: a static file with
@@ -472,7 +472,7 @@ def tick(t, iid):
 
 
 # Sections (groups) are the tracker's order of work. The agent sets them when
-# it starts the tracker; the owner may rename, add, reorder and remove empty ones.
+# it starts the tracker; the owner may edit, add, reorder and remove empty ones.
 
 def group_of(t, gid):
     for g in t["groups"]:
@@ -495,10 +495,28 @@ def add_group(t, title):
     return gid
 
 
-def rename_group(t, gid, title):
+def edit_group(t, gid, title, note=None, gate=None):
+    """A section's name, and, when given, the line under it (`note`) and what
+    must be true before it starts (`gate`)."""
     if not title.strip():
         raise Refused("A section needs a name.")
-    group_of(t, gid)["title"] = title.strip()
+    g = group_of(t, gid)
+    g["title"] = title.strip()
+    if note is not None:
+        g["note"] = note.strip()
+    if gate is not None:
+        g["gate"] = gate.strip()
+
+
+def edit_tracker(t, summary=None, principles=None):
+    """What the tracker holds (`summary`), and the rules that pick the next
+    item (`principles`, one per entry)."""
+    if summary is not None:
+        if not summary.strip():
+            raise Refused("A tracker needs a summary: what it holds, and how long it lives.")
+        t["summary"] = " ".join(summary.split())
+    if principles is not None:
+        t["principles"] = [p.strip() for p in principles if p.strip()]
 
 
 def move_group(t, gid, before=None):
