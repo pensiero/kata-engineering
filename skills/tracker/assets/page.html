@@ -109,8 +109,9 @@ function renderHead() {
   const count = (k) => items().filter((i) => inTab(i, k)).length;
   const open = openTab();
   const pick = (k) => { tab = k; try { localStorage.setItem("trackerTab", k); } catch (e) {} render(); };
-  const tabEl = ([k, label]) => el("button", { type: "button", class: "tab", role: "tab", "aria-selected": String(k === open), onclick: () => pick(k) },
-    el("span", { class: "dot " + (k === "archive" ? "done" : k) }), label, el("span", { class: "n" }, String(count(k))));
+  const tabEl = ([k, label]) => el("button", { type: "button", class: k === NEEDS ? "tab filter" : "tab", role: "tab", "aria-selected": String(k === open),
+      title: k === NEEDS ? "Not a stage: everything in To do or In progress that is waiting for you" : null, onclick: () => pick(k) },
+    k === NEEDS ? null : el("span", { class: "dot " + (k === "archive" ? "done" : k) }), label, el("span", { class: "n" }, String(count(k))));
   $("tabs").replaceChildren(...(count(NEEDS) ? [tabEl([NEEDS, "Needs you"]), el("span", { class: "tab-gap" })] : []),
     ...STAGES.filter(([k]) => count(k)).map(tabEl));
   const last = items().map((i) => i.updated || "").sort().pop();

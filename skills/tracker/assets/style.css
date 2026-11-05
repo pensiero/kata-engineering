@@ -88,15 +88,21 @@ textarea:focus, input[type="text"]:focus, select:focus { outline: none; border-c
 .flag { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; white-space: nowrap; flex: none; }
 .flag.me, .flag.needs { color: var(--waiting); border-color: var(--waiting-soft); background: var(--waiting-soft); }
 
-/* Needs you, a filter over To do and In progress, set apart from the stages
-   beside it, which are in the one order they are ever shown. */
+/* The stages are tabs on a line, in the one order they are ever shown. Needs
+   you is not one of them: it filters To do and In progress, so it is drawn as
+   the tag it filters on, floating clear of the line and set off by a divider. */
 .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-top: 20px; overflow-x: auto; }
 .tab { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border: 0; background: none; cursor: pointer; color: var(--muted);
   border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; font-size: 14.5px; }
 .tab:hover { color: var(--ink); }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 .tab .n { font-size: 13px; color: var(--muted); }
-.tab-gap { flex: none; width: 1px; margin: 8px 8px 9px; background: var(--line); }
+.tab.filter { align-self: center; margin: 0 0 5px; padding: 3px 11px; border: 1px solid transparent; border-radius: 999px;
+  color: var(--waiting); background: var(--waiting-soft); font-size: 14px; font-weight: 600; }
+.tab.filter .n { color: inherit; }
+.tab.filter:hover { color: var(--waiting); border-color: var(--waiting); }
+.tab.filter[aria-selected="true"] { color: var(--ink); border-color: var(--waiting); }
+.tab-gap { flex: none; width: 1px; margin: 8px 10px 9px 12px; background: var(--line); }
 
 /* An item's detail: context, plan, the question, the conversation. */
 .detail { display: flex; flex-direction: column; gap: 16px; }
