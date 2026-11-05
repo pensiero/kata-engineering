@@ -89,7 +89,7 @@ In PROPOSE mode, put the plan in a tracker under `trackers/` (`tracker` skill), 
 
 - Summary: one-sentence recommendation and the naming principles you applied.
 - One item per rename (old → new, why, and whether it is high value, medium value or a split), in the order to do them.
-- One item listing what you would leave alone and what you would NOT do, with the reasoning, waiting on the user's agreement — so the no-renames are visible decisions too.
+- One item listing what you would leave alone and what you would NOT do, with the reasoning and a `question` asking for the user's agreement — so the no-renames are visible decisions too.
 
 In APPLY mode, end with:
 - Summary of renames executed (old → new).

@@ -10,7 +10,7 @@ to read or write it — any agent can edit the JSON by hand and run `check`.
     tracker.py build   PATH                  # check, date what closed, then write PATH's page
     tracker.py brief   [PATH]                # what needs the agent, in a few lines; refreshes a stale page
     tracker.py show    PATH ID               # one item in full
-    tracker.py render  PATH [--status waiting]
+    tracker.py render  PATH [--status todo]
     tracker.py reply   PATH ID TEXT          # one owner reply
     tracker.py reply   PATH --from FILE      # replies copied from the page ('-' = stdin)
 
@@ -38,9 +38,9 @@ import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-SCHEMA = 3
-SCHEMAS = (1, 2, 3)   # older files had sections: `load` flattens them, and any write sets 3
-STATUSES = ("draft", "waiting", "todo", "doing", "done", "dropped")   # the order they are always shown in
+SCHEMA = 4
+SCHEMAS = (1, 2, 3, 4)   # older files: `load` brings them up to date, and any write sets 4
+STATUSES = ("draft", "todo", "doing", "done", "dropped")   # the order they are always shown in
 CLOSED = ("done", "dropped")
 KINDS = ("task", "decision", "check")
 FOR = ("agent", "me")
@@ -58,8 +58,7 @@ ASSETS = Path(__file__).resolve().parent.parent / "assets"
 TEMPLATE = ASSETS / "page.html"
 STYLE = ASSETS / "style.css"      # shared with the Kata hub
 
-STATUS_LABEL = {"draft": "Draft", "waiting": "Needs you", "todo": "To do", "doing": "In progress",
-                "done": "Done", "dropped": "Not doing"}
+STATUS_LABEL = {"draft": "Draft", "todo": "To do", "doing": "In progress", "done": "Done", "dropped": "Not doing"}
 BRIEF_LIST = 5        # items per list in `brief`
 BRIEF_TEXT = 90       # characters per line in `brief`
 
@@ -74,13 +73,14 @@ def now_iso():
 
 def load(path):
     with open(path, encoding="utf-8") as f:
-        return flatten(json.load(f))
+        return up_to_date(json.load(f))
 
 
-def flatten(t):
-    """A schema 1 or 2 tracker had sections, and an agent may still write some
-    out of habit. They become the one list they add up to, keeping their order,
-    so nothing past this point knows about them."""
+def up_to_date(t):
+    """Older trackers had sections, and a status `waiting`; an agent may still
+    write either out of habit. Sections become the one list they add up to,
+    keeping their order, and `waiting` becomes `todo`: its question is what
+    says it needs the owner. Nothing past this point knows about either."""
     if not isinstance(t, dict) or not isinstance(t.get("items"), list):
         return t
     groups = t.pop("groups", None)
@@ -90,6 +90,8 @@ def flatten(t):
     for i in t["items"]:
         if isinstance(i, dict):
             i.pop("group", None)
+            if i.get("status") == "waiting":
+                i["status"] = "todo"
     return t
 
 
@@ -167,8 +169,6 @@ def problems(t):
                 if "/" not in b and b not in all_ids:
                     out.append(f"{where}: blocked by '{b}', which is not an item here "
                                "(an item in another project is '<project>/<id>').")
-        if status == "waiting" and not str(it.get("question") or "").strip():
-            out.append(f"{where} is waiting on the owner but has no 'question'.")
         if status in ("done", "dropped") and not str(it.get("outcome") or "").strip():
             out.append(f"{where} is {status} but has no 'outcome' saying what happened.")
         thread = it.get("thread", [])
@@ -202,7 +202,8 @@ def render(t, status=None):
     lines = [f"# {t['title']}", ""]
     if t.get("summary"):
         lines += [t["summary"], ""]
-    lines.append(" · ".join(f"{STATUS_LABEL[s]}: {counts[s]}" for s in STATUSES if counts[s]))
+    needs = sum(1 for i in items if needs_you(i))
+    lines.append(" · ".join(([f"Needs you: {needs}"] if needs else []) + [f"{STATUS_LABEL[s]}: {counts[s]}" for s in STATUSES if counts[s]]))
     lines.append("")
     for s in STATUSES:
         rows = [i for i in items if i["status"] == s and (not status or s == status)]
@@ -212,8 +213,8 @@ def render(t, status=None):
             rows.sort(key=closed_at, reverse=True)
         lines += [f"## {STATUS_LABEL[s]}", ""]
         for i in rows:
-            lines.append(f"- **{i['id']}** {i['title']}")
-            if s == "waiting":
+            lines.append(f"- **{i['id']}** {i['title']}" + (" (needs you)" if needs_you(i) else ""))
+            if needs_you(i) and i.get("question"):
                 lines.append(f"  - Question: {i['question']}")
             if i.get("decision"):
                 lines.append(f"  - Decided: {i['decision']}")
@@ -307,6 +308,15 @@ def said(it):
     return it.get("context") or it["title"]
 
 
+def needs_you(it):
+    """Whether an item is waiting for the owner: their own to-do, or a question
+    they have not answered. A tag on a to-do or an item in progress, whatever
+    its stage; a draft is theirs anyway, and nothing is expected of a closed one."""
+    if it["status"] not in ("todo", "doing"):
+        return False
+    return it.get("for") == "me" or (bool(str(it.get("question") or "").strip()) and not it.get("unread"))
+
+
 def pending(it):
     """Whether the item holds something from the owner the agent has not
     processed yet (`unread`). Drafts and the owner's own to-dos are never the
@@ -318,14 +328,6 @@ def mark_unread(it):
     if it["status"] != "draft" and it.get("for") != "me":
         it["unread"] = True
 
-
-def heard(it):
-    """The owner said something on an item: an agent should read it, and an item
-    that was waiting on them is the agent's move again. Its `question` stays
-    until the agent has read the answer."""
-    mark_unread(it)
-    if it["status"] == "waiting" and it.get("for") != "me":
-        it["status"] = "todo"
 
 
 # ---------------------------------------------------------------- owner actions
@@ -440,7 +442,7 @@ def reply(t, iid, text):
     if not text.strip():
         raise Refused("A reply needs some text.")
     it.setdefault("thread", []).append({"by": "owner", "at": now_iso(), "text": text.strip()})
-    heard(it)
+    mark_unread(it)
     touch(it)
 
 
@@ -468,14 +470,12 @@ def edit_reply(t, iid, n, at, text):
 def delete_reply(t, iid, n, at):
     """Delete an unread reply. When nothing of the owner's is left unseen (an
     item of theirs still `fresh` always is), the item is no longer `unread`,
-    and a question it had answered is waiting on them again."""
+    so a question it had answered needs them again."""
     it, thread = own_reply(t, iid, n, at)
     del thread[n]
     last_agent = max((k for k, m in enumerate(thread) if m.get("by") != "owner"), default=-1)
     if not it.get("fresh") and not any(m.get("by") == "owner" for m in thread[last_agent + 1:]):
         it.pop("unread", None)
-        if it["status"] == "todo" and it.get("question"):
-            it["status"] = "waiting"
     touch(it)
 
 
@@ -546,9 +546,9 @@ def add_replies(t, replies, at=None):
     """Append each reply to its item's thread as an owner entry; a reply to
     "new" becomes a new item. A reply already in the thread word for word (for
     a new item: among the owner's unseen items) is skipped, so pasting the
-    same text twice is harmless. A reply moves a waiting item to `todo` and
-    nothing else: deciding what it means is the agent's job. Returns
-    (added [(id, text)], unknown ids)."""
+    same text twice is harmless. A reply answers the item's question, so it no
+    longer needs the owner; its status does not move, and deciding what the reply
+    means is the agent's job. Returns (added [(id, text)], unknown ids)."""
     by_id = {i["id"]: i for i in t["items"]}
     added, unknown = [], []
     for iid, text in replies:
@@ -564,7 +564,7 @@ def add_replies(t, replies, at=None):
         if any(m.get("by") == "owner" and m.get("text", "").strip() == text for m in thread):
             continue
         thread.append({"by": "owner", "at": at or now_iso(), "text": text})
-        heard(item)
+        mark_unread(item)
         item["updated"] = date.today().isoformat()
         added.append((iid, text))
     return added, unknown
@@ -589,16 +589,18 @@ def brief(t, source):
         ("From the owner, not yet seen", new, 10,
          lambda i: "new: " + clip(said(i)) if i.get("fresh") or not i.get("thread")
          else clip(i["title"], 40) + f" · {i['thread'][-1]['by']}: " + clip(i["thread"][-1]["text"], 50)),
-        ("Waiting on the owner", [i for i in agents if i["status"] == "waiting" and not pending(i)], BRIEF_LIST,
+        ("Waiting on the owner", [i for i in agents if needs_you(i)], BRIEF_LIST,
          lambda i: clip(i.get("question") or i["title"])),
-        ("Next to do", [i for i in agents if i["status"] == "todo" and not pending(i)], BRIEF_LIST,
+        ("Next to do", [i for i in agents if i["status"] == "todo" and not pending(i) and not needs_you(i)], BRIEF_LIST,
          lambda i: clip(i["title"]) + (" · blocked by " + ", ".join(i["blocked_by"]) if i.get("blocked_by") else "")),
-        ("In progress", [i for i in agents if i["status"] == "doing" and not pending(i)], BRIEF_LIST,
+        ("In progress", [i for i in agents if i["status"] == "doing" and not pending(i) and not needs_you(i)], BRIEF_LIST,
          lambda i: clip(i["title"])),
     ]
     count = lambda s: sum(1 for i in agents if i["status"] == s)
+    waiting = sum(1 for i in agents if needs_you(i))
     tally = [f"drafts {count('draft')} (not yet for you)"] if count("draft") else []
-    tally += [f"{STATUS_LABEL[s].lower()} {count(s)}" for s in ("waiting", "todo", "doing") if count(s)]
+    tally += [f"needs the owner {waiting}"] if waiting else []
+    tally += [f"{STATUS_LABEL[s].lower()} {count(s)}" for s in ("todo", "doing") if count(s)]
     tally += [f"archive {count('done') + count('dropped')}"] if count("done") + count("dropped") else []
     tally += [f"owner's own to-dos {len(mine)}"] if mine else []
     lines = [f"{t['title']} ({source}): " + (", ".join(tally) or "empty")]

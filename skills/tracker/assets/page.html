@@ -9,7 +9,7 @@
 /* A tracker's page, built by `tracker.py build` next to its JSON file, with
    the tracker embedded below. It opens from disk with no server and loads
    nothing from the network; replies typed here stay in this browser until
-   they are copied to the agent. One reading column: the title, the status
+   they are copied to the agent. One reading column: the title, the
    tabs, then the items of the open tab, each a row that opens onto its detail
    and a reply box. */
 .wrap { max-width: 820px; margin: 0 auto; padding: 40px 20px 96px; }
@@ -43,14 +43,16 @@ details.item .detail { padding: 4px 12px 16px 33px; }
 <script type="application/json" id="tracker-data">__TRACKER_DATA__</script>
 
 <script>
-const STATUS = { draft: "Draft", waiting: "Needs you", todo: "To do", doing: "In progress", done: "Done", dropped: "Not doing" };
-/* The tabs, in the one order they are ever shown. The hub has the same five. */
-const TABS = [["draft", "Draft"], ["waiting", "Needs you"], ["todo", "To do"], ["doing", "In progress"], ["archive", "Archive"]];
+const STATUS = { draft: "Draft", todo: "To do", doing: "In progress", done: "Done", dropped: "Not doing" };
+/* Needs you filters To do and In progress; the stages keep the one order they
+   are ever shown in. The hub has the same tabs. */
+const NEEDS = "needs";
+const STAGES = [["draft", "Draft"], ["todo", "To do"], ["doing", "In progress"], ["archive", "Archive"]];
 const closed = (it) => it.status === "done" || it.status === "dropped";
-const tabOf = (it) => closed(it) ? "archive" : it.status === "draft" ? "draft"
-  : it.status === "waiting" || it.for === "me" ? "waiting" : it.status === "doing" ? "doing" : "todo";
+const needsYou = (it) => (it.status === "todo" || it.status === "doing") && (it.for === "me" || (!!it.question && !it.unread));
+const stageOf = (it) => closed(it) ? "archive" : it.status;
+const inTab = (it, k) => k === NEEDS ? needsYou(it) : stageOf(it) === k;
 const closedAt = (it) => it.closed || it.updated || it.created || "";
-const KIND = { decision: "Your call", check: "Your check" };
 const NEW = "new";         // tracker.py turns "[new] …" into a new item
 
 let state = null, source = "", tab = "";
@@ -96,20 +98,21 @@ const ready = () => items().filter((i) => drafts[i.id] && drafts[i.id].text.trim
 
 /* The tab to show: the one picked, else what needs the owner, else the first with items. */
 function openTab() {
-  const has = (k) => items().some((i) => tabOf(i) === k);
-  return has(tab) ? tab : has("waiting") ? "waiting" : (TABS.find(([k]) => has(k)) || [""])[0];
+  const has = (k) => items().some((i) => inTab(i, k));
+  return has(tab) ? tab : has(NEEDS) ? NEEDS : (STAGES.find(([k]) => has(k)) || [""])[0];
 }
 
 function renderHead() {
   document.title = state.title || "Tracker";
   $("title").textContent = state.title || "Tracker";
   $("lede").textContent = state.summary || "";
-  const count = (k) => items().filter((i) => tabOf(i) === k).length;
+  const count = (k) => items().filter((i) => inTab(i, k)).length;
   const open = openTab();
   const pick = (k) => { tab = k; try { localStorage.setItem("trackerTab", k); } catch (e) {} render(); };
-  $("tabs").replaceChildren(...TABS.filter(([k]) => count(k)).map(([k, label]) =>
-    el("button", { type: "button", class: "tab", role: "tab", "aria-selected": String(k === open), onclick: () => pick(k) },
-      el("span", { class: "dot " + (k === "archive" ? "done" : k) }), label, el("span", { class: "n" }, String(count(k))))));
+  const tabEl = ([k, label]) => el("button", { type: "button", class: "tab", role: "tab", "aria-selected": String(k === open), onclick: () => pick(k) },
+    el("span", { class: "dot " + (k === "archive" ? "done" : k) }), label, el("span", { class: "n" }, String(count(k))));
+  $("tabs").replaceChildren(...(count(NEEDS) ? [tabEl([NEEDS, "Needs you"]), el("span", { class: "tab-gap" })] : []),
+    ...STAGES.filter(([k]) => count(k)).map(tabEl));
   const last = items().map((i) => i.updated || "").sort().pop();
   $("foot").textContent = `Built from ${source}` + (last ? `, last changed ${last}` : "") + ". The agent rebuilds this page after every change: reload to see it.";
 }
@@ -120,7 +123,7 @@ function section(label, text, cls = "") {
 
 function replyBox(it) {
   const ta = el("textarea", { id: "reply-" + it.id, "aria-label": "Reply about " + it.title,
-    placeholder: it.status === "waiting" ? "Your answer" : "Reply",
+    placeholder: needsYou(it) ? "Your answer" : "Reply",
     oninput: (e) => {
       if (e.target.value.trim()) drafts[it.id] = { text: e.target.value }; else delete drafts[it.id];
       saveDrafts(); renderOutbox();
@@ -137,7 +140,7 @@ function detail(it) {
     ...it.table.slice(1).map((r) => el("tr", {}, ...r.map((c) => el("td", {}, String(c))))))) : null;
   return el("div", { class: "detail" },
     section("Context", it.context), table, section("Plan", it.plan),
-    section(it.status === "waiting" ? "Question for you" : "You were asked", it.question, it.status === "waiting" ? "question" : ""),
+    section(needsYou(it) ? "Question for you" : "You were asked", it.question, needsYou(it) ? "question" : ""),
     section("Decided", it.decision),
     section(it.status === "dropped" ? "Why not" : it.status === "done" ? "What was done" : "Progress", it.outcome),
     (it.refs || []).length ? el("p", { class: "refs" }, it.refs.join(", ")) : null,
@@ -146,13 +149,13 @@ function detail(it) {
 }
 
 function itemEl(it) {
-  const open = it.status === "waiting" || !!drafts[it.id];
+  const open = needsYou(it) || !!drafts[it.id];
   return el("details", { class: "item", id: it.id, open },
     el("summary", { class: "row " + it.status },
       el("span", { class: "dot " + it.status, title: STATUS[it.status] }),
       el("span", { class: "title" }, it.title),
       it.for === "me" ? el("span", { class: "flag me" }, "Yours") : null,
-      KIND[it.kind] ? el("span", { class: "flag" }, KIND[it.kind]) : null,
+      openTab() === NEEDS ? el("span", { class: "flag" }, STATUS[it.status]) : needsYou(it) && it.for !== "me" ? el("span", { class: "flag needs" }, "Needs you") : null,
       it.status === "dropped" ? el("span", { class: "flag" }, STATUS.dropped) : null,
       el("span", { class: "where" }, it.id)),
     detail(it));
@@ -199,7 +202,7 @@ function render() {
   const focused = document.activeElement && document.activeElement.id;
   const caret = focused && document.activeElement.selectionStart;
   const open = openTab();
-  const rows = items().filter((i) => tabOf(i) === open);
+  const rows = items().filter((i) => inTab(i, open));
   if (open === "archive") rows.sort((a, b) => closedAt(b).localeCompare(closedAt(a)));   // newest first
   $("list").replaceChildren(rows.length ? el("div", { class: "items" }, rows.map(itemEl)) : el("p", { class: "empty" }, "No items yet."));
   if (focused) { const f = document.getElementById(focused); if (f) { f.focus(); try { f.setSelectionRange(caret, caret); } catch (e) {} } }

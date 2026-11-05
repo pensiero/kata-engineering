@@ -17,7 +17,7 @@ def sample():
     t = tracker.new_tracker("Demo · Plan", "What is planned for the demo. Long-lived.")
     t["items"] = [
         {"id": "T1", "title": "Fix the thing", "status": "todo"},
-        {"id": "T2", "title": "Pick a colour", "status": "waiting",
+        {"id": "T2", "title": "Pick a colour", "status": "todo",
          "kind": "decision", "question": "Blue or green?", "thread": []},
         {"id": "T3", "title": "Old idea", "status": "dropped",
          "outcome": "Not worth it: nobody asked."},
@@ -37,13 +37,10 @@ class Check(unittest.TestCase):
         t["title"] = "x" * (tracker.MAX_TITLE + 1)
         self.assertEqual(len(tracker.problems(t)), 2)
 
-    def test_waiting_needs_a_question_and_closed_needs_an_outcome(self):
+    def test_closed_needs_an_outcome(self):
         t = sample()
-        t["items"][1]["question"] = ""
         t["items"][0]["status"] = "done"
-        msgs = " ".join(tracker.problems(t))
-        self.assertIn("T2 is waiting on the owner but has no 'question'", msgs)
-        self.assertIn("T1 is done but has no 'outcome'", msgs)
+        self.assertIn("T1 is done but has no 'outcome'", " ".join(tracker.problems(t)))
 
     def test_duplicate_id_and_bad_status_are_caught(self):
         t = sample()
@@ -72,32 +69,33 @@ class Replies(unittest.TestCase):
         self.assertEqual(tracker.parse_replies(COPIED), [
             ("T2", "Green.\nThe darker one, if there are two."), ("T1", "Go ahead.")])
 
-    def test_a_reply_moves_a_question_to_todo_for_an_agent_to_read(self):
+    def test_a_reply_answers_the_question_and_leaves_the_stage_alone(self):
         t = sample()
+        t["items"][1]["status"] = "doing"
+        self.assertTrue(tracker.needs_you(t["items"][1]))
         tracker.add_replies(t, [("T2", "Green.")])
         it = t["items"][1]
-        self.assertEqual((it["status"], it["question"], it["unread"]), ("todo", "Blue or green?", True))
+        self.assertEqual((it["status"], it["question"]), ("doing", "Blue or green?"))
+        self.assertFalse(tracker.needs_you(it))
         self.assertTrue(tracker.pending(it))
-        self.assertEqual(tracker.problems(t), [])
         typed = sample()
         tracker.reply(typed, "T2", "Green.")
-        self.assertEqual(typed["items"][1]["status"], "todo")
-        tracker.reply(typed, "T1", "And quickly.")               # not a question: it stays where it is
-        self.assertEqual(typed["items"][0]["status"], "todo")
+        self.assertFalse(tracker.needs_you(typed["items"][1]))
 
-    def test_a_reply_elsewhere_moves_nothing_and_a_draft_stays_a_draft(self):
-        t = sample()
-        t["items"].append({"id": "D", "title": "Started", "status": "doing"})
-        t["items"].append({"id": "A", "title": "An idea", "status": "draft"})
-        tracker.add_replies(t, [("D", "Hurry."), ("A", "Maybe.")])
-        self.assertEqual([i["status"] for i in t["items"][-2:]], ["doing", "draft"])
-
-    def test_deleting_the_answer_puts_the_question_back(self):
+    def test_deleting_the_answer_asks_the_question_again(self):
         t = sample()
         tracker.reply(t, "T2", "Green.")
         tracker.delete_reply(t, "T2", 0, t["items"][1]["thread"][0]["at"])
-        self.assertEqual(t["items"][1]["status"], "waiting")
+        self.assertTrue(tracker.needs_you(t["items"][1]))
         self.assertFalse(tracker.pending(t["items"][1]))
+
+    def test_a_follow_up_from_the_agent_needs_the_owner_again(self):
+        t = sample()
+        tracker.reply(t, "T2", "Which greens are there?")
+        it = t["items"][1]
+        del it["unread"]                                     # the agent read it, and asks again
+        it["question"] = "Dark or light green?"
+        self.assertTrue(tracker.needs_you(it))
 
     def test_a_reply_is_appended_once(self):
         t = sample()
@@ -177,25 +175,46 @@ class Order(unittest.TestCase):
     def test_a_new_tracker_has_only_what_a_tracker_needs(self):
         self.assertEqual(sorted(tracker.new_tracker("Demo · Plan", "What. Long-lived.")), ["items", "schema", "summary", "title"])
 
-    def test_statuses_always_read_draft_needs_you_to_do_in_progress_then_the_archive(self):
+    def test_needs_you_is_a_tag_on_to_dos_and_work_in_progress_only(self):
+        ask = {"title": "x", "question": "Yes?"}
+        for status, needs in [("draft", False), ("todo", True), ("doing", True), ("done", False), ("dropped", False)]:
+            self.assertEqual(tracker.needs_you(dict(ask, status=status)), needs, status)
+        self.assertTrue(tracker.needs_you({"title": "x", "status": "todo", "for": "me"}))
+        self.assertFalse(tracker.needs_you({"title": "x", "status": "draft", "for": "me"}))
+        self.assertFalse(tracker.needs_you({"title": "x", "status": "doing"}))   # progress notes ask nothing
+
+    def test_a_status_waiting_becomes_a_to_do_that_needs_the_owner(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "TRACKER.json"
+            t = sample()
+            t["items"][1]["status"] = "waiting"                 # an older file, or an agent's habit
+            path.write_text(json.dumps(t))
+            it = tracker.load(path)["items"][1]
+            self.assertEqual(it["status"], "todo")
+            self.assertTrue(tracker.needs_you(it))
+
+    def test_stages_always_read_draft_to_do_in_progress_then_the_archive(self):
         self.assertEqual([tracker.STATUS_LABEL[s] for s in tracker.STATUSES],
-                         ["Draft", "Needs you", "To do", "In progress", "Done", "Not doing"])
+                         ["Draft", "To do", "In progress", "Done", "Not doing"])
         t = sample()
         t["items"] += [{"id": "D", "title": "An idea", "status": "doing"}, {"id": "A", "title": "A thought", "status": "draft"},
                        {"id": "O", "title": "Late", "status": "done", "outcome": "x", "closed": "2026-11-02"},
                        {"id": "N", "title": "Later", "status": "done", "outcome": "x", "closed": "2026-11-03"}]
         text = tracker.render(t)
         heads = [l[3:] for l in text.splitlines() if l.startswith("## ")]
-        self.assertEqual(heads, ["Draft", "Needs you", "To do", "In progress", "Done", "Not doing"])
+        self.assertEqual(heads, ["Draft", "To do", "In progress", "Done", "Not doing"])
+        self.assertIn("**T2** Pick a colour (needs you)", text)
+        self.assertIn("Needs you: 1 · Draft: 1", text)
         self.assertLess(text.index("**N**"), text.index("**O**"))     # the archive: newest first
 
     def test_the_brief_keeps_that_order_too(self):
         t = sample()
         t["items"] += [{"id": "D", "title": "Started", "status": "doing"}, {"id": "A", "title": "A thought", "status": "draft"}]
         text = tracker.brief(t, "TRACKER.json")
-        self.assertIn("drafts 1 (not yet for you), needs you 1, to do 1, in progress 1, archive 1", text)
+        self.assertIn("drafts 1 (not yet for you), needs the owner 1, to do 2, in progress 1, archive 1", text)
         self.assertLess(text.index("Waiting on the owner"), text.index("Next to do"))
         self.assertLess(text.index("Next to do"), text.index("In progress:"))
+        self.assertEqual(text.count("Pick a colour") + text.count("Blue or green?"), 1)   # not also next to do
 
 
 class OwnerActions(unittest.TestCase):
@@ -239,7 +258,7 @@ class OwnerActions(unittest.TestCase):
         self.assertEqual(t["items"][-1]["status"], "draft")
         self.assertFalse(tracker.pending(t["items"][-1]))
         with self.assertRaises(tracker.Refused):
-            tracker.demote(t, "T2")
+            tracker.demote(t, "T3")
 
     def test_move_puts_an_item_before_another_or_last(self):
         t = sample()
@@ -371,7 +390,7 @@ class OwnerActions(unittest.TestCase):
             with self.assertRaises(tracker.Refused):
                 tracker.act(path, tracker.add, "x")
             bad = sample()
-            bad["items"][1]["question"] = ""
+            bad["items"][1]["status"] = "maybe"
             tracker.save(path, bad)
             with self.assertRaises(tracker.Refused):
                 tracker.act(path, tracker.add, "x")
@@ -382,7 +401,7 @@ def big():
     t = sample()
     for n in range(80):
         t["items"].append({"id": f"B{n}", "title": f"Bulk item {n} " + "words " * 30,
-                           "status": ("todo", "doing", "done", "waiting")[n % 4],
+                           "status": ("todo", "doing", "done", "todo")[n % 4],
                            "question": "Ok?", "outcome": "Done."})
     return t
 
@@ -478,7 +497,7 @@ class Page(unittest.TestCase):
             self.assertTrue((Path(d) / "TRACKER.html").exists())
             self.assertEqual(tracker.main(["build", path]), 0)
             t = tracker.load(path)
-            t["items"].append({"id": "T1", "title": "x", "status": "waiting", "question": "Ok?"})
+            t["items"].append({"id": "T1", "title": "x", "status": "todo", "question": "Ok?"})
             tracker.save(path, t)
             copied = Path(d) / "copied.txt"
             copied.write_text("Replies to Demo:\n\n[T1] Yes.\n")

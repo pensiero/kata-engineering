@@ -22,7 +22,7 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 
 ```json
 {
-  "schema": 3,
+  "schema": 4,
   "title": "Compass · Calculation review",
   "summary": "Every finding from the 5 October review and where it stands. Temporary: deleted once every item is closed.",
   "principles": ["Fix what is wrong before what is untidy."],
@@ -32,7 +32,7 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 
 | Field | Meaning |
 |---|---|
-| `schema` | `3`. Schema 1 and 2 files had sections (`groups`, and a `group` on each item): `tracker.py` reads them as one list, sections in order, and any write drops them and sets `3`. |
+| `schema` | `4`. Older files had sections (`groups`, and a `group` on each item) and a status `waiting`: `tracker.py` reads them as one list, sections in order, with `waiting` as `todo`, and any write sets `4`. |
 | `title` | `<Project> · <scope>`: `Compass · Plan` for the main tracker, `Compass · Calculation review` for one effort. At most 60 characters. Also the page's title. |
 | `summary` | Two sentences, at most 240 characters. First what it holds, then how long it lives ("Long-lived: …" or "Temporary: deleted once every item is closed."). Pointers to other docs belong in the project's `CLAUDE.md`, not here. |
 | `principles` | Optional. Rules an agent works by when nobody is there to ask (a `PLAN.md`'s "Prioritization"). For agents: no page shows them. |
@@ -45,7 +45,7 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
   "id": "A2",
   "title": "A short, large round trip dominates a holding's yearly rate",
   "kind": "decision",
-  "status": "waiting",
+  "status": "todo",
   "for": "agent",
   "context": "What is true now and why it matters, with the evidence.",
   "plan": "What the agent will do, including any assumption it is making.",
@@ -71,13 +71,13 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 | `id` | ✓ | Unique, short, stable. Letters, digits and `_ - . ~ : @ +` only (it heads the owner's copied replies as `[id]`). Never reused. `new` is reserved: the owner's new items arrive as `[new]` and get the id `new-<n>`. |
 | `title` | ✓ | What the item is, in the owner's words, not the code's. |
 | `kind` | | `task` (default): the agent can just do it. `decision`: needs the owner's view. `check`: needs something only the owner can look at. |
-| `status` | ✓ | In the order they are always shown: `draft` (not ready for an agent), `waiting` (needs the owner), `todo`, `doing` (started and not finished, however long it runs), `done`, `dropped` (shown as "Not doing"). |
+| `status` | ✓ | The item's stage, in the order they are always shown: `draft` (not ready for an agent), `todo`, `doing` (the work has started and is not finished, however long it runs), `done`, `dropped` (shown as "Not doing"). |
 | `for` | | `agent` (default) or `me`: a to-do of the owner's own, which the agent never works and the owner archives when done. |
 | `fresh` | | `true` on an item the owner added, until an agent first works on it. While fresh, the owner may still rewrite or delete it. |
-| `unread` | | `true` when the owner wrote something the agent has not processed: a new item, a promoted draft, a reply, a reopening. The agent clears it once processed. For agents: no page shows it. |
+| `unread` | | `true` when the owner wrote something the agent has not processed: a new item, a promoted draft, a reply, a reopening. A reply on an item with a `question` answers it. The agent clears it once processed. For agents: no page shows it. |
 | `context` | | What is wrong or what is wanted, with the evidence. |
 | `plan` | | How it will be done, and any assumption made. For a `decision`, the agent's recommendation. |
-| `question` | when `waiting` | The single open question. It stays on an answered item, now `todo`, until the agent has read the answer and clears it. |
+| `question` | | The single open question for the owner, and the only thing that reaches them: on a `todo` or `doing` item it means "Needs you". It stays on an answered item until the agent has read the answer and clears it. |
 | `thread` | | The conversation, oldest first. `at` is a full ISO timestamp. The owner's entries are added by `tracker.py reply`, from text copied off the page or said in chat; the agent's are its follow-ups. Append only. |
 | `decision` | | The settled answer, in one or two sentences. This is what stops a question being asked again. |
 | `outcome` | when `done` or `dropped` | What was done and where, or why not. |
@@ -90,9 +90,13 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 
 ## Status, and what moves it
 
-Every view shows the same five tabs, in this order, each left out when empty:
-**Draft** (`draft`), **Needs you** (`waiting`, and any open `for: me` item),
-**To do** (`todo`), **In progress** (`doing`), **Archive** (`done`, `dropped`).
+An item is in one stage: **Draft** (`draft`), **To do** (`todo`), **In progress**
+(`doing`) or **Archive** (`done`, `dropped`), in that order everywhere.
+
+**Needs you** is a tag across stages, not a stage: a `todo` or `doing` item that
+has a `question` and is not `unread`, or is `for: me`. Every view shows it as a
+filter before the stages, and a draft or a closed item never has it. Empty tabs
+are left out.
 
 | From | To | When | Who |
 |---|---|---|---|
@@ -101,15 +105,20 @@ Every view shows the same five tabs, in this order, each left out when empty:
 | `todo` | `draft` | Not ready for an agent after all | owner |
 | — | `todo` | An item is added | agent, or the owner (`[new]`, or the hub) |
 | `todo` | `doing` | Work starts | agent |
-| any open | `waiting` | The agent needs the owner; `question` is set | agent |
-| `waiting` | `todo` | The owner replies; the item is `unread` until an agent has read it | owner |
-| `todo` | `waiting` | The owner deletes that reply before an agent reads it | owner |
-| `todo` | `todo` / `doing` | The reply settles it; `decision` is written, `question` cleared | agent |
-| `todo` | `waiting` | The reply raises a follow-up; the agent adds a thread entry and a new `question` | agent |
 | any | `done` | Finished; `outcome` and `refs` written | agent |
 | any | `dropped` | Not going to happen; `outcome` says why | agent, after the owner agrees |
 | any open | `done` / `dropped` | The owner archives it, with their reason if they give one | owner |
 | `done` / `dropped` | `todo` | The owner reopens it, saying why in the thread | owner |
+
+The tag moves without the stage:
+
+| Tag | When | Who |
+|---|---|---|
+| on | The agent needs the owner's word or review; `question` is set | agent |
+| off | The owner replies; the item is `unread` until an agent has read it | owner |
+| on | The owner deletes that reply before an agent reads it | owner |
+| off | The reply settles it; `decision` is written, `question` and `unread` cleared | agent |
+| on | The reply raises a follow-up; a thread entry and a new `question`, `unread` cleared | agent |
 
 ## Who writes what
 

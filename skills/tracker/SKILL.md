@@ -41,16 +41,20 @@ into the agent's global skills directory). Everything below is relative to it:
    promotes drafts and sends to-dos back to draft, reorders items, rewrites
    the title and summary, replies (and rewrites a reply until you read it),
    archives any open item as done or not doing, and reopens
-   (`reference/schema.md`, "Who writes what"). A reply on a `waiting` item
-   moves it to `todo` by itself. Every other status change, decision and
-   outcome is yours, in the file. Never act on a `draft` or a `for: me` item.
+   (`reference/schema.md`, "Who writes what"). Every other status change,
+   decision and outcome is yours, in the file. Never act on a `draft` or a
+   `for: me` item.
 3. **Everything stays local.** Never publish a tracker or its page anywhere
    (no artifacts, no gists, no hosted pages). It is shared the way the
    repository is shared, and a private tracker not at all.
-4. **A question only when it is the owner's call.** A plain bug gets a plan and
-   no question: say what you will do and do it. Ask when there is a real choice
-   (a rule change, a trade-off, a preference) or when you are undecided, and put
-   your recommendation in `plan` so the owner can answer "yes".
+4. **A question only when it is the owner's call, and always when it is.** A
+   plain bug gets a plan and no question: say what you will do and do it. Ask
+   when there is a real choice (a rule change, a trade-off, a preference), when
+   you are undecided, or when you want the owner to review something, and put
+   your recommendation in `plan` so the owner can answer "yes". `question` is
+   the only thing that reaches them: it puts a "Needs you" tag on the item. A
+   line in a thread or a plan such as "reply here if you want changes" reaches
+   nobody.
 5. **Write for the owner.** Titles and context in the owner's words, with the
    evidence, and numbers when there are numbers. Follow the project's register
    and privacy rules: a tracker holding private data goes where the project
@@ -72,16 +76,16 @@ into the agent's global skills directory). Everything below is relative to it:
 2. `python3 scripts/tracker.py new <file> --title "<Project> · <scope>" --summary "<what it holds>. <how long it lives>."`.
    A tracker is one list in the order of work, the same in every project:
    there are no sections, groups or gates, and where an item stands is its
-   status. `check` refuses any other status, and `build` flattens sections left
-   in a file. Every tracker
+   status: `draft`, `todo`, `doing`, `done` or `dropped`. `check` refuses any
+   other, and `build` flattens sections left in a file. Every tracker
    follows the same title and summary shape (`reference/schema.md`), so two
    trackers' pages read alike. `new` writes the page too.
 3. Write the items, first to do first, and `principles` if an agent needs rules
    to work by. What must happen first is `blocked_by`; what is not ready for an
    agent (an idea to argue, something to check again on a date or a condition)
    is a `draft`, saying what it waits for. Run `build`.
-4. Tell the owner, in a line or two, what is in it, which items are waiting on
-   them, and the page to open (`file://` + the page's absolute path).
+4. Tell the owner, in a line or two, what is in it, which items need them, and
+   the page to open (`file://` + the page's absolute path).
 
 ## The page
 
@@ -89,10 +93,12 @@ into the agent's global skills directory). Everything below is relative to it:
 (`TRACKER.json` → `TRACKER.html`) with the tracker embedded. The owner opens it
 from disk in any browser and reloads it after the agent rebuilds.
 
-- Items sit in five tabs, always in this order, each left out when empty:
-  Draft, Needs you, To do, In progress, Archive. The hub has the same five.
-  The archive is by date, newest first; the others keep the list's order.
-- Each waiting item has a reply box; other items take replies inside their
+- Items sit in four stages, always in this order: Draft, To do, In progress,
+  Archive. Needs you stands apart before them, a filter over To do and In
+  progress, and those items carry a tag in their stage. The hub has the same
+  tabs, and empty ones are left out. The archive is by date, newest first; the
+  others keep the list's order.
+- Each item that needs the owner has a reply box; other items take replies inside their
   conversation. Below the list, "Something new?" takes new items, one per
   paragraph. What the owner types is kept in that browser only.
 - **Copy for the agent** copies every pending reply as text:
@@ -125,21 +131,23 @@ arguments, starting "Replies to …"), or answers in chat directly.
    Each reply is appended to its item's `thread` as an `owner` entry, the page
    is rebuilt, and a reply already there word for word is skipped. A `[new]`
    reply becomes a new item: `todo`, last, id `new-<n>`, the
-   owner's words as its title and context, `fresh` and `unread`. A reply moves
-   a `waiting` item to `todo` and marks it `unread`; nothing else changes.
+   owner's words as its title and context, `fresh` and `unread`. A reply marks
+   its item `unread`, which answers a question and takes the tag off; the
+   status does not move.
 2. Process them (below).
 
 ## Process the owner's replies
 
 For each new reply, decide what it means and write it into the item:
 
-An answered item is already in `todo`, its `question` still there so you can
-see what was asked.
+An answered item keeps its stage and its `question`, so you can see what was
+asked.
 
 - **It settles the question.** Write `decision` in one or two sentences and
-  clear `question`. The item stays `todo`, or goes straight to `doing`.
+  clear `question`. The stage moves only if the work did.
 - **It needs a follow-up.** Add an agent entry to `thread` explaining what is
-  still unclear, set a new `question`, and move it back to `waiting`.
+  still unclear, and set a new `question`. Clearing `unread` is what puts the
+  tag back.
 - **It asks for something new.** Add a new item; reference it in a thread
   entry.
 - **It is a new item** (`new-<n>`). Give it a real title, its kind and its
@@ -154,10 +162,12 @@ say so rather than following it silently.
 ## Work an item
 
 - Starting: `doing`, and clear `fresh` and `unread`. Finishing: `done`,
-  `outcome`, `refs`, `updated`. `doing` says the work has started and is not
-  finished, not that an agent is at it now: a 12-month paper test stays `doing`
-  while it runs.
-- Take the first `todo` nothing blocks; a `draft` waits for the owner.
+  `outcome`, `refs`, `updated`. `doing` says the work itself has started and is
+  not finished, not that an agent is at it now: a 12-month paper test stays
+  `doing` while it runs. Discussing or designing something not yet being built
+  leaves it `todo`.
+- Take the first `todo` that nothing blocks and that does not need the owner; a
+  `draft` waits for them.
 - Size it yourself, and pick the smallest shape that fits:
   1. do it directly;
   2. split it into items in the same tracker;
@@ -167,7 +177,8 @@ say so rather than following it silently.
      it there with `project-kickoff`, and register the new project
      (`kata register <path>`, when the `kata` command exists).
 - Discovered on the way: a new item, never a silent fix outside the tracker.
-- Blocked on the owner: `waiting` with a `question` and your recommendation.
+- Blocked on the owner, or wanting their review: set `question`, with your
+  recommendation. The item stays in its stage, `todo` or `doing`, tagged.
 - Something only the owner can do: a `for: me` item, with what they need.
 - Run `build` after every change, so the page never lags the file.
 
@@ -182,8 +193,8 @@ through this tracker. Run `tracker.py brief <file>`, then, in this order:
 3. **In progress.** Carry on with what can move now. Leave a long-running item
    (a paper test, a ledger) alone until its next date or step comes.
 
-Never a `draft`, a `for: me` item, or a `waiting` item: when you need the owner,
-set the question and go on with the next item. When there is more than one
+Never a `draft`, a `for: me` item, or an item that needs the owner: when you
+need them, set the question and go on with the next item. When there is more than one
 session's work, take the top of it and tell the owner what is left.
 
 With an id, `/tracker work <file> <id>`: run `tracker.py show <file> <id>` and
@@ -195,7 +206,7 @@ If the repository has `TRACKER.json` or `trackers/*.json`, run
 `tracker.py brief` from the repository root: a few lines per tracker, with
 what the owner added or said that you have not processed yet. Read the whole
 file only when you edit it, and an item with `show`. Mention the owner's news
-and the `waiting` items when they bear on the task. `brief` also rebuilds a
+and what is waiting on them when they bear on the task. `brief` also rebuilds a
 page that is missing or out of date; commit it with your work.
 
 ## Close a tracker
@@ -217,7 +228,7 @@ Never in one step, never without the owner. First propose, then migrate.
    | What the section holds | Where it goes |
    |---|---|
    | Work with a status (checkboxes, workstreams, "small items") | Items |
-   | Questions for the owner ("open questions", "the owner's call") | Items, `kind: "decision"`, `waiting` |
+   | Questions for the owner ("open questions", "the owner's call") | Items, `kind: "decision"`, with a `question` |
    | Order and gates (Now → Next → Later, "don't start before…") | The items' order, `blocked_by` |
    | What was done ("completed", execution logs) | `done` items with `outcome` and `refs`, or left to git history |
    | Deferred ("not now, because…") | `draft` items, the reason in `context` |
