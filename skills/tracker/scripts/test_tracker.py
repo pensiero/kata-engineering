@@ -14,12 +14,12 @@ import tracker
 
 
 def sample():
-    t = tracker.new_tracker("Demo · Plan", ["now", "later"], "What is planned for the demo. Long-lived.")
+    t = tracker.new_tracker("Demo · Plan", "What is planned for the demo. Long-lived.")
     t["items"] = [
-        {"id": "T1", "group": "now", "title": "Fix the thing", "status": "todo"},
-        {"id": "T2", "group": "now", "title": "Pick a colour", "status": "waiting",
+        {"id": "T1", "title": "Fix the thing", "status": "todo"},
+        {"id": "T2", "title": "Pick a colour", "status": "waiting",
          "kind": "decision", "question": "Blue or green?", "thread": []},
-        {"id": "T3", "group": "later", "title": "Old idea", "status": "dropped",
+        {"id": "T3", "title": "Old idea", "status": "dropped",
          "outcome": "Not worth it: nobody asked."},
     ]
     return t
@@ -45,12 +45,11 @@ class Check(unittest.TestCase):
         self.assertIn("T2 is waiting on the owner but has no 'question'", msgs)
         self.assertIn("T1 is done but has no 'outcome'", msgs)
 
-    def test_unknown_group_duplicate_id_and_bad_status_are_caught(self):
+    def test_duplicate_id_and_bad_status_are_caught(self):
         t = sample()
-        t["items"].append({"id": "T1", "group": "someday", "title": "x", "status": "maybe"})
+        t["items"].append({"id": "T1", "title": "x", "status": "maybe"})
         msgs = " ".join(tracker.problems(t))
         self.assertIn("the id is used twice", msgs)
-        self.assertIn("group 'someday' is not in 'groups'", msgs)
         self.assertIn("status must be one of", msgs)
 
     def test_ids_must_be_safe_in_reply_lines(self):
@@ -84,13 +83,13 @@ class Replies(unittest.TestCase):
         self.assertEqual(tracker.add_replies(t, [("T2", "Green.")]), ([], []))
         self.assertEqual(len(t["items"][1]["thread"]), 1)
 
-    def test_a_reply_to_new_becomes_a_todo_in_the_first_group_once(self):
+    def test_a_reply_to_new_becomes_a_todo_once(self):
         t = sample()
         text = "Add a dark mode.\nOnly for the settings page."
         added, _ = tracker.add_replies(t, [("new", text), ("new", "Ship it")], at="2026-10-05T10:00:00+00:00")
         self.assertEqual([i for i, _ in added], ["new-1", "new-2"])
         item = t["items"][3]
-        self.assertEqual((item["group"], item["status"], item["title"]), ("now", "todo", "Add a dark mode."))
+        self.assertEqual((item["status"], item["title"]), ("todo", "Add a dark mode."))
         # The owner's words are the item itself, flagged unseen, so they can still edit it.
         self.assertEqual((item["context"], item["fresh"]), (text, True))
         self.assertEqual(tracker.problems(t), [])
@@ -124,13 +123,50 @@ class Schema2(unittest.TestCase):
         self.assertIn("blocked by 'T9', which is not an item here", msgs)
 
 
+class Order(unittest.TestCase):
+    def test_a_file_with_sections_becomes_one_list_in_their_order(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "TRACKER.json"
+            old = sample()
+            old.update(schema=2, groups=[{"id": "now", "title": "Now"}, {"id": "later", "title": "Later"}])
+            old["items"] = [dict(old["items"][2], group="later"), dict(old["items"][0], group="now"), dict(old["items"][1], group="now")]
+            path.write_text(json.dumps(old))
+            t = tracker.load(path)
+            self.assertEqual([i["id"] for i in t["items"]], ["T1", "T2", "T3"])
+            self.assertNotIn("groups", t)
+            self.assertNotIn("group", t["items"][0])
+            self.assertEqual(tracker.problems(t), [])
+            tracker.act(path, tracker.reply, "T1", "Hi")
+            self.assertNotIn("groups", json.loads(path.read_text()))
+
+    def test_statuses_always_read_draft_needs_you_to_do_in_progress_then_the_archive(self):
+        self.assertEqual([tracker.STATUS_LABEL[s] for s in tracker.STATUSES],
+                         ["Draft", "Needs you", "To do", "In progress", "Done", "Not doing"])
+        t = sample()
+        t["items"] += [{"id": "D", "title": "An idea", "status": "doing"}, {"id": "A", "title": "A thought", "status": "draft"},
+                       {"id": "O", "title": "Late", "status": "done", "outcome": "x", "closed": "2026-11-02"},
+                       {"id": "N", "title": "Later", "status": "done", "outcome": "x", "closed": "2026-11-03"}]
+        text = tracker.render(t)
+        heads = [l[3:] for l in text.splitlines() if l.startswith("## ")]
+        self.assertEqual(heads, ["Draft", "Needs you", "To do", "In progress", "Done", "Not doing"])
+        self.assertLess(text.index("**N**"), text.index("**O**"))     # the archive: newest first
+
+    def test_the_brief_keeps_that_order_too(self):
+        t = sample()
+        t["items"] += [{"id": "D", "title": "Started", "status": "doing"}, {"id": "A", "title": "A thought", "status": "draft"}]
+        text = tracker.brief(t, "TRACKER.json")
+        self.assertIn("drafts 1 (not yet for you), needs you 1, to do 1, in progress 1, archive 1", text)
+        self.assertLess(text.index("Waiting on the owner"), text.index("Next to do"))
+        self.assertLess(text.index("Next to do"), text.index("In progress:"))
+
+
 class OwnerActions(unittest.TestCase):
     def test_add_makes_a_fresh_draft_or_todo_the_owner_can_still_edit(self):
         t = sample()
         d = tracker.add(t, "Try a sidebar\nMaybe on the left.", status="draft")
-        m = tracker.add(t, "Renew the domain", for_me=True, group="later")
+        m = tracker.add(t, "Renew the domain", for_me=True)
         self.assertEqual((d["id"], d["status"], d["title"], d["fresh"]), ("new-1", "draft", "Try a sidebar", True))
-        self.assertEqual((m["id"], m["for"], m["group"]), ("new-2", "me", "later"))
+        self.assertEqual((m["id"], m["for"]), ("new-2", "me"))
         self.assertEqual(tracker.edit(t, "new-1", "Try a top bar"), "edited")
         self.assertEqual((d["title"], d["context"]), ("Try a top bar", ""))
         self.assertEqual(tracker.problems(t), [])
@@ -158,19 +194,26 @@ class OwnerActions(unittest.TestCase):
         with self.assertRaises(tracker.Refused):
             tracker.promote(t, "new-1")
 
-    def test_move_reorders_and_regroups(self):
+    def test_demote_turns_a_todo_back_into_a_draft_only(self):
         t = sample()
-        tracker.move(t, "T2", "now", before="T1")
+        tracker.add(t, "Idea")
+        tracker.demote(t, "new-1")
+        self.assertEqual(t["items"][-1]["status"], "draft")
+        self.assertFalse(tracker.pending(t["items"][-1]))
+        with self.assertRaises(tracker.Refused):
+            tracker.demote(t, "T2")
+
+    def test_move_puts_an_item_before_another_or_last(self):
+        t = sample()
+        tracker.move(t, "T2", before="T1")
         self.assertEqual([i["id"] for i in t["items"]], ["T2", "T1", "T3"])
-        tracker.move(t, "T2", "later")
-        self.assertEqual([(i["id"], i["group"]) for i in t["items"]], [("T1", "now"), ("T3", "later"), ("T2", "later")])
-        tracker.move(t, "T2", "now")      # last in a group, before the next group's items
-        self.assertEqual([i["id"] for i in t["items"]], ["T1", "T2", "T3"])
+        tracker.move(t, "T2")
+        self.assertEqual([i["id"] for i in t["items"]], ["T1", "T3", "T2"])
 
     def test_a_move_that_no_longer_applies_is_refused_and_changes_nothing(self):
         t = sample()
         before = json.dumps(t)
-        for args in [("T1", "now", "GONE"), ("T1", "now", "T3"), ("T1", "someday", None), ("GONE", "now", None)]:
+        for args in [("T1", "GONE"), ("GONE", None)]:
             with self.assertRaises(tracker.Refused):
                 tracker.move(t, *args)
         self.assertEqual(json.dumps(t), before)
@@ -193,14 +236,42 @@ class OwnerActions(unittest.TestCase):
         with self.assertRaises(tracker.Refused):
             tracker.reopen(t, "T1", "It is open.")
 
-    def test_the_owner_ticks_only_their_own_to_dos(self):
+    def test_the_owner_archives_any_open_item_as_done_or_not_doing(self):
         t = sample()
         tracker.add(t, "Renew the domain", for_me=True)
-        tracker.tick(t, "new-1")
-        self.assertEqual(t["items"][-1]["status"], "done")
-        self.assertEqual(tracker.problems(t), [])
+        tracker.archive(t, "new-1")
+        tracker.reply(t, "T2", "Forget it.")
+        tracker.archive(t, "T2", "dropped", "Nobody will see the difference.")
+        tracker.archive(t, "T1", "dropped")
+        by_id = {i["id"]: i for i in t["items"]}
+        self.assertEqual(by_id["new-1"]["status"], "done")
+        self.assertEqual((by_id["T2"]["status"], by_id["T2"]["outcome"]), ("dropped", "Nobody will see the difference."))
+        self.assertFalse(tracker.pending(by_id["T2"]))         # nothing is left for an agent to read
+        self.assertEqual(tracker.problems(t), [])              # the outcome a closed item needs is there
         with self.assertRaises(tracker.Refused):
-            tracker.tick(t, "T1")
+            tracker.archive(t, "T1")
+        with self.assertRaises(tracker.Refused):
+            tracker.archive(sample(), "T1", "maybe")
+
+    def test_archiving_keeps_the_progress_an_item_already_records(self):
+        t = sample()
+        t["items"][0].update(status="doing", outcome="Half of it is in.")
+        tracker.archive(t, "T1")
+        self.assertEqual(t["items"][0]["outcome"], "Half of it is in.")
+
+    def test_everything_that_closes_is_dated_and_a_reopened_item_forgets_it(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "TRACKER.json"
+            t = sample()
+            t["items"][2]["updated"] = "2026-10-05"           # closed by an agent, by hand, long ago
+            tracker.save(path, t)
+            tracker.act(path, tracker.archive, "T1")
+            t = tracker.load(path)
+            self.assertEqual(t["items"][2]["closed"], "2026-10-05")
+            self.assertIn("T", t["items"][0]["closed"])        # today: to the second, so it sorts newest
+            self.assertEqual(sorted(t["items"], key=tracker.closed_at, reverse=True)[0]["id"], "T1")
+            tracker.act(path, tracker.reopen, "T1", "Not quite.")
+            self.assertNotIn("closed", tracker.load(path)["items"][0])
 
     def test_a_reply_no_agent_has_read_can_be_edited_or_deleted(self):
         t = sample()
@@ -227,30 +298,21 @@ class OwnerActions(unittest.TestCase):
         with self.assertRaises(tracker.Refused):
             tracker.edit_reply(t, "T2", 0, at, "Green.")
 
-    def test_the_owner_renames_adds_reorders_and_removes_empty_sections(self):
+    def test_the_owner_rewrites_the_title_and_the_summary(self):
         t = sample()
-        tracker.edit_group(t, "later", "Someday", note="Not before spring.", gate="")
-        self.assertEqual(tracker.add_group(t, "Ideas & bets"), "ideas-bets")
-        self.assertEqual(tracker.add_group(t, "Ideas & bets"), "ideas-bets-2")
-        tracker.move_group(t, "ideas-bets", before="now")
-        self.assertEqual([g["id"] for g in t["groups"]], ["ideas-bets", "now", "later", "ideas-bets-2"])
-        self.assertEqual(t["groups"][2]["title"], "Someday")
-        tracker.delete_group(t, "ideas-bets-2")
-        with self.assertRaises(tracker.Refused):          # holds a dropped item
-            tracker.delete_group(t, "later")
-        with self.assertRaises(tracker.Refused):
-            tracker.move_group(t, "now", before="GONE")
-        with self.assertRaises(tracker.Refused):
-            tracker.edit_group(t, "now", "  ")
-        self.assertEqual(t["groups"][2]["note"], "Not before spring.")
-        self.assertEqual(tracker.problems(t), [])
+        tracker.edit_tracker(t, title="Demo  · Launch", summary="What the demo needs.\nLong-lived.")
+        self.assertEqual((t["title"], t["summary"]), ("Demo · Launch", "What the demo needs. Long-lived."))
+        for bad in ({"title": " "}, {"summary": " "}):
+            with self.assertRaises(tracker.Refused):
+                tracker.edit_tracker(t, **bad)
 
-    def test_the_owner_rewrites_the_summary_and_the_rules_for_the_next_item(self):
-        t = sample()
-        tracker.edit_tracker(t, summary="What the demo needs.\nLong-lived.", principles=["Cheap first", " ", "Then the biggest"])
-        self.assertEqual((t["summary"], t["principles"]), ("What the demo needs. Long-lived.", ["Cheap first", "Then the biggest"]))
-        with self.assertRaises(tracker.Refused):
-            tracker.edit_tracker(t, summary=" ")
+    def test_a_title_past_the_limit_is_refused_and_the_file_keeps_its_own(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "TRACKER.json"
+            tracker.save(path, sample())
+            with self.assertRaises(tracker.Refused):
+                tracker.act(path, tracker.edit_tracker, title="x" * (tracker.MAX_TITLE + 1))
+            self.assertEqual(tracker.load(path)["title"], "Demo · Plan")
 
     def test_act_writes_the_file_and_its_page_atomically_and_upgrades_the_schema(self):
         with tempfile.TemporaryDirectory() as d:
@@ -260,7 +322,7 @@ class OwnerActions(unittest.TestCase):
             tracker.save(path, t)
             item = tracker.act(path, tracker.add, "From the hub", status="draft")
             saved = tracker.load(path)
-            self.assertEqual((saved["schema"], saved["items"][-1]["id"]), (2, item["id"]))
+            self.assertEqual((saved["schema"], saved["items"][-1]["id"]), (tracker.SCHEMA, item["id"]))
             self.assertIn("From the hub", (Path(d) / "TRACKER.html").read_text())
             self.assertEqual(sorted(os.listdir(d)), ["TRACKER.html", "TRACKER.json"])   # no temp files left
 
@@ -281,7 +343,7 @@ class OwnerActions(unittest.TestCase):
 def big():
     t = sample()
     for n in range(80):
-        t["items"].append({"id": f"B{n}", "group": "later", "title": f"Bulk item {n} " + "words " * 30,
+        t["items"].append({"id": f"B{n}", "title": f"Bulk item {n} " + "words " * 30,
                            "status": ("todo", "doing", "done", "waiting")[n % 4],
                            "question": "Ok?", "outcome": "Done."})
     return t
@@ -317,7 +379,7 @@ class Brief(unittest.TestCase):
         self.assertIn("From the owner, not yet seen:", lines[1])
         self.assertIn("[new-1] new: Add an export", text)
         self.assertIn("[T2] Pick a colour · owner: Green.", text)
-        self.assertIn("drafts 1 (the owner's, not yet for you)", lines[0])
+        self.assertIn("drafts 1 (not yet for you)", lines[0])
         self.assertNotIn("Not yet", text)
         self.assertIn("… and", text)
 
@@ -378,7 +440,7 @@ class Page(unittest.TestCase):
             self.assertTrue((Path(d) / "TRACKER.html").exists())
             self.assertEqual(tracker.main(["build", path]), 0)
             t = tracker.load(path)
-            t["items"].append({"id": "T1", "group": "now", "title": "x", "status": "waiting", "question": "Ok?"})
+            t["items"].append({"id": "T1", "title": "x", "status": "waiting", "question": "Ok?"})
             tracker.save(path, t)
             copied = Path(d) / "copied.txt"
             copied.write_text("Replies to Demo:\n\n[T1] Yes.\n")
@@ -391,7 +453,7 @@ class Render(unittest.TestCase):
     def test_render_shows_questions_and_outcomes(self):
         md = tracker.render(sample())
         self.assertIn("Question: Blue or green?", md)
-        self.assertIn("Dropped: Not worth it: nobody asked.", md)
+        self.assertIn("Not doing: Not worth it: nobody asked.", md)
         self.assertNotIn("Old idea", tracker.render(sample(), status="waiting"))
 
 

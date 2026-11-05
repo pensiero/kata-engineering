@@ -10,23 +10,11 @@
    the tracker embedded below. It opens from disk with no server and loads
    nothing from the network; replies typed here stay in this browser until
    they are copied to the agent. One reading column: the title, the status
-   counts (which filter the list), then the tracker's groups in order, each
-   item a row that opens onto its detail and a reply box. */
+   tabs, then the items of the open tab, each a row that opens onto its detail
+   and a reply box. */
 .wrap { max-width: 820px; margin: 0 auto; padding: 40px 20px 96px; }
 .lede { color: var(--muted); margin-top: 6px; max-width: 65ch; white-space: pre-line; }
-.how { margin-top: 10px; font-size: 13.5px; color: var(--muted); }
-.how summary { cursor: pointer; width: max-content; }
-.how ul { margin: 6px 0 0; padding-left: 18px; max-width: 65ch; }
-.filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 26px 0 8px; }
-.chip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line);
-  background: transparent; cursor: pointer; font-size: 13.5px; }
-.chip:hover { border-color: var(--muted); }
-.chip[aria-pressed="true"] { background: var(--surface); border-color: var(--accent); }
-.chip b { font-weight: 600; }
-.group { margin-top: 30px; }
-.group h2 { margin-bottom: 2px; padding-left: 12px; }
-.gnote { color: var(--muted); font-size: 13.5px; padding-left: 12px; max-width: 70ch; }
-.items { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+.items { margin-top: 14px; display: flex; flex-direction: column; gap: 2px; }
 details.item > summary { list-style: none; }
 details.item > summary::-webkit-details-marker { display: none; }
 details.item[open] { background: var(--surface); border-radius: var(--radius); }
@@ -46,8 +34,7 @@ details.item .detail { padding: 4px 12px 16px 33px; }
 <div class="wrap">
   <h1 id="title">Tracker</h1>
   <p class="lede" id="lede"></p>
-  <details class="how" id="how" hidden><summary>How the next item is chosen</summary><ul id="principles"></ul></details>
-  <div class="filters" id="filters" role="group" aria-label="Show only one status"></div>
+  <div class="tabs" id="tabs" role="tablist" aria-label="Status"></div>
   <div id="list"><p class="empty">Loading the tracker…</p></div>
   <section class="newbox" id="newbox" hidden></section>
   <div class="outbox" id="outbox" hidden></div>
@@ -56,14 +43,18 @@ details.item .detail { padding: 4px 12px 16px 33px; }
 <script type="application/json" id="tracker-data">__TRACKER_DATA__</script>
 
 <script>
-const STATUS = { waiting: "Needs you", draft: "Draft", todo: "To do", doing: "In progress", done: "Done", dropped: "Dropped" };
-const ORDER = ["waiting", "draft", "todo", "doing", "done", "dropped"];
+const STATUS = { draft: "Draft", waiting: "Needs you", todo: "To do", doing: "In progress", done: "Done", dropped: "Not doing" };
+/* The tabs, in the one order they are ever shown. The hub has the same five. */
+const TABS = [["draft", "Draft"], ["waiting", "Needs you"], ["todo", "To do"], ["doing", "In progress"], ["archive", "Archive"]];
+const closed = (it) => it.status === "done" || it.status === "dropped";
+const tabOf = (it) => closed(it) ? "archive" : it.status === "draft" ? "draft"
+  : it.status === "waiting" || it.for === "me" ? "waiting" : it.status === "doing" ? "doing" : "todo";
+const closedAt = (it) => it.closed || it.updated || it.created || "";
 const KIND = { decision: "Your call", check: "Your check" };
 const NEW = "new";         // tracker.py turns "[new] …" into a new item
 
-let state = null, source = "", filter = "all";
-try { filter = localStorage.getItem("trackerFilter") || "all"; } catch (e) {}
-if (filter !== "all" && !ORDER.includes(filter)) filter = "all";
+let state = null, source = "", tab = "";
+try { tab = localStorage.getItem("trackerTab") || ""; } catch (e) {}
 /* Replies typed here and not yet seen in the rebuilt tracker. They live in
    this browser only (keyed by this file's path) and leave it only when
    copied to the agent. */
@@ -103,18 +94,22 @@ function forgetMerged() {
 }
 const ready = () => items().filter((i) => drafts[i.id] && drafts[i.id].text.trim());
 
+/* The tab to show: the one picked, else what needs the owner, else the first with items. */
+function openTab() {
+  const has = (k) => items().some((i) => tabOf(i) === k);
+  return has(tab) ? tab : has("waiting") ? "waiting" : (TABS.find(([k]) => has(k)) || [""])[0];
+}
+
 function renderHead() {
   document.title = state.title || "Tracker";
   $("title").textContent = state.title || "Tracker";
   $("lede").textContent = state.summary || "";
-  const pr = state.principles || [];
-  $("how").hidden = !pr.length;
-  $("principles").replaceChildren(...pr.map((p) => el("li", {}, p)));
-  const count = (s) => items().filter((i) => i.status === s).length;
-  const pick = (s) => { filter = s; try { localStorage.setItem("trackerFilter", s); } catch (e) {} render(); };
-  $("filters").replaceChildren(...ORDER.filter((s) => count(s)).map((s) =>
-    el("button", { type: "button", class: "chip", "aria-pressed": filter === s ? "true" : "false",
-      onclick: () => pick(filter === s ? "all" : s) }, el("span", { class: "dot " + s }), STATUS[s], el("b", {}, String(count(s))))));
+  const count = (k) => items().filter((i) => tabOf(i) === k).length;
+  const open = openTab();
+  const pick = (k) => { tab = k; try { localStorage.setItem("trackerTab", k); } catch (e) {} render(); };
+  $("tabs").replaceChildren(...TABS.filter(([k]) => count(k)).map(([k, label]) =>
+    el("button", { type: "button", class: "tab", role: "tab", "aria-selected": String(k === open), onclick: () => pick(k) },
+      el("span", { class: "dot " + (k === "archive" ? "done" : k) }), label, el("span", { class: "n" }, String(count(k))))));
   const last = items().map((i) => i.updated || "").sort().pop();
   $("foot").textContent = `Built from ${source}` + (last ? `, last changed ${last}` : "") + ". The agent rebuilds this page after every change: reload to see it.";
 }
@@ -144,7 +139,7 @@ function detail(it) {
     section("Context", it.context), table, section("Plan", it.plan),
     it.status === "waiting" ? section("Question for you", it.question, "question") : null,
     section("Decided", it.decision),
-    section(it.status === "dropped" ? "Why it was dropped" : it.status === "done" ? "What was done" : "Progress", it.outcome),
+    section(it.status === "dropped" ? "Why not" : it.status === "done" ? "What was done" : "Progress", it.outcome),
     (it.refs || []).length ? el("p", { class: "refs" }, it.refs.join(", ")) : null,
     thread.length ? el("div", { class: "thread" }, thread) : null,
     it.for === "me" ? null : replyBox(it));
@@ -158,6 +153,7 @@ function itemEl(it) {
       el("span", { class: "title" }, it.title),
       it.for === "me" ? el("span", { class: "flag me" }, "Yours") : null,
       KIND[it.kind] ? el("span", { class: "flag" }, KIND[it.kind]) : null,
+      it.status === "dropped" ? el("span", { class: "flag" }, STATUS.dropped) : null,
       el("span", { class: "where" }, it.id)),
     detail(it));
 }
@@ -202,16 +198,10 @@ function render() {
   renderHead(); renderOutbox();
   const focused = document.activeElement && document.activeElement.id;
   const caret = focused && document.activeElement.selectionStart;
-  const shown = items().filter((i) => filter === "all" || i.status === filter);
-  const groups = (state.groups || []).map((g) => {
-    const rows = shown.filter((i) => i.group === g.id);
-    if (!rows.length) return null;
-    return el("section", { class: "group" }, el("h2", {}, g.title),
-      g.note ? el("p", { class: "gnote" }, g.note) : null,
-      g.gate ? el("p", { class: "gnote" }, "Starts when: " + g.gate) : null,
-      el("div", { class: "items" }, rows.map(itemEl)));
-  }).filter(Boolean);
-  $("list").replaceChildren(...(groups.length ? groups : [el("p", { class: "empty" }, items().length ? "Nothing with this status." : "No items yet.")]));
+  const open = openTab();
+  const rows = items().filter((i) => tabOf(i) === open);
+  if (open === "archive") rows.sort((a, b) => closedAt(b).localeCompare(closedAt(a)));   // newest first
+  $("list").replaceChildren(rows.length ? el("div", { class: "items" }, rows.map(itemEl)) : el("p", { class: "empty" }, "No items yet."));
   if (focused) { const f = document.getElementById(focused); if (f) { f.focus(); try { f.setSelectionRange(caret, caret); } catch (e) {} } }
 }
 

@@ -38,12 +38,12 @@ into the agent's global skills directory). Everything below is relative to it:
    is generated: never edit it, and if it disagrees with the file, rebuild it.
 2. **The owner writes intents, the agent writes the record.** The owner adds
    items and drafts, rewrites their own items until you first work them,
-   promotes drafts, reorders items and sections, edits and adds sections,
-   rewrites the summary and `principles`,
-   replies (and rewrites a reply until you read it), reopens, and ticks their own to-dos
+   promotes drafts and sends to-dos back to draft, reorders items, rewrites
+   the title and summary, replies (and rewrites a reply until you read it),
+   archives any open item as done or not doing, and reopens
    (`reference/schema.md`, "Who writes what"). Every other status change,
    decision and outcome is yours, in the file. Never act on a `draft` or a
-   `for: me` item: they are the owner's.
+   `for: me` item.
 3. **Everything stays local.** Never publish a tracker or its page anywhere
    (no artifacts, no gists, no hosted pages). It is shared the way the
    repository is shared, and a private tracker not at all.
@@ -58,7 +58,7 @@ into the agent's global skills directory). Everything below is relative to it:
 6. **Closing means saying what happened.** `done` needs an `outcome` and,
    where possible, `refs` (commit, file, PR). `dropped` needs the reason, and
    the owner's agreement. A settled question keeps its `decision`, so it is
-   never asked again.
+   never asked again. `build` dates what closed, for the archive's order.
 7. **Commit the tracker and its page with the work** that moved them, following the project's
    own commit rules. Git history is the tracker's history.
 
@@ -69,16 +69,15 @@ into the agent's global skills directory). Everything below is relative to it:
 1. Pick the file: `TRACKER.json` for the project's main tracker,
    `trackers/<name>.json` for one effort (see `reference/schema.md`, "Where
    trackers live").
-2. `python3 scripts/tracker.py new <file> --title "<Project> · <scope>" --summary "<what it holds>. <how long it lives>." --groups now,next,later`
-   (or groups that fit, for example one per area of a review). Groups are the
-   tracker's sections, in the order of work: they say what the work is or when
-   it comes, never where it stands. No "Waiting on you", "Running" or "Queued"
-   section: the status shows that, the same in every tracker and in the hub.
-   A section for closed items ("Settled") is fine. Every tracker
+2. `python3 scripts/tracker.py new <file> --title "<Project> · <scope>" --summary "<what it holds>. <how long it lives>."`.
+   A tracker is one list in the order of work, the same in every project:
+   there are no sections, and where an item stands is its status. Every tracker
    follows the same title and summary shape (`reference/schema.md`), so two
    trackers' pages read alike. `new` writes the page too.
-3. Write `principles` if the order of work needs rules, the groups' `note` and
-   `gate`, and the items. Run `build`.
+3. Write the items, first to do first, and `principles` if an agent needs rules
+   to work by. What must happen first is `blocked_by`; what is not ready for an
+   agent (an idea to argue, something to check again on a date or a condition)
+   is a `draft`, saying what it waits for. Run `build`.
 4. Tell the owner, in a line or two, what is in it, which items are waiting on
    them, and the page to open (`file://` + the page's absolute path).
 
@@ -88,8 +87,9 @@ into the agent's global skills directory). Everything below is relative to it:
 (`TRACKER.json` → `TRACKER.html`) with the tracker embedded. The owner opens it
 from disk in any browser and reloads it after the agent rebuilds.
 
-- The status counts on top filter the list; "How the next item is chosen"
-  shows `principles`.
+- Items sit in five tabs, always in this order, each left out when empty:
+  Draft, Needs you, To do, In progress, Archive. The hub has the same five.
+  The archive is by date, newest first; the others keep the list's order.
 - Each waiting item has a reply box; other items take replies inside their
   conversation. Below the list, "Something new?" takes new items, one per
   paragraph. What the owner types is kept in that browser only.
@@ -122,7 +122,7 @@ arguments, starting "Replies to …"), or answers in chat directly.
    answer given in chat, `python3 scripts/tracker.py reply <file> <id> "<their words>"`.
    Each reply is appended to its item's `thread` as an `owner` entry, the page
    is rebuilt, and a reply already there word for word is skipped. A `[new]`
-   reply becomes a new item: `todo` in the first group, id `new-<n>`, the
+   reply becomes a new item: `todo`, last, id `new-<n>`, the
    owner's words as its title and context, `fresh` and `unread`. Nothing else
    changes.
 2. Process them (below).
@@ -137,8 +137,8 @@ For each new reply, decide what it means and write it into the item:
   still unclear, set a new `question`, keep it `waiting`.
 - **It asks for something new.** Add a new item; reference it in a thread
   entry.
-- **It is a new item** (`new-<n>`). Give it a real title, the right group and
-  kind, and a plan, or a question if it is the owner's call.
+- **It is a new item** (`new-<n>`). Give it a real title, its kind and its
+  place in the list, and a plan, or a question if it is the owner's call.
 - **It drops the item.** Move it to `dropped` with the reason as `outcome`.
 
 Clear `unread` (and `fresh`) on every item you processed, so neither you nor
@@ -149,7 +149,10 @@ say so rather than following it silently.
 ## Work an item
 
 - Starting: `doing`, and clear `fresh` and `unread`. Finishing: `done`,
-  `outcome`, `refs`, `updated`.
+  `outcome`, `refs`, `updated`. `doing` says the work has started and is not
+  finished, not that an agent is at it now: a 12-month paper test stays `doing`
+  while it runs.
+- Take the first `todo` nothing blocks; a `draft` waits for the owner.
 - Size it yourself, and pick the smallest shape that fits:
   1. do it directly;
   2. split it into items in the same tracker;
@@ -195,9 +198,9 @@ Never in one step, never without the owner. First propose, then migrate.
    |---|---|
    | Work with a status (checkboxes, workstreams, "small items") | Items |
    | Questions for the owner ("open questions", "the owner's call") | Items, `kind: "decision"`, `waiting` |
-   | Order and gates (Now → Next → Later, "don't start before…") | Groups, with `gate` |
+   | Order and gates (Now → Next → Later, "don't start before…") | The items' order, `blocked_by` |
    | What was done ("completed", execution logs) | `done` items with `outcome` and `refs`, or left to git history |
-   | Deferred ("not now, because…") | `todo` items in a `later` group, the reason in `context` |
+   | Deferred ("not now, because…") | `draft` items, the reason in `context` |
    | Refused or settled ("refused", "answered") | `dropped` or `done` items that keep their `decision` |
    | Prioritization rules | `principles` |
    | Reasoning, design notes, hand-off instructions, snippets | Stays a document (`DECISIONS.md`, `ARCHITECTURE.md`, the existing doc) |

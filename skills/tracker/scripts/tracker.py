@@ -5,24 +5,24 @@ Standard library only, Python 3.9+. The file format is specified in
 ../reference/schema.md; this script is a convenience over it, not the only way
 to read or write it — any agent can edit the JSON by hand and run `check`.
 
-    tracker.py new     PATH --title T --summary S [--groups now,next,later]
+    tracker.py new     PATH --title T --summary S
     tracker.py check   PATH
-    tracker.py build   PATH                  # check, then write PATH's page
+    tracker.py build   PATH                  # check, date what closed, then write PATH's page
     tracker.py brief   [PATH]                # what needs the agent, in a few lines; refreshes a stale page
     tracker.py show    PATH ID               # one item in full
-    tracker.py render  PATH [--status waiting] [--group G]
+    tracker.py render  PATH [--status waiting]
     tracker.py reply   PATH ID TEXT          # one owner reply
     tracker.py reply   PATH --from FILE      # replies copied from the page ('-' = stdin)
 
 A reply addressed to "new" ("[new] …") is a new item from the owner: it is
-added as a `todo` in the first group, for the agent to title and place.
+added as a `todo`, last, for the agent to title and place.
 `brief` without a PATH reads TRACKER.json and trackers/*.json in the current
 directory.
 
-The owner's actions (add, edit, delete, promote, move, reply, edit_reply,
-delete_reply, reopen, tick, edit_tracker, and the sections' add_group,
-edit_group, move_group, delete_group) are functions here too, for the hub that writes them; `act` applies one to a
-file. Each refuses, with a reason, when it no longer applies to the file.
+The owner's actions (add, edit, delete, promote, demote, archive, move, reply,
+edit_reply, delete_reply, reopen, edit_tracker) are functions here too, for the
+hub that writes them; `act` applies one to a file. Each refuses, with a reason,
+when it no longer applies to the file.
 
 The page is PATH with an .html suffix, written next to it: a static file with
 the tracker embedded, opened from disk. `new`, `build` and `reply` rewrite it,
@@ -38,9 +38,9 @@ import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-SCHEMA = 2
-SCHEMAS = (1, 2)      # schema 2 only adds to schema 1; any write by this script sets 2
-STATUSES = ("draft", "todo", "doing", "waiting", "done", "dropped")
+SCHEMA = 3
+SCHEMAS = (1, 2, 3)   # older files had sections: `load` flattens them, and any write sets 3
+STATUSES = ("draft", "waiting", "todo", "doing", "done", "dropped")   # the order they are always shown in
 CLOSED = ("done", "dropped")
 KINDS = ("task", "decision", "check")
 FOR = ("agent", "me")
@@ -58,8 +58,8 @@ ASSETS = Path(__file__).resolve().parent.parent / "assets"
 TEMPLATE = ASSETS / "page.html"
 STYLE = ASSETS / "style.css"      # shared with the Kata hub
 
-STATUS_LABEL = {"draft": "Draft", "todo": "To do", "doing": "In progress", "waiting": "Needs you",
-                "done": "Done", "dropped": "Dropped"}
+STATUS_LABEL = {"draft": "Draft", "waiting": "Needs you", "todo": "To do", "doing": "In progress",
+                "done": "Done", "dropped": "Not doing"}
 BRIEF_LIST = 5        # items per list in `brief`
 BRIEF_TEXT = 90       # characters per line in `brief`
 
@@ -74,7 +74,21 @@ def now_iso():
 
 def load(path):
     with open(path, encoding="utf-8") as f:
-        return json.load(f)
+        return flatten(json.load(f))
+
+
+def flatten(t):
+    """A schema 1 or 2 tracker had sections. They become the one list they add
+    up to, keeping their order, so nothing past this point knows about them."""
+    if not isinstance(t, dict) or not isinstance(t.get("groups"), list):
+        return t
+    order = {g.get("id"): n for n, g in enumerate(t.pop("groups")) if isinstance(g, dict)}
+    if isinstance(t.get("items"), list):
+        t["items"].sort(key=lambda i: order.get(i.get("group"), len(order)) if isinstance(i, dict) else len(order))
+        for i in t["items"]:
+            if isinstance(i, dict):
+                i.pop("group", None)
+    return t
 
 
 def save(path, tracker):
@@ -109,18 +123,6 @@ def problems(t):
         out.append("'summary' is missing: say what the tracker holds and how long it lives.")
     elif len(summary) > MAX_SUMMARY:
         out.append(f"'summary' is over {MAX_SUMMARY} characters: two sentences, what it holds and how long it lives.")
-    groups = t.get("groups")
-    if not isinstance(groups, list) or not groups:
-        out.append("'groups' must be a non-empty list.")
-        groups = []
-    gids = [g.get("id") for g in groups if isinstance(g, dict)]
-    if len(gids) != len(groups) or not all(isinstance(g, str) and g for g in gids):
-        out.append("Every group needs a non-empty string 'id'.")
-    if len(set(gids)) != len(gids):
-        out.append("Group ids must be unique.")
-    for g in groups:
-        if isinstance(g, dict) and not str(g.get("title") or "").strip():
-            out.append(f"Group '{g.get('id')}' needs a 'title'.")
     items = t.get("items")
     if not isinstance(items, list):
         return out + ["'items' must be a list."]
@@ -141,8 +143,6 @@ def problems(t):
         elif iid in seen:
             out.append(f"{where}: the id is used twice.")
         seen.add(iid)
-        if it.get("group") not in gids:
-            out.append(f"{where}: group '{it.get('group')}' is not in 'groups'.")
         if not str(it.get("title") or "").strip():
             out.append(f"{where} needs a 'title'.")
         status = it.get("status")
@@ -188,7 +188,12 @@ def problems(t):
 
 # ---------------------------------------------------------------- render
 
-def render(t, status=None, group=None):
+def closed_at(it):
+    """When an item closed, for the archive's order: newest first."""
+    return it.get("closed") or it.get("updated") or it.get("created") or ""
+
+
+def render(t, status=None):
     """Plain Markdown, for reading in a terminal or by an agent without a page."""
     items = t["items"]
     counts = {s: sum(1 for i in items if i["status"] == s) for s in STATUSES}
@@ -197,24 +202,21 @@ def render(t, status=None, group=None):
         lines += [t["summary"], ""]
     lines.append(" · ".join(f"{STATUS_LABEL[s]}: {counts[s]}" for s in STATUSES if counts[s]))
     lines.append("")
-    for g in t["groups"]:
-        if group and g["id"] != group:
-            continue
-        rows = [i for i in items if i["group"] == g["id"] and (not status or i["status"] == status)]
+    for s in STATUSES:
+        rows = [i for i in items if i["status"] == s and (not status or s == status)]
         if not rows:
             continue
-        lines.append(f"## {g['title']}")
-        if g.get("gate"):
-            lines.append(f"*Starts when:* {g['gate']}")
-        lines.append("")
+        if s in CLOSED:
+            rows.sort(key=closed_at, reverse=True)
+        lines += [f"## {STATUS_LABEL[s]}", ""]
         for i in rows:
-            lines.append(f"- **{i['id']}** [{STATUS_LABEL[i['status']]}] {i['title']}")
-            if i["status"] == "waiting":
+            lines.append(f"- **{i['id']}** {i['title']}")
+            if s == "waiting":
                 lines.append(f"  - Question: {i['question']}")
             if i.get("decision"):
                 lines.append(f"  - Decided: {i['decision']}")
-            if i["status"] in ("done", "dropped"):
-                lines.append(f"  - {STATUS_LABEL[i['status']]}: {i['outcome']}")
+            if s in CLOSED:
+                lines.append(f"  - {STATUS_LABEL[s]}: {i['outcome']}")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
@@ -332,19 +334,16 @@ def touch(it):
     it["updated"] = date.today().isoformat()
 
 
-def add(t, text, status="todo", for_me=False, group=None):
-    """A new item from the owner: `todo` (the agent may take it) or `draft`
-    (not yet), `fresh` until an agent works on it."""
+def add(t, text, status="todo", for_me=False):
+    """A new item from the owner, last: `todo` (the agent may take it) or
+    `draft` (not yet), `fresh` until an agent works on it."""
     if not text.strip():
         raise Refused("An item needs some text.")
     if status not in ("todo", "draft"):
         raise Refused("A new item is either a draft or a to-do.")
-    gids = [g["id"] for g in t["groups"]]
-    if group is not None and group not in gids:
-        raise Refused(f"There is no group '{group}' any more.")
     title, context = owner_words(text)
     today = date.today().isoformat()
-    item = {"id": free_id(t), "group": group or gids[0], "title": title, "kind": "task",
+    item = {"id": free_id(t), "title": title, "kind": "task",
             "status": status, "context": context, "fresh": True, "created": today, "updated": today}
     if for_me:
         item["for"] = "me"
@@ -385,21 +384,40 @@ def promote(t, iid):
     touch(it)
 
 
-def move(t, iid, group, before=None):
-    """Put the item in `group`, just before item `before`, or last in the group."""
+def demote(t, iid):
+    """A to-do back to draft: not ready for an agent after all."""
     it = find(t, iid)
-    if group not in [g["id"] for g in t["groups"]]:
-        raise Refused(f"There is no group '{group}' any more.")
+    if it["status"] != "todo":
+        raise Refused(f"'{iid}' is not a to-do any more.")
+    it["status"] = "draft"
+    it.pop("unread", None)
+    touch(it)
+
+
+def archive(t, iid, how="done", reason=""):
+    """Close an open item, whoever's it is: `done`, or `dropped` (not doing it).
+    The outcome is the owner's reason, else what the item already says. Nothing
+    is left for an agent to read on it."""
+    it = find(t, iid)
+    if how not in CLOSED:
+        raise Refused(f"An item is archived as {' or '.join(CLOSED)}.")
+    if it["status"] in CLOSED:
+        raise Refused(f"'{iid}' is already in the archive.")
+    it["status"] = how
+    it["outcome"] = reason.strip() or it.get("outcome") or ("Done, the owner says." if how == "done" else "Not doing it, the owner's call.")
+    it.pop("unread", None)
+    touch(it)
+
+
+def move(t, iid, before=None):
+    """Put the item just before item `before`, or last."""
+    it = find(t, iid)
     if before == iid:
         return
     items = [i for i in t["items"] if i is not it]
-    if before is None:
-        at = max((n + 1 for n, i in enumerate(items) if i["group"] == group), default=len(items))
-    else:
-        at = next((n for n, i in enumerate(items) if i["id"] == before and i["group"] == group), None)
-        if at is None:
-            raise Refused(f"'{before}' is no longer in that group; reload and try again.")
-    it["group"] = group
+    at = len(items) if before is None else next((n for n, i in enumerate(items) if i["id"] == before), None)
+    if at is None:
+        raise Refused(f"'{before}' is not there any more; reload and try again.")
     items.insert(at, it)
     t["items"] = items
 
@@ -460,86 +478,36 @@ def reopen(t, iid, reason=""):
     touch(it)
 
 
-def tick(t, iid):
-    """The owner's own to-do, done."""
-    it = find(t, iid)
-    if it.get("for") != "me":
-        raise Refused(f"'{iid}' is the agent's to close.")
-    if it["status"] in CLOSED:
-        return
-    it["status"], it["outcome"] = "done", "Done by the owner."
-    touch(it)
-
-
-# Sections (groups) are the tracker's order of work. The agent sets them when
-# it starts the tracker; the owner may edit, add, reorder and remove empty ones.
-
-def group_of(t, gid):
-    for g in t["groups"]:
-        if g["id"] == gid:
-            return g
-    raise Refused(f"There is no section '{gid}' any more; reload and try again.")
-
-
-def add_group(t, title):
-    """A new section, last. Its id comes from its name."""
-    title = title.strip()
-    if not title:
-        raise Refused("A section needs a name.")
-    taken = {g["id"] for g in t["groups"]}
-    base = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40] or "section"
-    gid, n = base, 2
-    while gid in taken:
-        gid, n = f"{base}-{n}", n + 1
-    t["groups"].append({"id": gid, "title": title, "note": "", "gate": ""})
-    return gid
-
-
-def edit_group(t, gid, title, note=None, gate=None):
-    """A section's name, and, when given, the line under it (`note`) and what
-    must be true before it starts (`gate`)."""
-    if not title.strip():
-        raise Refused("A section needs a name.")
-    g = group_of(t, gid)
-    g["title"] = title.strip()
-    if note is not None:
-        g["note"] = note.strip()
-    if gate is not None:
-        g["gate"] = gate.strip()
-
-
-def edit_tracker(t, summary=None, principles=None):
-    """What the tracker holds (`summary`), and the rules that pick the next
-    item (`principles`, one per entry)."""
+def edit_tracker(t, title=None, summary=None):
+    """What the tracker is called, and what it holds (`summary`)."""
+    if title is not None:
+        if not title.strip():
+            raise Refused("A tracker needs a title.")
+        t["title"] = " ".join(title.split())
     if summary is not None:
         if not summary.strip():
             raise Refused("A tracker needs a summary: what it holds, and how long it lives.")
         t["summary"] = " ".join(summary.split())
-    if principles is not None:
-        t["principles"] = [p.strip() for p in principles if p.strip()]
 
 
-def move_group(t, gid, before=None):
-    """Put section `gid` just before section `before`, or last."""
-    g = group_of(t, gid)
-    if before == gid:
-        return
-    rest = [x for x in t["groups"] if x is not g]
-    at = len(rest) if before is None else next((n for n, x in enumerate(rest) if x["id"] == before), None)
-    if at is None:
-        raise Refused(f"There is no section '{before}' any more; reload and try again.")
-    rest.insert(at, g)
-    t["groups"] = rest
+def stamp(t):
+    """Date every item that closed, for the archive's order, and forget the
+    date of one that reopened. An agent closing by hand leaves only `updated`:
+    a past date is taken as it is, today's gets the time."""
+    today = date.today().isoformat()
+    for it in t["items"]:
+        if it["status"] not in CLOSED:
+            it.pop("closed", None)
+        elif not it.get("closed"):
+            it["closed"] = it["updated"] if it.get("updated") not in (None, "", today) else now_iso()
 
 
-def delete_group(t, gid):
-    """Remove a section with nothing in it, closed items included."""
-    g = group_of(t, gid)
-    if any(i["group"] == gid for i in t["items"]):
-        raise Refused(f"'{g['title']}' still holds items. Move them out first.")
-    if len(t["groups"]) == 1:
-        raise Refused("A tracker keeps at least one section.")
-    t["groups"].remove(g)
+def finish(path, t):
+    """Write a valid tracker and its page."""
+    stamp(t)
+    t["schema"] = SCHEMA
+    save(path, t)
+    return write_page(path, t)
 
 
 def act(path, action, *args, **kwargs):
@@ -556,9 +524,7 @@ def act(path, action, *args, **kwargs):
     issues = problems(t)
     if issues:
         raise Refused(issues[0])
-    t["schema"] = SCHEMA
-    save(path, t)
-    write_page(path, t)
+    finish(path, t)
     return result
 
 
@@ -601,8 +567,6 @@ def brief(t, source):
     the tracker's size: what the owner added or said, what waits on them,
     what is in progress and what comes next. `show` gives an item in full."""
     items = t["items"]
-    order = {g["id"]: n for n, g in enumerate(t["groups"])}
-    items = sorted(items, key=lambda i: order.get(i["group"], len(order)))   # stable: keeps file order
     mine = [i for i in items if i.get("for") == "me" and i["status"] not in CLOSED]
     agents = [i for i in items if i.get("for") != "me"]
     new = [i for i in agents if pending(i)]
@@ -612,15 +576,15 @@ def brief(t, source):
          else clip(i["title"], 40) + f" · {i['thread'][-1]['by']}: " + clip(i["thread"][-1]["text"], 50)),
         ("Waiting on the owner", [i for i in agents if i["status"] == "waiting" and not pending(i)], BRIEF_LIST,
          lambda i: clip(i.get("question") or i["title"])),
-        ("In progress", [i for i in agents if i["status"] == "doing" and not pending(i)], BRIEF_LIST,
-         lambda i: clip(i["title"])),
         ("Next to do", [i for i in agents if i["status"] == "todo" and not pending(i)], BRIEF_LIST,
          lambda i: clip(i["title"]) + (" · blocked by " + ", ".join(i["blocked_by"]) if i.get("blocked_by") else "")),
+        ("In progress", [i for i in agents if i["status"] == "doing" and not pending(i)], BRIEF_LIST,
+         lambda i: clip(i["title"])),
     ]
     count = lambda s: sum(1 for i in agents if i["status"] == s)
-    tally = [f"{STATUS_LABEL[s].lower()} {count(s)}" for s in ("waiting", "doing", "todo") if count(s)]
-    tally += [f"closed {count('done') + count('dropped')}"] if count("done") + count("dropped") else []
-    tally += [f"drafts {count('draft')} (the owner's, not yet for you)"] if count("draft") else []
+    tally = [f"drafts {count('draft')} (not yet for you)"] if count("draft") else []
+    tally += [f"{STATUS_LABEL[s].lower()} {count(s)}" for s in ("waiting", "todo", "doing") if count(s)]
+    tally += [f"archive {count('done') + count('dropped')}"] if count("done") + count("dropped") else []
     tally += [f"owner's own to-dos {len(mine)}"] if mine else []
     lines = [f"{t['title']} ({source}): " + (", ".join(tally) or "empty")]
     for head, rows, cap, fmt in lists:
@@ -647,16 +611,8 @@ def found_trackers(root="."):
 
 # ---------------------------------------------------------------- new
 
-def new_tracker(title, groups, summary=""):
-    return {
-        "schema": SCHEMA,
-        "title": title,
-        "summary": summary,
-        "principles": [],
-        "groups": [{"id": g, "title": g.replace("-", " ").capitalize(), "note": "", "gate": ""}
-                   for g in groups],
-        "items": [],
-    }
+def new_tracker(title, summary=""):
+    return {"schema": SCHEMA, "title": title, "summary": summary, "principles": [], "items": []}
 
 
 # ---------------------------------------------------------------- cli
@@ -666,12 +622,11 @@ def main(argv=None):
     sub = p.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("new");    a.add_argument("path"); a.add_argument("--title", required=True)
     a.add_argument("--summary", required=True)
-    a.add_argument("--groups", default="now,next,later")
     a = sub.add_parser("check");  a.add_argument("path")
     a = sub.add_parser("build");  a.add_argument("path")
     a = sub.add_parser("brief");  a.add_argument("path", nargs="?")
     a = sub.add_parser("show");   a.add_argument("path"); a.add_argument("id")
-    a = sub.add_parser("render"); a.add_argument("path"); a.add_argument("--status"); a.add_argument("--group")
+    a = sub.add_parser("render"); a.add_argument("path"); a.add_argument("--status")
     a = sub.add_parser("reply");  a.add_argument("path"); a.add_argument("id", nargs="?"); a.add_argument("text", nargs="?")
     a.add_argument("--from", dest="source")
     args = p.parse_args(argv)
@@ -680,7 +635,7 @@ def main(argv=None):
         if Path(args.path).exists():
             print(f"{args.path} already exists; not overwriting it.", file=sys.stderr)
             return 1
-        t = new_tracker(args.title, [g.strip() for g in args.groups.split(",") if g.strip()], args.summary)
+        t = new_tracker(args.title, args.summary)
         save(args.path, t)
         print(f"Created {args.path} and {write_page(args.path, t)}.")
         return 0
@@ -704,10 +659,10 @@ def main(argv=None):
         return 0
 
     if args.cmd == "build":
-        print(f"{args.path}: valid, {len(t['items'])} items. Wrote {write_page(args.path, t)}.")
+        print(f"{args.path}: valid, {len(t['items'])} items. Wrote {finish(args.path, t)}.")
         return 0
     if args.cmd == "render":
-        sys.stdout.write(render(t, args.status, args.group))
+        sys.stdout.write(render(t, args.status))
         return 0
     if args.cmd == "brief":
         sys.stdout.write(brief(t, args.path))

@@ -22,33 +22,27 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 
 ```json
 {
-  "schema": 2,
+  "schema": 3,
   "title": "Compass · Calculation review",
   "summary": "Every finding from the 5 October review and where it stands. Temporary: deleted once every item is closed.",
   "principles": ["Fix what is wrong before what is untidy."],
-  "groups": [
-    { "id": "now",   "title": "Now",   "note": "The one active loop.", "gate": "" },
-    { "id": "next",  "title": "Next",  "note": "", "gate": "The Now loop has produced evidence." }
-  ],
   "items": [ … ]
 }
 ```
 
 | Field | Meaning |
 |---|---|
-| `schema` | `2`. A schema 1 file is valid as it is (schema 2 only adds fields); `tracker.py` sets `2` when it writes. |
+| `schema` | `3`. Schema 1 and 2 files had sections (`groups`, and a `group` on each item): `tracker.py` reads them as one list, sections in order, and any write drops them and sets `3`. |
 | `title` | `<Project> · <scope>`: `Compass · Plan` for the main tracker, `Compass · Calculation review` for one effort. At most 60 characters. Also the page's title. |
 | `summary` | Two sentences, at most 240 characters. First what it holds, then how long it lives ("Long-lived: …" or "Temporary: deleted once every item is closed."). Pointers to other docs belong in the project's `CLAUDE.md`, not here. |
-| `principles` | Optional. How to choose what comes next when nobody is there to ask (a `PLAN.md`'s "Prioritization"). The page shows them under "How the next item is chosen". |
-| `groups` | Ordered sections. Their order is the order of work. `gate` says what must be true before a group starts; leave it empty when there is none. Typical sets: `now / next / later`, or one group per area for a review. A section says what the work is or when it comes, never where it stands: no section repeats a status. |
-| `items` | The work, in display order within each group. |
+| `principles` | Optional. Rules an agent works by when nobody is there to ask (a `PLAN.md`'s "Prioritization"). For agents: no page shows them. |
+| `items` | The work, one list in the order of work: an agent takes the first `todo` nothing blocks. |
 
 ## Items
 
 ```json
 {
   "id": "A2",
-  "group": "now",
   "title": "A short, large round trip dominates a holding's yearly rate",
   "kind": "decision",
   "status": "waiting",
@@ -67,18 +61,18 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
   "blocked_by": [],
   "spawned": "",
   "created": "2026-10-05",
-  "updated": "2026-10-05"
+  "updated": "2026-10-05",
+  "closed": ""
 }
 ```
 
 | Field | Required | Meaning |
 |---|:-:|---|
 | `id` | ✓ | Unique, short, stable. Letters, digits and `_ - . ~ : @ +` only (it heads the owner's copied replies as `[id]`). Never reused. `new` is reserved: the owner's new items arrive as `[new]` and get the id `new-<n>`. |
-| `group` | ✓ | One of the group ids. |
 | `title` | ✓ | What the item is, in the owner's words, not the code's. |
 | `kind` | | `task` (default): the agent can just do it. `decision`: needs the owner's view. `check`: needs something only the owner can look at. |
-| `status` | ✓ | `draft` (the owner's, not yet for the agent), `todo`, `doing`, `waiting` (needs the owner), `done`, `dropped`. |
-| `for` | | `agent` (default) or `me`: a to-do of the owner's own, which the agent never works and the owner ticks done. |
+| `status` | ✓ | In the order they are always shown: `draft` (not ready for an agent), `waiting` (needs the owner), `todo`, `doing` (started and not finished, however long it runs), `done`, `dropped` (shown as "Not doing"). |
+| `for` | | `agent` (default) or `me`: a to-do of the owner's own, which the agent never works and the owner archives when done. |
 | `fresh` | | `true` on an item the owner added, until an agent first works on it. While fresh, the owner may still rewrite or delete it. |
 | `unread` | | `true` when the owner wrote something the agent has not processed: a new item, a promoted draft, a reply, a reopening. The agent clears it once processed. |
 | `context` | | What is wrong or what is wanted, with the evidence. |
@@ -86,19 +80,25 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 | `question` | when `waiting` | The single open question. Clear it once answered. |
 | `thread` | | The conversation, oldest first. `at` is a full ISO timestamp. The owner's entries are added by `tracker.py reply`, from text copied off the page or said in chat; the agent's are its follow-ups. Append only. |
 | `decision` | | The settled answer, in one or two sentences. This is what stops a question being asked again. |
-| `outcome` | when `done` or `dropped` | What was done and where, or why it was dropped. |
+| `outcome` | when `done` or `dropped` | What was done and where, or why not. |
 | `refs` | | Where the outcome lives: commits, files, PRs, docs. |
 | `table` | | Optional small data table; first row is the header. |
 | `blocked_by` | | Items that must close first: an id in this tracker, or `<project>/<id>` for another registered project. |
 | `spawned` | | The tracker this item grew into (`trackers/<name>.json`). The item stays `doing` until that tracker closes. |
 | `created`, `updated` | | ISO dates. |
+| `closed` | | When it closed: the archive's order, newest first. Written by the hub and by `build`; an item that reopens loses it. |
 
 ## Status, and what moves it
+
+Every view shows the same five tabs, in this order, each left out when empty:
+**Draft** (`draft`), **Needs you** (`waiting`, and any open `for: me` item),
+**To do** (`todo`), **In progress** (`doing`), **Archive** (`done`, `dropped`).
 
 | From | To | When | Who |
 |---|---|---|---|
 | — | `draft` | The owner notes something not ready for the agent | owner |
 | `draft` | `todo` | The owner promotes it | owner |
+| `todo` | `draft` | Not ready for an agent after all | owner |
 | — | `todo` | An item is added | agent, or the owner (`[new]`, or the hub) |
 | `todo` | `doing` | Work starts | agent |
 | any open | `waiting` | The agent needs the owner; `question` is set | agent |
@@ -106,8 +106,8 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 | `waiting` | `waiting` | A reply raises a follow-up; the agent adds a thread entry and a new `question` | agent |
 | any | `done` | Finished; `outcome` and `refs` written | agent |
 | any | `dropped` | Not going to happen; `outcome` says why | agent, after the owner agrees |
+| any open | `done` / `dropped` | The owner archives it, with their reason if they give one | owner |
 | `done` / `dropped` | `todo` | The owner reopens it, saying why in the thread | owner |
-| open, `for: me` | `done` | The owner ticks their own to-do | owner |
 
 ## Who writes what
 
@@ -121,14 +121,13 @@ when the action no longer applies:
 |---|---|
 | add an item (`todo` or `draft`, theirs or the agent's) | — |
 | rewrite or delete an item they added | only while `fresh`; after that a rewrite becomes a reply |
-| promote a draft | — |
-| move an item to a group, or before another item | — |
-| rename, add or reorder sections (groups), rewrite their `note` and `gate`; remove one | only an empty one |
-| rewrite the tracker's `summary` and `principles` | — |
+| promote a draft, or send a to-do back to draft | — |
+| move an item before another, or last | — |
+| rewrite the tracker's `title` and `summary` | — |
 | reply on any item | — |
 | rewrite or delete their reply | only while no agent has read it: the item is `unread` and no agent entry follows |
 | reopen a closed item | with a reason, unless it is their own to-do |
-| tick their own to-do done | `for: me` only |
+| archive an open item as done or not doing | — |
 
 Everything else (status, plan, question, decision, outcome, refs, splitting
 and spawning) is the agent's. The agent never acts on a `draft` or a
@@ -136,6 +135,6 @@ and spawning) is the agent's. The agent never acts on a `draft` or a
 
 ## Size
 
-A tracker is read whole, by agents and by its page. When done items crowd out
-the open ones, archive them: their `decision` and `outcome` go to
+A tracker is read whole, by agents and by its page. When closed items grow
+too many to read past, retire them: their `decision` and `outcome` go to
 `DECISIONS.md` or git history, and the items are deleted.
