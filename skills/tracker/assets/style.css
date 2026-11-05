@@ -114,7 +114,7 @@ textarea, input[type="text"], select {
   border: 1px solid var(--line); border-radius: var(--radius); padding: 5px 10px; }
 textarea { resize: vertical; min-height: 64px; }
 textarea:focus, input[type="text"]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 
 /* A row: one item in a list. The list sits 12px in from the sheet and a row
    pads 12px, so its dot lines up with the description and the stages. */
