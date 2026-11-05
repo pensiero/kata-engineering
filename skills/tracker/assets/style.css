@@ -1,16 +1,28 @@
 /* The tracker's visual language, shared by every tracker's page (inlined by
    `tracker.py build`) and by the Kata hub (served as-is). Tokens first, then
-   the pieces both use: the status dot, the info tip, buttons and fields, a
-   row, an item's detail and its conversation. Layout belongs to each page. */
+   the pieces both use: the sheet, the status dot, the info tip, buttons and
+   fields, a row, an item's detail and its conversation. Layout belongs to
+   each page.
+
+   One system, so that everything belongs together:
+   - Four text sizes: small for what describes (--t-s), medium for what is
+     read or pressed (--t-m), large for a tracker's name (--t-l), and the page
+     title (--t-xl).
+   - One height for every control (--control).
+   - Corners say what a thing is: surfaces --radius-lg, controls --radius, and
+     round only for data (a count, a tag, a dot).
+   - Two colours beyond ink: indigo for acting and where you are, amber for
+     what waits for you. Everything else is grey. */
 :root {
   --paper: #eceef3; --side: #e2e5ed; --surface: #ffffff; --ink: #1d2333; --muted: #646b7d;
   --line: #d5d9e3; --hover: #e3e6ee;
   --accent: #34459a; --accent-ink: #ffffff; --accent-soft: #dfe3f4;
   --draft: #8c92a3; --todo: #7a8090; --doing: #34459a; --waiting: #b7791f; --done: #5b7b45; --dropped: #a3a7b2;
-  --waiting-soft: #f6ecd9; --error: #b4413a;
+  --waiting-soft: #f6ecd9; --waiting-ink: #8a5a12; --error: #b4413a;
   --ui: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
   --display: Optima, Candara, "Gill Sans", "Segoe UI", sans-serif;
-  --radius: 6px;
+  --t-s: 13px; --t-m: 15px; --t-l: 19px; --t-xl: 30px;
+  --control: 32px; --radius: 6px; --radius-lg: 10px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
@@ -18,26 +30,49 @@
   --line: #2c3246; --hover: #232941;
   --accent: #8e9df0; --accent-ink: #161a26; --accent-soft: #283160;
   --draft: #7c8296; --todo: #8c92a3; --doing: #8e9df0; --waiting: #e2a94b; --done: #94bc7a; --dropped: #5e6476;
-  --waiting-soft: #3a2f1c; --error: #e0776f; color-scheme: dark; } }
+  --waiting-soft: #3a2f1c; --waiting-ink: #e2a94b; --error: #e0776f; color-scheme: dark; } }
 :root[data-theme="dark"] {
   --paper: #161a26; --side: #121520; --surface: #1e2333; --ink: #e6e8ef; --muted: #9aa0b3;
   --line: #2c3246; --hover: #232941;
   --accent: #8e9df0; --accent-ink: #161a26; --accent-soft: #283160;
   --draft: #7c8296; --todo: #8c92a3; --doing: #8e9df0; --waiting: #e2a94b; --done: #94bc7a; --dropped: #5e6476;
-  --waiting-soft: #3a2f1c; --error: #e0776f; color-scheme: dark; }
+  --waiting-soft: #3a2f1c; --waiting-ink: #e2a94b; --error: #e0776f; color-scheme: dark; }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; }
-body { background: var(--paper); color: var(--ink); font: 15px/1.5 var(--ui); font-variant-numeric: tabular-nums;
+body { background: var(--paper); color: var(--ink); font: var(--t-m)/1.5 var(--ui); font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased; }
 h1, h2, h3 { font-family: var(--display); font-weight: 500; margin: 0; text-wrap: balance; }
-h1 { font-size: 29px; line-height: 1.2; letter-spacing: -.005em; }
-h2 { font-size: 18.75px; line-height: 1.3; }
+h1 { font-size: var(--t-xl); line-height: 1.2; letter-spacing: -.005em; }
+h2 { font-size: var(--t-l); line-height: 1.3; }
 p { margin: 0; }
 a { color: var(--accent); }
 .muted { color: var(--muted); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* A tracker is one sheet: its description, its stages and its items on the
+   same surface, with its name on an index tab joined to the sheet's top edge.
+   The open tab is the sheet's own white; the others stay behind it. */
+.leaves { position: relative; z-index: 1; display: flex; gap: 2px; margin-bottom: -1px; overflow-x: auto; scrollbar-width: none; }
+.leaves::-webkit-scrollbar { display: none; }
+.leaf { display: flex; align-items: center; gap: 8px; flex: none; max-width: 340px; height: 44px; margin: 0; padding: 0 16px;
+  border: 1px solid transparent; border-bottom: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: var(--side); color: var(--muted);
+  font: 500 var(--t-l)/1 var(--display); white-space: nowrap; cursor: pointer; transition: background-color .12s, color .12s; }
+.leaf .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+.leaf:hover { background: var(--hover); color: var(--ink); }
+.leaf:focus-visible { outline-offset: -3px; }
+.leaf[aria-pressed="true"], .leaf.only { background: var(--surface); border-color: var(--line); color: var(--ink); cursor: default; }
+.leaf.only { display: block; flex: 0 1 auto; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 44px; }
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.leaves + .sheet { border-top-left-radius: 0; }
+.about { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 20px 24px 16px; }
+.lede { color: var(--muted); max-width: 66ch; }
+
+/* Counts of what waits for you, the same wherever they appear. */
+.count { color: var(--muted); font-size: var(--t-s); }
+.count.attn { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--waiting-soft); color: var(--waiting-ink);
+  font: 600 var(--t-s)/20px var(--ui); text-align: center; }
 
 /* Status: one dot, its colour the status. A draft is only a ring. */
 .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; display: inline-block; background: var(--todo); }
@@ -52,7 +87,7 @@ a { color: var(--accent); }
 [data-tip] { position: relative; }
 [data-tip]::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
   width: max-content; max-width: 260px; padding: 7px 10px; border-radius: var(--radius); background: var(--ink); color: var(--paper);
-  font: 400 12.5px/1.45 var(--ui); font-style: normal; white-space: normal; text-align: left; letter-spacing: 0; text-transform: none;
+  font: 400 var(--t-s)/1.45 var(--ui); font-style: normal; white-space: normal; text-align: left; letter-spacing: 0; text-transform: none;
   pointer-events: none; opacity: 0; visibility: hidden; z-index: 30; transition: opacity .12s, visibility 0s .12s; }
 [data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; visibility: visible; transition: opacity .12s .35s, visibility 0s .35s; }
 .tip:hover::after, .tip:focus-visible::after { transition-delay: 0s; }
@@ -66,63 +101,65 @@ a { color: var(--accent); }
 
 /* Buttons and fields */
 button { font: inherit; color: inherit; }
-.btn { font: 500 13.5px/1 var(--ui); border-radius: var(--radius); padding: 8px 14px; cursor: pointer;
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: var(--control); padding: 0 12px;
+  font: 500 var(--t-m)/1 var(--ui); white-space: nowrap; text-decoration: none; border-radius: var(--radius); cursor: pointer;
   background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
 .btn.quiet { background: transparent; color: var(--ink); border-color: var(--line); }
 .btn.quiet:hover { border-color: var(--muted); }
-.btn.link { background: none; border: 0; padding: 4px 2px; color: var(--accent); }
+.btn.link { background: none; border: 0; padding: 0 2px; color: var(--accent); }
 .btn.danger { background: transparent; color: var(--error); border-color: transparent; }
 .btn[disabled] { opacity: .45; cursor: default; }
 textarea, input[type="text"], select {
-  width: 100%; font: 14.5px/1.45 var(--ui); color: var(--ink); background: var(--surface);
-  border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; }
+  width: 100%; font: var(--t-m)/1.45 var(--ui); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 5px 10px; }
 textarea { resize: vertical; min-height: 64px; }
 textarea:focus, input[type="text"]:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 
-/* A row: one item in a list. */
-.row { display: flex; gap: 12px; align-items: center; padding: 9px 12px; border-radius: var(--radius); min-width: 0; cursor: pointer; }
-.row:hover { background: var(--hover); }
+/* A row: one item in a list. The list sits 12px in from the sheet and a row
+   pads 12px, so its dot lines up with the description and the stages. */
+.items { display: flex; flex-direction: column; gap: 2px; margin: 8px 12px 12px; }
+.row { display: flex; gap: 12px; align-items: center; min-height: 40px; padding: 8px 12px; border-radius: var(--radius); min-width: 0; cursor: pointer; }
+.row:hover { background: var(--paper); }
 .row .title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.row .where { color: var(--muted); font-size: 13px; white-space: nowrap; flex: none; max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
-.flag { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; white-space: nowrap; flex: none; }
-.flag.me, .flag.needs { color: var(--waiting); border-color: var(--waiting-soft); background: var(--waiting-soft); }
+.row .where { color: var(--muted); font-size: var(--t-s); white-space: nowrap; flex: none; max-width: 40%; overflow: hidden; text-overflow: ellipsis; }
+.flag { font-size: var(--t-s); color: var(--muted); white-space: nowrap; flex: none; }
+.flag.me, .flag.needs { display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 999px; background: var(--waiting-soft);
+  color: var(--waiting-ink); font-weight: 600; line-height: 24px; }
 
-/* The stages are tabs on a line, in the one order they are ever shown. Needs
-   you is not one of them: it filters To do and In progress, so it is drawn as
-   the tag it filters on, floating clear of the line and set off by a divider. */
-.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); margin-top: 20px; overflow-x: auto; }
-.tab { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border: 0; background: none; cursor: pointer; color: var(--muted);
-  border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; font-size: 14.5px; }
+/* The stages are tabs on a line, in the one order they are ever shown, their
+   line joining the sheet's header to its list. Needs you is not one of them:
+   it filters To do and In progress, so it is that same tag, set off by a
+   divider, and it marks the line in amber when open. */
+.tabs { display: flex; gap: 24px; padding: 0 24px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tab { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--muted);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; font-size: var(--t-m); }
 .tab:hover { color: var(--ink); }
 .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
-.tab .n { font-size: 13px; color: var(--muted); }
-.tab.filter { align-self: center; margin: 0 0 5px; padding: 3px 11px; border: 1px solid transparent; border-radius: 999px;
-  color: var(--waiting); background: var(--waiting-soft); font-size: 14px; font-weight: 600; }
-.tab.filter .n { color: inherit; }
-.tab.filter:hover { color: var(--waiting); border-color: var(--waiting); }
-.tab.filter[aria-selected="true"] { color: var(--ink); border-color: var(--waiting); }
-.tab-gap { flex: none; width: 1px; margin: 8px 10px 9px 12px; background: var(--line); }
+.tab .n { font-size: var(--t-s); color: var(--muted); }
+.tab.filter[aria-selected="true"] { border-bottom-color: var(--waiting); }
+.tab .flag .n { color: inherit; }
+.tab-gap { flex: none; width: 1px; margin: 10px 0 11px; background: var(--line); }
 
 /* An item's detail: context, plan, the question, the conversation. */
 .detail { display: flex; flex-direction: column; gap: 16px; }
-.detail .lbl { font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 3px; }
+.detail .lbl { font-size: var(--t-s); font-weight: 600; color: var(--muted); margin-bottom: 3px; }
 .detail .text { white-space: pre-line; max-width: 68ch; overflow-wrap: anywhere; }
-.detail .question { background: var(--waiting-soft); border-radius: var(--radius); padding: 12px 14px; }
-.detail .question .lbl { color: var(--waiting); }
-.detail .refs { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
-.status-line { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13.5px; flex-wrap: wrap; }
+.detail .question { background: var(--waiting-soft); border-radius: var(--radius-lg); padding: 12px 16px; }
+.detail .question .lbl { color: var(--waiting-ink); }
+.detail .refs { font-size: var(--t-s); color: var(--muted); overflow-wrap: anywhere; }
+.status-line { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: var(--t-s); flex-wrap: wrap; }
 .thread { display: flex; flex-direction: column; gap: 8px; }
-.msg { max-width: 88%; padding: 8px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line);
-  white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14.5px; }
+.msg { max-width: 88%; padding: 8px 12px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--line);
+  white-space: pre-wrap; overflow-wrap: anywhere; }
 .msg.owner { align-self: flex-end; background: var(--accent-soft); border-color: transparent; }
 .msg.pending { border-style: dashed; border-color: var(--accent); background: transparent; }
-.msg .who { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
-table.mini { border-collapse: collapse; font-size: 13.5px; }
+.msg .who { display: block; font-size: var(--t-s); color: var(--muted); margin-bottom: 2px; }
+table.mini { border-collapse: collapse; font-size: var(--t-s); }
 table.mini td, table.mini th { padding: 3px 14px 3px 0; text-align: right; }
 table.mini th { font-weight: 600; color: var(--muted); }
 table.mini td:first-child, table.mini th:first-child { text-align: left; }
 .tw { overflow-x: auto; }
-.empty { color: var(--muted); padding: 14px 12px; }
+.empty { color: var(--muted); padding: 16px 24px; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

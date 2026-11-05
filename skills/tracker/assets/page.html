@@ -9,33 +9,35 @@
 /* A tracker's page, built by `tracker.py build` next to its JSON file, with
    the tracker embedded below. It opens from disk with no server and loads
    nothing from the network; replies typed here stay in this browser until
-   they are copied to the agent. One reading column: the title, the
-   tabs, then the items of the open tab, each a row that opens onto its detail
-   and a reply box. */
-.wrap { max-width: 820px; margin: 0 auto; padding: 40px 20px 96px; }
-.lede { color: var(--muted); margin-top: 6px; max-width: 65ch; white-space: pre-line; }
-.items { margin-top: 14px; display: flex; flex-direction: column; gap: 2px; }
+   they are copied to the agent. One reading column, the sheet the hub draws
+   for a tracker: its name on a tab, then the stages and the items of the open
+   one, each a row that opens onto its detail and a reply box. */
+.wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 96px; }
+.lede { white-space: pre-line; }
 details.item > summary { list-style: none; }
 details.item > summary::-webkit-details-marker { display: none; }
-details.item[open] { background: var(--surface); border-radius: var(--radius); }
+details.item[open] { background: var(--paper); border-radius: var(--radius); }
 details.item[open] > summary:hover { background: transparent; }
 details.item .detail { padding: 4px 12px 16px 33px; }
-.newbox { margin-top: 40px; padding-left: 12px; }
-.newbox p { color: var(--muted); font-size: 13.5px; margin: 4px 0 8px; }
+details.item .detail textarea { background: var(--surface); }
+.newbox { margin-top: 32px; }
+.newbox p { color: var(--muted); font-size: var(--t-s); margin: 4px 0 8px; }
 .outbox { position: sticky; bottom: 16px; margin-top: 28px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
-  background: var(--ink); color: var(--paper); border-radius: 10px; padding: 10px 12px 10px 16px; }
+  background: var(--ink); color: var(--paper); border-radius: var(--radius-lg); padding: 8px 8px 8px 16px; }
 .outbox .btn { background: var(--paper); color: var(--ink); border-color: var(--paper); margin-left: auto; }
 .outbox textarea { flex-basis: 100%; min-height: 120px; }
-.foot { margin-top: 48px; color: var(--muted); font-size: 12.5px; padding-left: 12px; }
+.foot { margin-top: 32px; color: var(--muted); font-size: var(--t-s); }
 @media (max-width: 560px) { .wrap { padding-top: 24px; } .row .where { display: none; } }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1 id="title">Tracker</h1>
-  <p class="lede" id="lede"></p>
-  <div class="tabs" id="tabs" role="tablist" aria-label="Status"></div>
-  <div id="list"><p class="empty">Loading the tracker…</p></div>
+  <div class="leaves"><h1 class="leaf only" id="title">Tracker</h1></div>
+  <div class="sheet">
+    <div class="about" id="about"><p class="lede" id="lede"></p></div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="Status"></div>
+    <div id="list"><p class="empty">Loading the tracker…</p></div>
+  </div>
   <section class="newbox" id="newbox" hidden></section>
   <div class="outbox" id="outbox" hidden></div>
   <p class="foot" id="foot"></p>
@@ -106,12 +108,14 @@ function renderHead() {
   document.title = state.title || "Tracker";
   $("title").textContent = state.title || "Tracker";
   $("lede").textContent = state.summary || "";
+  $("about").hidden = !state.summary;
   const count = (k) => items().filter((i) => inTab(i, k)).length;
   const open = openTab();
   const pick = (k) => { tab = k; try { localStorage.setItem("trackerTab", k); } catch (e) {} render(); };
   const tabEl = ([k, label]) => el("button", { type: "button", class: k === NEEDS ? "tab filter" : "tab", role: "tab", "aria-selected": String(k === open),
       title: k === NEEDS ? "Not a stage: everything in To do or In progress that is waiting for you" : null, onclick: () => pick(k) },
-    k === NEEDS ? null : el("span", { class: "dot " + (k === "archive" ? "done" : k) }), label, el("span", { class: "n" }, String(count(k))));
+    k === NEEDS ? el("span", { class: "flag needs" }, label, el("span", { class: "n" }, String(count(k))))
+      : [label, el("span", { class: "n" }, String(count(k)))]);
   $("tabs").replaceChildren(...(count(NEEDS) ? [tabEl([NEEDS, "Needs you"]), el("span", { class: "tab-gap" })] : []),
     ...STAGES.filter(([k]) => count(k)).map(tabEl));
   const last = items().map((i) => i.updated || "").sort().pop();
