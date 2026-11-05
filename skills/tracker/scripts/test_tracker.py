@@ -72,13 +72,39 @@ class Replies(unittest.TestCase):
         self.assertEqual(tracker.parse_replies(COPIED), [
             ("T2", "Green.\nThe darker one, if there are two."), ("T1", "Go ahead.")])
 
-    def test_replies_are_appended_once_and_never_change_a_status(self):
+    def test_a_reply_moves_a_question_to_todo_for_an_agent_to_read(self):
+        t = sample()
+        tracker.add_replies(t, [("T2", "Green.")])
+        it = t["items"][1]
+        self.assertEqual((it["status"], it["question"], it["unread"]), ("todo", "Blue or green?", True))
+        self.assertTrue(tracker.pending(it))
+        self.assertEqual(tracker.problems(t), [])
+        typed = sample()
+        tracker.reply(typed, "T2", "Green.")
+        self.assertEqual(typed["items"][1]["status"], "todo")
+        tracker.reply(typed, "T1", "And quickly.")               # not a question: it stays where it is
+        self.assertEqual(typed["items"][0]["status"], "todo")
+
+    def test_a_reply_elsewhere_moves_nothing_and_a_draft_stays_a_draft(self):
+        t = sample()
+        t["items"].append({"id": "D", "title": "Started", "status": "doing"})
+        t["items"].append({"id": "A", "title": "An idea", "status": "draft"})
+        tracker.add_replies(t, [("D", "Hurry."), ("A", "Maybe.")])
+        self.assertEqual([i["status"] for i in t["items"][-2:]], ["doing", "draft"])
+
+    def test_deleting_the_answer_puts_the_question_back(self):
+        t = sample()
+        tracker.reply(t, "T2", "Green.")
+        tracker.delete_reply(t, "T2", 0, t["items"][1]["thread"][0]["at"])
+        self.assertEqual(t["items"][1]["status"], "waiting")
+        self.assertFalse(tracker.pending(t["items"][1]))
+
+    def test_a_reply_is_appended_once(self):
         t = sample()
         added, unknown = tracker.add_replies(t, [("T2", "Green.")], at="2026-10-05T10:00:00+00:00")
         self.assertEqual((added, unknown), ([("T2", "Green.")], []))
         self.assertEqual(t["items"][1]["thread"][-1],
                          {"by": "owner", "at": "2026-10-05T10:00:00+00:00", "text": "Green."})
-        self.assertEqual(t["items"][1]["status"], "waiting")
         # Pasting the same text again changes nothing.
         self.assertEqual(tracker.add_replies(t, [("T2", "Green.")]), ([], []))
         self.assertEqual(len(t["items"][1]["thread"]), 1)
@@ -138,6 +164,18 @@ class Order(unittest.TestCase):
             self.assertEqual(tracker.problems(t), [])
             tracker.act(path, tracker.reply, "T1", "Hi")
             self.assertNotIn("groups", json.loads(path.read_text()))
+
+    def test_sections_left_in_a_new_file_are_flattened_not_kept(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "TRACKER.json"
+            t = sample()
+            t["items"][0]["group"] = "now"                     # an agent's habit, with no sections at all
+            path.write_text(json.dumps(t))
+            self.assertEqual(tracker.main(["build", str(path)]), 0)
+            self.assertNotIn("group", path.read_text())
+
+    def test_a_new_tracker_has_only_what_a_tracker_needs(self):
+        self.assertEqual(sorted(tracker.new_tracker("Demo · Plan", "What. Long-lived.")), ["items", "schema", "summary", "title"])
 
     def test_statuses_always_read_draft_needs_you_to_do_in_progress_then_the_archive(self):
         self.assertEqual([tracker.STATUS_LABEL[s] for s in tracker.STATUSES],

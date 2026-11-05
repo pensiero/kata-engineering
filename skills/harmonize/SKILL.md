@@ -88,7 +88,7 @@ For each rename, in this order:
 In PROPOSE mode, put the plan in a tracker under `trackers/` (`tracker` skill), so the user can answer rename by rename:
 
 - Summary: one-sentence recommendation and the naming principles you applied.
-- One group each for High value / Medium value / Splits; one item per rename (old → new, why), with sequencing as the order of groups and items.
+- One item per rename (old → new, why, and whether it is high value, medium value or a split), in the order to do them.
 - One item listing what you would leave alone and what you would NOT do, with the reasoning, waiting on the user's agreement — so the no-renames are visible decisions too.
 
 In APPLY mode, end with:

@@ -74,10 +74,10 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 | `status` | ✓ | In the order they are always shown: `draft` (not ready for an agent), `waiting` (needs the owner), `todo`, `doing` (started and not finished, however long it runs), `done`, `dropped` (shown as "Not doing"). |
 | `for` | | `agent` (default) or `me`: a to-do of the owner's own, which the agent never works and the owner archives when done. |
 | `fresh` | | `true` on an item the owner added, until an agent first works on it. While fresh, the owner may still rewrite or delete it. |
-| `unread` | | `true` when the owner wrote something the agent has not processed: a new item, a promoted draft, a reply, a reopening. The agent clears it once processed. |
+| `unread` | | `true` when the owner wrote something the agent has not processed: a new item, a promoted draft, a reply, a reopening. The agent clears it once processed. For agents: no page shows it. |
 | `context` | | What is wrong or what is wanted, with the evidence. |
 | `plan` | | How it will be done, and any assumption made. For a `decision`, the agent's recommendation. |
-| `question` | when `waiting` | The single open question. Clear it once answered. |
+| `question` | when `waiting` | The single open question. It stays on an answered item, now `todo`, until the agent has read the answer and clears it. |
 | `thread` | | The conversation, oldest first. `at` is a full ISO timestamp. The owner's entries are added by `tracker.py reply`, from text copied off the page or said in chat; the agent's are its follow-ups. Append only. |
 | `decision` | | The settled answer, in one or two sentences. This is what stops a question being asked again. |
 | `outcome` | when `done` or `dropped` | What was done and where, or why not. |
@@ -102,8 +102,10 @@ Every view shows the same five tabs, in this order, each left out when empty:
 | — | `todo` | An item is added | agent, or the owner (`[new]`, or the hub) |
 | `todo` | `doing` | Work starts | agent |
 | any open | `waiting` | The agent needs the owner; `question` is set | agent |
-| `waiting` | `todo` / `doing` | A reply settles it; `decision` is written, `question` cleared | agent |
-| `waiting` | `waiting` | A reply raises a follow-up; the agent adds a thread entry and a new `question` | agent |
+| `waiting` | `todo` | The owner replies; the item is `unread` until an agent has read it | owner |
+| `todo` | `waiting` | The owner deletes that reply before an agent reads it | owner |
+| `todo` | `todo` / `doing` | The reply settles it; `decision` is written, `question` cleared | agent |
+| `todo` | `waiting` | The reply raises a follow-up; the agent adds a thread entry and a new `question` | agent |
 | any | `done` | Finished; `outcome` and `refs` written | agent |
 | any | `dropped` | Not going to happen; `outcome` says why | agent, after the owner agrees |
 | any open | `done` / `dropped` | The owner archives it, with their reason if they give one | owner |

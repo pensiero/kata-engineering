@@ -78,16 +78,18 @@ def load(path):
 
 
 def flatten(t):
-    """A schema 1 or 2 tracker had sections. They become the one list they add
-    up to, keeping their order, so nothing past this point knows about them."""
-    if not isinstance(t, dict) or not isinstance(t.get("groups"), list):
+    """A schema 1 or 2 tracker had sections, and an agent may still write some
+    out of habit. They become the one list they add up to, keeping their order,
+    so nothing past this point knows about them."""
+    if not isinstance(t, dict) or not isinstance(t.get("items"), list):
         return t
-    order = {g.get("id"): n for n, g in enumerate(t.pop("groups")) if isinstance(g, dict)}
-    if isinstance(t.get("items"), list):
+    groups = t.pop("groups", None)
+    if isinstance(groups, list):
+        order = {g.get("id"): n for n, g in enumerate(groups) if isinstance(g, dict)}
         t["items"].sort(key=lambda i: order.get(i.get("group"), len(order)) if isinstance(i, dict) else len(order))
-        for i in t["items"]:
-            if isinstance(i, dict):
-                i.pop("group", None)
+    for i in t["items"]:
+        if isinstance(i, dict):
+            i.pop("group", None)
     return t
 
 
@@ -317,6 +319,15 @@ def mark_unread(it):
         it["unread"] = True
 
 
+def heard(it):
+    """The owner said something on an item: an agent should read it, and an item
+    that was waiting on them is the agent's move again. Its `question` stays
+    until the agent has read the answer."""
+    mark_unread(it)
+    if it["status"] == "waiting" and it.get("for") != "me":
+        it["status"] = "todo"
+
+
 # ---------------------------------------------------------------- owner actions
 # What the owner may write (reference/schema.md, "Who writes what"). An item
 # the owner added stays theirs to edit or delete while it is `fresh`, that is
@@ -429,7 +440,7 @@ def reply(t, iid, text):
     if not text.strip():
         raise Refused("A reply needs some text.")
     it.setdefault("thread", []).append({"by": "owner", "at": now_iso(), "text": text.strip()})
-    mark_unread(it)
+    heard(it)
     touch(it)
 
 
@@ -456,12 +467,15 @@ def edit_reply(t, iid, n, at, text):
 
 def delete_reply(t, iid, n, at):
     """Delete an unread reply. When nothing of the owner's is left unseen (an
-    item of theirs still `fresh` always is), the item is no longer `unread`."""
+    item of theirs still `fresh` always is), the item is no longer `unread`,
+    and a question it had answered is waiting on them again."""
     it, thread = own_reply(t, iid, n, at)
     del thread[n]
     last_agent = max((k for k, m in enumerate(thread) if m.get("by") != "owner"), default=-1)
     if not it.get("fresh") and not any(m.get("by") == "owner" for m in thread[last_agent + 1:]):
         it.pop("unread", None)
+        if it["status"] == "todo" and it.get("question"):
+            it["status"] = "waiting"
     touch(it)
 
 
@@ -532,8 +546,9 @@ def add_replies(t, replies, at=None):
     """Append each reply to its item's thread as an owner entry; a reply to
     "new" becomes a new item. A reply already in the thread word for word (for
     a new item: among the owner's unseen items) is skipped, so pasting the
-    same text twice is harmless. Statuses are NOT changed: deciding what a reply means is the
-    agent's job. Returns (added [(id, text)], unknown ids)."""
+    same text twice is harmless. A reply moves a waiting item to `todo` and
+    nothing else: deciding what it means is the agent's job. Returns
+    (added [(id, text)], unknown ids)."""
     by_id = {i["id"]: i for i in t["items"]}
     added, unknown = [], []
     for iid, text in replies:
@@ -549,7 +564,7 @@ def add_replies(t, replies, at=None):
         if any(m.get("by") == "owner" and m.get("text", "").strip() == text for m in thread):
             continue
         thread.append({"by": "owner", "at": at or now_iso(), "text": text})
-        mark_unread(item)
+        heard(item)
         item["updated"] = date.today().isoformat()
         added.append((iid, text))
     return added, unknown
@@ -612,7 +627,7 @@ def found_trackers(root="."):
 # ---------------------------------------------------------------- new
 
 def new_tracker(title, summary=""):
-    return {"schema": SCHEMA, "title": title, "summary": summary, "principles": [], "items": []}
+    return {"schema": SCHEMA, "title": title, "summary": summary, "items": []}
 
 
 # ---------------------------------------------------------------- cli

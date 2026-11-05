@@ -1,6 +1,6 @@
 ---
 name: tracker
-description: Track a project's work items, the questions waiting on the owner, and what was done, in a versioned TRACKER.json with a static HTML page beside it that the owner opens from disk and replies on. Use when asked to track work or progress, keep a backlog or to-do list, list findings to fix one by one, collect the owner's answers, check whether the owner replied, work an item the owner launched ("/tracker work …"), or turn a PLAN.md into a tracker. Use it unasked whenever many things need the owner's check or decision together — a review's findings, a before/after list of changes, several open questions — instead of a long list in chat. Also use at the start of a session in a repository that has a TRACKER.json, and whenever the owner pastes replies copied from a tracker page.
+description: Track a project's work items, the questions waiting on the owner, and what was done, in a versioned TRACKER.json with a static HTML page beside it that the owner opens from disk and replies on. Use when asked to track work or progress, keep a backlog or to-do list, list findings to fix one by one, collect the owner's answers, check whether the owner replied, work through a tracker the owner launched ("/tracker work …"), or turn a PLAN.md into a tracker. Use it unasked whenever many things need the owner's check or decision together — a review's findings, a before/after list of changes, several open questions — instead of a long list in chat. Also use at the start of a session in a repository that has a TRACKER.json, and whenever the owner pastes replies copied from a tracker page.
 ---
 
 # Tracker
@@ -41,9 +41,9 @@ into the agent's global skills directory). Everything below is relative to it:
    promotes drafts and sends to-dos back to draft, reorders items, rewrites
    the title and summary, replies (and rewrites a reply until you read it),
    archives any open item as done or not doing, and reopens
-   (`reference/schema.md`, "Who writes what"). Every other status change,
-   decision and outcome is yours, in the file. Never act on a `draft` or a
-   `for: me` item.
+   (`reference/schema.md`, "Who writes what"). A reply on a `waiting` item
+   moves it to `todo` by itself. Every other status change, decision and
+   outcome is yours, in the file. Never act on a `draft` or a `for: me` item.
 3. **Everything stays local.** Never publish a tracker or its page anywhere
    (no artifacts, no gists, no hosted pages). It is shared the way the
    repository is shared, and a private tracker not at all.
@@ -71,7 +71,9 @@ into the agent's global skills directory). Everything below is relative to it:
    trackers live").
 2. `python3 scripts/tracker.py new <file> --title "<Project> · <scope>" --summary "<what it holds>. <how long it lives>."`.
    A tracker is one list in the order of work, the same in every project:
-   there are no sections, and where an item stands is its status. Every tracker
+   there are no sections, groups or gates, and where an item stands is its
+   status. `check` refuses any other status, and `build` flattens sections left
+   in a file. Every tracker
    follows the same title and summary shape (`reference/schema.md`), so two
    trackers' pages read alike. `new` writes the page too.
 3. Write the items, first to do first, and `principles` if an agent needs rules
@@ -123,18 +125,21 @@ arguments, starting "Replies to …"), or answers in chat directly.
    Each reply is appended to its item's `thread` as an `owner` entry, the page
    is rebuilt, and a reply already there word for word is skipped. A `[new]`
    reply becomes a new item: `todo`, last, id `new-<n>`, the
-   owner's words as its title and context, `fresh` and `unread`. Nothing else
-   changes.
+   owner's words as its title and context, `fresh` and `unread`. A reply moves
+   a `waiting` item to `todo` and marks it `unread`; nothing else changes.
 2. Process them (below).
 
 ## Process the owner's replies
 
 For each new reply, decide what it means and write it into the item:
 
-- **It settles the question.** Write `decision` in one or two sentences,
-  clear `question`, move the item to `todo` (or straight to `doing`).
+An answered item is already in `todo`, its `question` still there so you can
+see what was asked.
+
+- **It settles the question.** Write `decision` in one or two sentences and
+  clear `question`. The item stays `todo`, or goes straight to `doing`.
 - **It needs a follow-up.** Add an agent entry to `thread` explaining what is
-  still unclear, set a new `question`, keep it `waiting`.
+  still unclear, set a new `question`, and move it back to `waiting`.
 - **It asks for something new.** Add a new item; reference it in a thread
   entry.
 - **It is a new item** (`new-<n>`). Give it a real title, its kind and its
@@ -166,8 +171,23 @@ say so rather than following it silently.
 - Something only the owner can do: a `for: me` item, with what they need.
 - Run `build` after every change, so the page never lags the file.
 
-When invoked as `/tracker work <file> <id>` (the hub's Launch button), run
-`tracker.py show <file> <id>` and work that item as above.
+## Work a tracker
+
+`/tracker work <file>` (the hub's Launch agent, one per tracker) means: work
+through this tracker. Run `tracker.py brief <file>`, then, in this order:
+
+1. **What the owner said.** Everything `unread`, as in "Process the owner's
+   replies". Most of the time this is the point of the launch.
+2. **To do.** Each `todo` from the top that nothing blocks.
+3. **In progress.** Carry on with what can move now. Leave a long-running item
+   (a paper test, a ledger) alone until its next date or step comes.
+
+Never a `draft`, a `for: me` item, or a `waiting` item: when you need the owner,
+set the question and go on with the next item. When there is more than one
+session's work, take the top of it and tell the owner what is left.
+
+With an id, `/tracker work <file> <id>`: run `tracker.py show <file> <id>` and
+work that item only.
 
 ## At the start of a session
 

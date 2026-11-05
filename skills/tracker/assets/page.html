@@ -137,7 +137,7 @@ function detail(it) {
     ...it.table.slice(1).map((r) => el("tr", {}, ...r.map((c) => el("td", {}, String(c))))))) : null;
   return el("div", { class: "detail" },
     section("Context", it.context), table, section("Plan", it.plan),
-    it.status === "waiting" ? section("Question for you", it.question, "question") : null,
+    section(it.status === "waiting" ? "Question for you" : "You were asked", it.question, it.status === "waiting" ? "question" : ""),
     section("Decided", it.decision),
     section(it.status === "dropped" ? "Why not" : it.status === "done" ? "What was done" : "Progress", it.outcome),
     (it.refs || []).length ? el("p", { class: "refs" }, it.refs.join(", ")) : null,

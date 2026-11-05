@@ -174,7 +174,7 @@ Do not read the entire codebase. You're looking for signals of change, not doing
 - Close answered Open Questions — promote durable answers to `DECISIONS.md`
 - Prune "Completed" if it has grown into archaeology — keep enough history to understand the journey, not every checkmark forever
 
-`TRACKER.json`: the same moves, following the `tracker` skill — done items get `outcome` and `refs`, settled questions keep their `decision`.
+`TRACKER.json`: the same moves, following the `tracker` skill — done items get `outcome` and `refs`, settled questions keep their `decision`, and deferred work is a `draft` saying what it waits for.
 
 ### Step 3: Refresh `DECISIONS.md` (if it exists)
 
