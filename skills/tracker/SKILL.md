@@ -55,15 +55,21 @@ into the agent's global skills directory). Everything below is relative to it:
    the only thing that reaches them: it puts a "Needs you" tag on the item. A
    line in a thread or a plan such as "reply here if you want changes" reaches
    nobody.
-5. **Write for the owner.** Titles and context in the owner's words, with the
+5. **Each field says one thing, once.** `context` is what is wanted, `findings`
+   what you found out, `plan` what you will do and why, `question` the choice
+   left to the owner in one line ("Keep the old export, or drop it? I'd drop
+   it."), never the plan again. Your thread entries are news (what you tried,
+   what changed after a reply), never the question, the plan or the findings
+   restated. The page shows every field, so what is written twice is read twice.
+6. **Write for the owner.** Titles and context in the owner's words, with the
    evidence, and numbers when there are numbers. Follow the project's register
    and privacy rules: a tracker holding private data goes where the project
    keeps private files.
-6. **Closing means saying what happened.** `done` needs an `outcome` and,
+7. **Closing means saying what happened.** `done` needs an `outcome` and,
    where possible, `refs` (commit, file, PR). `dropped` needs the reason, and
    the owner's agreement. A settled question keeps its `decision`, so it is
    never asked again. `build` dates what closed, for the archive's order.
-7. **Commit the tracker and its page with the work** that moved them, following the project's
+8. **Commit the tracker and its page with the work** that moved them, following the project's
    own commit rules. Git history is the tracker's history.
 
 ---
@@ -145,13 +151,12 @@ asked.
 
 - **It settles the question.** Write `decision` in one or two sentences and
   clear `question`. The stage moves only if the work did.
-- **It needs a follow-up.** Add an agent entry to `thread` explaining what is
-  still unclear, and set a new `question`. Clearing `unread` is what puts the
-  tag back.
+- **It needs a follow-up.** Rewrite `plan` (and `findings`) to what you know
+  now, and set a new `question`. Clearing `unread` is what puts the tag back.
 - **It asks for something new.** Add a new item; reference it in a thread
   entry.
 - **It is a new item** (`new-<n>`). Give it a real title, its kind and its
-  place in the list, and a plan, or a question if it is the owner's call.
+  place in the list, then work it as "An item the owner wrote" says.
 - **It drops the item.** Move it to `dropped` with the reason as `outcome`.
 
 Clear `unread` (and `fresh`) on every item you processed, so neither you nor
@@ -177,10 +182,34 @@ say so rather than following it silently.
      it there with `project-kickoff`, and register the new project
      (`kata register <path>`, when the `kata` command exists).
 - Discovered on the way: a new item, never a silent fix outside the tracker.
+- An item the owner wrote (`fresh`, or a `new-<n>`): read what they want from
+  it first (below).
 - Blocked on the owner, or wanting their review: set `question`, with your
   recommendation. The item stays in its stage, `todo` or `doing`, tagged.
 - Something only the owner can do: a `for: me` item, with what they need.
 - Run `build` after every change, so the page never lags the file.
+
+### An item the owner wrote
+
+A to-do the owner wrote is one of three things, and their words say which:
+
+- **Do it** ("Add…", "Fix…", "Make…"): they are convinced, and the item is the
+  go-ahead. Plan it, build it, close it with an `outcome`. Ask only at a fork
+  their words leave open, and ask for a review after the work, not leave to
+  start it.
+- **Find out** (a question, "look into…", "why does…"): the answer is the
+  work. Write it in `findings`, with the evidence. When it settles the matter,
+  close the item `done`, its `outcome` saying what came of it ("Answered;
+  nothing to change"). When it leads to work, put what you recommend in
+  `plan` and ask, or split the work into new items and name them in `outcome`.
+- **Plan it first** ("think about…", "plan…", "should we…"): they are not
+  convinced yet. Explore, write `findings` if there are any and the `plan`,
+  and ask whether to build it ("Build it as planned, or …?"). When the plan
+  is several pieces of work, list them in `plan` and, on the owner's yes, add
+  them as new items.
+
+When the words leave it open, something small and easy to undo is "do it",
+and anything large, costly or touching the project's rules is "plan it first".
 
 ## Work a tracker
 

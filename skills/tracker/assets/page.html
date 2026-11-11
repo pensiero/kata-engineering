@@ -144,9 +144,9 @@ function detail(it) {
     el("tr", {}, ...it.table[0].map((c) => el("th", {}, String(c)))),
     ...it.table.slice(1).map((r) => el("tr", {}, ...r.map((c) => el("td", {}, String(c))))))) : null;
   return el("div", { class: "detail" },
-    section("Context", it.context), table, section("Plan", it.plan),
+    section("Context", it.context), section("What was found", it.findings), table,
     section(needsYou(it) ? "Question for you" : "You were asked", it.question, needsYou(it) ? "question" : ""),
-    section("Decided", it.decision),
+    section("Plan", it.plan), section("Decided", it.decision),
     section(it.status === "dropped" ? "Why not" : it.status === "done" ? "What was done" : "Progress", it.outcome),
     (it.refs || []).length ? el("p", { class: "refs" }, it.refs.join(", ")) : null,
     thread.length ? el("div", { class: "thread" }, thread) : null,

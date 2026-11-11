@@ -48,8 +48,9 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
   "status": "todo",
   "for": "agent",
   "context": "What is true now and why it matters, with the evidence.",
+  "findings": "",
   "plan": "What the agent will do, including any assumption it is making.",
-  "question": "The one thing the owner needs to answer.",
+  "question": "The one choice left to the owner, in one line.",
   "thread": [
     { "by": "agent", "at": "2026-10-05T15:04:42Z", "text": "…" },
     { "by": "owner", "at": "2026-10-05T18:10:03Z", "text": "…" }
@@ -76,9 +77,10 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 | `fresh` | | `true` on an item the owner added, until an agent first works on it. While fresh, the owner may still rewrite or delete it. |
 | `unread` | | `true` when the owner wrote something the agent has not processed: a new item, a promoted draft, a reply, a reopening. A reply on an item with a `question` answers it. The agent clears it once processed. For agents: no page shows it. |
 | `context` | | What is wrong or what is wanted, with the evidence. |
-| `plan` | | How it will be done, and any assumption made. For a `decision`, the agent's recommendation. |
-| `question` | | The single open question for the owner, and the only thing that reaches them: on a `todo` or `doing` item it means "Needs you". It stays on an answered item until the agent has read the answer and clears it. |
-| `thread` | | The conversation, oldest first. `at` is a full ISO timestamp. The owner's entries are added by `tracker.py reply`, from text copied off the page or said in chat; the agent's are its follow-ups. Append only. |
+| `findings` | | What the agent found out, when finding out was the work: the answer to the owner's question, what an exploration turned up. Shown as "What was found". |
+| `plan` | | How it will be done, and any assumption made. For a `decision`, the agent's recommendation and its reasons. |
+| `question` | | The single open question for the owner, in one line naming the choice; the reasons are in `plan`, never repeated here. The only thing that reaches the owner: on a `todo` or `doing` item it means "Needs you". It stays on an answered item until the agent has read the answer and clears it. |
+| `thread` | | The conversation, oldest first. `at` is a full ISO timestamp. The owner's entries are added by `tracker.py reply`, from text copied off the page or said in chat; the agent's are news (what it tried, what changed after a reply), never another field restated. Append only. |
 | `decision` | | The settled answer, in one or two sentences. This is what stops a question being asked again. |
 | `outcome` | when `done` or `dropped` | What was done and where, or why not. |
 | `refs` | | Where the outcome lives: commits, files, PRs, docs. |
@@ -118,7 +120,7 @@ The tag moves without the stage:
 | off | The owner replies; the item is `unread` until an agent has read it | owner |
 | on | The owner deletes that reply before an agent reads it | owner |
 | off | The reply settles it; `decision` is written, `question` and `unread` cleared | agent |
-| on | The reply raises a follow-up; a thread entry and a new `question`, `unread` cleared | agent |
+| on | The reply raises a follow-up; `plan` rewritten, a new `question`, `unread` cleared | agent |
 
 ## Who writes what
 
@@ -140,7 +142,7 @@ when the action no longer applies:
 | reopen a closed item | with a reason, unless it is their own to-do |
 | archive an open item as done or not doing | — |
 
-Everything else (status, plan, question, decision, outcome, refs, splitting
+Everything else (status, findings, plan, question, decision, outcome, refs, splitting
 and spawning) is the agent's. The agent never acts on a `draft` or a
 `for: me` item, and it clears `fresh` and `unread` when it works an item.
 
