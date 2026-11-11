@@ -43,7 +43,7 @@ into the agent's global skills directory). Everything below is relative to it:
    archives any open item as done or not doing, and reopens
    (`reference/schema.md`, "Who writes what"). Every other status change,
    decision and outcome is yours, in the file. Never act on a `draft` or a
-   `for: me` item.
+   `for: me` item, beyond reading a reply on it.
 3. **Everything stays local.** Never publish a tracker or its page anywhere
    (no artifacts, no gists, no hosted pages). It is shared the way the
    repository is shared, and a private tracker not at all.
@@ -138,8 +138,8 @@ arguments, starting "Replies to …"), or answers in chat directly.
    is rebuilt, and a reply already there word for word is skipped. A `[new]`
    reply becomes a new item: `todo`, last, id `new-<n>`, the
    owner's words as its title and context, `fresh` and `unread`. A reply marks
-   its item `unread`, which answers a question and takes the tag off; the
-   status does not move.
+   its item `unread`, which answers a question, or reports on a `for: me` item
+   you left them, and takes the tag off; the status does not move.
 2. Process them (below).
 
 ## Process the owner's replies
@@ -158,6 +158,9 @@ asked.
 - **It is a new item** (`new-<n>`). Give it a real title, its kind and its
   place in the list, then work it as "An item the owner wrote" says.
 - **It drops the item.** Move it to `dropped` with the reason as `outcome`.
+- **It is on a `for: me` item you left them.** If they did it, remove `for`
+  and carry on with the work it unblocks, or close the item `done`. If it is
+  still theirs, leave `for: me`: clearing `unread` puts the tag back.
 
 Clear `unread` (and `fresh`) on every item you processed, so neither you nor
 the owner sees it as unseen again. Then run `build`, and tell the owner in chat what you understood from each

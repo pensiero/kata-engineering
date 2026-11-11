@@ -51,7 +51,7 @@ const STATUS = { draft: "Draft", todo: "To do", doing: "In progress", done: "Don
 const NEEDS = "needs";
 const STAGES = [["draft", "Draft"], ["todo", "To do"], ["doing", "In progress"], ["archive", "Archive"]];
 const closed = (it) => it.status === "done" || it.status === "dropped";
-const needsYou = (it) => (it.status === "todo" || it.status === "doing") && (it.for === "me" || (!!it.question && !it.unread));
+const needsYou = (it) => (it.status === "todo" || it.status === "doing") && !it.unread && (it.for === "me" || !!it.question);
 const stageOf = (it) => closed(it) ? "archive" : it.status;
 const inTab = (it, k) => k === NEEDS ? needsYou(it) : stageOf(it) === k;
 const closedAt = (it) => it.closed || it.updated || it.created || "";
@@ -128,7 +128,7 @@ function section(label, text, cls = "") {
 
 function replyBox(it) {
   const ta = el("textarea", { id: "reply-" + it.id, "aria-label": "Reply about " + it.title,
-    placeholder: needsYou(it) ? "Your answer" : "Reply",
+    placeholder: needsYou(it) && it.for !== "me" ? "Your answer" : it.for === "me" ? "What you did, or a note" : "Reply",
     oninput: (e) => {
       if (e.target.value.trim()) drafts[it.id] = { text: e.target.value }; else delete drafts[it.id];
       saveDrafts(); renderOutbox();
@@ -150,7 +150,7 @@ function detail(it) {
     section(it.status === "dropped" ? "Why not" : it.status === "done" ? "What was done" : "Progress", it.outcome),
     (it.refs || []).length ? el("p", { class: "refs" }, it.refs.join(", ")) : null,
     thread.length ? el("div", { class: "thread" }, thread) : null,
-    it.for === "me" ? null : replyBox(it));
+    it.for === "me" && it.fresh ? null : replyBox(it));
 }
 
 function itemEl(it) {

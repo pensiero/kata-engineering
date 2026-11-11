@@ -73,9 +73,9 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 | `title` | ✓ | What the item is, in the owner's words, not the code's. |
 | `kind` | | `task` (default): the agent can just do it. `decision`: needs the owner's view. `check`: needs something only the owner can look at. |
 | `status` | ✓ | The item's stage, in the order they are always shown: `draft` (not ready for an agent), `todo`, `doing` (the work has started and is not finished, however long it runs), `done`, `dropped` (shown as "Not doing"). |
-| `for` | | `agent` (default) or `me`: a to-do of the owner's own, which the agent never works and the owner archives when done. |
+| `for` | | `agent` (default) or `me`: a to-do of the owner's own, which the agent never works and the owner archives when done. A reply on one the agent left them is `unread` like any other, and the agent decides from it whether the item comes back to it. |
 | `fresh` | | `true` on an item the owner added, until an agent first works on it. While fresh, the owner may still rewrite or delete it. |
-| `unread` | | `true` when the owner wrote something the agent has not processed: a new item, a promoted draft, a reply, a reopening. A reply on an item with a `question` answers it. The agent clears it once processed. For agents: no page shows it. |
+| `unread` | | `true` when the owner wrote something the agent has not processed: a new item, a promoted draft, a reply, a reopening. Never on a draft, nor on a `for: me` item still `fresh`. A reply on an item with a `question` answers it. The agent clears it once processed. For agents: no page shows it. |
 | `context` | | What is wrong or what is wanted, with the evidence. |
 | `findings` | | What the agent found out, when finding out was the work: the answer to the owner's question, what an exploration turned up. Shown as "What was found". |
 | `plan` | | How it will be done, and any assumption made. For a `decision`, the agent's recommendation and its reasons. |
@@ -96,7 +96,7 @@ An item is in one stage: **Draft** (`draft`), **To do** (`todo`), **In progress*
 (`doing`) or **Archive** (`done`, `dropped`), in that order everywhere.
 
 **Needs you** is a tag across stages, not a stage: a `todo` or `doing` item that
-has a `question` and is not `unread`, or is `for: me`. Every view shows it as a
+has a `question` or is `for: me`, and is not `unread`. Every view shows it as a
 filter before the stages, and a draft or a closed item never has it. Empty tabs
 are left out.
 
@@ -117,10 +117,13 @@ The tag moves without the stage:
 | Tag | When | Who |
 |---|---|---|
 | on | The agent needs the owner's word or review; `question` is set | agent |
+| on | The agent leaves the owner something only they can do; `for: me` is set | agent |
 | off | The owner replies; the item is `unread` until an agent has read it | owner |
 | on | The owner deletes that reply before an agent reads it | owner |
 | off | The reply settles it; `decision` is written, `question` and `unread` cleared | agent |
 | on | The reply raises a follow-up; `plan` rewritten, a new `question`, `unread` cleared | agent |
+| off | The owner did what a `for: me` item asked; `for` removed, `unread` cleared | agent |
+| on | A `for: me` item is still the owner's; `unread` cleared | agent |
 
 ## Who writes what
 
@@ -144,7 +147,7 @@ when the action no longer applies:
 
 Everything else (status, findings, plan, question, decision, outcome, refs, splitting
 and spawning) is the agent's. The agent never acts on a `draft` or a
-`for: me` item, and it clears `fresh` and `unread` when it works an item.
+`for: me` item beyond reading a reply on it, and it clears `fresh` and `unread` when it works an item.
 
 ## Size
 

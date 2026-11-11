@@ -309,23 +309,27 @@ def said(it):
 
 
 def needs_you(it):
-    """Whether an item is waiting for the owner: their own to-do, or a question
-    they have not answered. A tag on a to-do or an item in progress, whatever
-    its stage; a draft is theirs anyway, and nothing is expected of a closed one."""
-    if it["status"] not in ("todo", "doing"):
+    """Whether an item is waiting for the owner: a to-do of theirs, or a question,
+    they have not replied to since (`unread`). A tag on a to-do or an item in
+    progress, whatever its stage; a draft is theirs anyway, and nothing is
+    expected of a closed one."""
+    if it["status"] not in ("todo", "doing") or it.get("unread"):
         return False
-    return it.get("for") == "me" or (bool(str(it.get("question") or "").strip()) and not it.get("unread"))
+    return it.get("for") == "me" or bool(str(it.get("question") or "").strip())
 
 
 def pending(it):
     """Whether the item holds something from the owner the agent has not
-    processed yet (`unread`). Drafts and the owner's own to-dos are never the
-    agent's to act on."""
-    return bool(it.get("unread")) and it["status"] != "draft" and it.get("for") != "me"
+    processed yet (`unread`). Drafts are never the agent's to act on."""
+    return bool(it.get("unread")) and it["status"] != "draft"
 
 
 def mark_unread(it):
-    if it["status"] != "draft" and it.get("for") != "me":
+    """Flag what the owner wrote for the agent to read. Not on a draft, nor on
+    a to-do the owner added for themselves that no agent has touched (`fresh`):
+    no agent works either. A reply on a `for: me` item an agent left them is
+    read, and takes it off Needs you until the agent has."""
+    if it["status"] != "draft" and not (it.get("for") == "me" and it.get("fresh")):
         it["unread"] = True
 
 
@@ -582,9 +586,9 @@ def brief(t, source):
     the tracker's size: what the owner added or said, what waits on them,
     what is in progress and what comes next. `show` gives an item in full."""
     items = t["items"]
-    mine = [i for i in items if i.get("for") == "me" and i["status"] not in CLOSED]
+    mine = [i for i in items if i.get("for") == "me" and i["status"] not in CLOSED and not pending(i)]
     agents = [i for i in items if i.get("for") != "me"]
-    new = [i for i in agents if pending(i)]
+    new = [i for i in items if pending(i)]
     lists = [
         ("From the owner, not yet seen", new, 10,
          lambda i: "new: " + clip(said(i)) if i.get("fresh") or not i.get("thread")

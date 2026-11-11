@@ -419,6 +419,29 @@ class Brief(unittest.TestCase):
         tracker.promote(t, "new-2")
         self.assertTrue(tracker.pending(t["items"][4]))
 
+    def test_a_reply_on_what_an_agent_left_the_owner_takes_it_off_needs_you_until_read(self):
+        t = sample()
+        t["items"].append({"id": "exports", "title": "Send one export per account", "status": "todo", "for": "me"})
+        it = t["items"][-1]
+        self.assertTrue(tracker.needs_you(it))
+        tracker.reply(t, "exports", "They are in imports/.")
+        self.assertFalse(tracker.needs_you(it))
+        self.assertTrue(tracker.pending(it))
+        self.assertIn("[exports] Send one export per account · owner: They are in imports/.", tracker.brief(t, "TRACKER.json"))
+        self.assertNotIn("owner's own to-dos", tracker.brief(t, "TRACKER.json"))
+        tracker.delete_reply(t, "exports", 0, it["thread"][0]["at"])
+        self.assertTrue(tracker.needs_you(it))                # nothing said any more: theirs again
+        tracker.reply(t, "exports", "Not yet, the bank is slow.")
+        del it["unread"]                                      # the agent read it and left it theirs
+        self.assertTrue(tracker.needs_you(it))
+
+    def test_a_note_on_the_owners_own_untouched_to_do_is_not_for_an_agent(self):
+        t = sample()
+        m = tracker.add(t, "Call the bank", for_me=True)
+        tracker.reply(t, m["id"], "Tuesday.")
+        self.assertFalse(tracker.pending(m))
+        self.assertTrue(tracker.needs_you(m))
+
     def test_replies_processed_before_unread_existed_are_not_pending(self):
         t = sample()
         t["items"][1]["thread"] = [{"by": "owner", "at": "2026-10-05T10:00:00+00:00", "text": "Green."}]
