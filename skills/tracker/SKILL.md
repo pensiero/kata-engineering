@@ -62,7 +62,9 @@ into the agent's global skills directory). Everything below is relative to it:
    what changed after a reply), never the question, the plan or the findings
    restated. The page shows every field, so what is written twice is read twice.
 6. **Write for the owner.** Titles and context in the owner's words, with the
-   evidence, and numbers when there are numbers. Follow the project's register
+   evidence, and numbers when there are numbers. Text fields and thread
+   entries are Markdown: a list for a list, bold for what matters most, `code`
+   for a file or command; titles stay plain. Follow the project's register
    and privacy rules: a tracker holding private data goes where the project
    keeps private files.
 7. **Closing means saying what happened.** `done` needs an `outcome` and,
@@ -137,7 +139,7 @@ arguments, starting "Replies to …"), or answers in chat directly.
    Each reply is appended to its item's `thread` as an `owner` entry, the page
    is rebuilt, and a reply already there word for word is skipped. A `[new]`
    reply becomes a new item: `todo`, last, id `new-<n>`, the
-   owner's words as its title and context, `fresh` and `unread`. A reply marks
+   owner's first line (or first sentence) as its title and the rest as its context, `fresh` and `unread`. A reply marks
    its item `unread`, which answers a question, or reports on a `for: me` item
    you left them, and takes the tag off; the status does not move.
 2. Process them (below).

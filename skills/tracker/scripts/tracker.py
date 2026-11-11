@@ -54,9 +54,11 @@ ID_RE = re.compile(r"^[A-Za-z0-9_\-.~:@+]{1,64}$")
 REPLY_RE = re.compile(r"^\[([A-Za-z0-9_\-.~:@+]{1,64})\]\s?(.*)$")
 NEW = "new"           # the reply id the page uses for a new item; never an item's id
 MAX_NEW_TITLE = 80
+SENTENCE = re.compile(r"(.+?[.!?])\s+(?=[A-Z0-9(\"'*`])")   # a first sentence, not "e.g. this"
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
 TEMPLATE = ASSETS / "page.html"
 STYLE = ASSETS / "style.css"      # shared with the Kata hub
+MARKDOWN = ASSETS / "markdown.js" # shared with the Kata hub
 
 STATUS_LABEL = {"draft": "Draft", "todo": "To do", "doing": "In progress", "done": "Done", "dropped": "Not doing"}
 BRIEF_LIST = 5        # items per list in `brief`
@@ -237,6 +239,7 @@ def build_page(t, source):
     data = data.replace("<", "\\u003c")     # "<" only occurs inside strings; keeps </script> out
     return (TEMPLATE.read_text(encoding="utf-8")
             .replace("/*__TRACKER_STYLE__*/", STYLE.read_text(encoding="utf-8"))
+            .replace("/*__TRACKER_MARKDOWN__*/", MARKDOWN.read_text(encoding="utf-8"))
             .replace("__TRACKER_TITLE__", html.escape(t["title"]))
             .replace("__TRACKER_DATA__", data))
 
@@ -295,17 +298,40 @@ def free_id(t):
 
 
 def owner_words(text):
-    """The owner's text as (title, context): the first line as a provisional
-    title, the whole text as context when there is more than that line."""
+    """The owner's text as (title, context), with nothing said in both: the
+    first line is a provisional title and the lines after it the context. A
+    first line too long for a title gives its first sentence, when that is
+    short enough, and the rest of the line opens the context; failing that,
+    the title is the line cut short and the context the whole text."""
     text = text.strip()
-    first = text.splitlines()[0].strip()
-    title = first if len(first) <= MAX_NEW_TITLE else first[:MAX_NEW_TITLE - 1].rstrip() + "…"
-    return title, (text if text != title else "")
+    first, _, rest = text.partition("\n")
+    first, rest = first.strip(), rest.strip()
+    if len(first) <= MAX_NEW_TITLE:
+        return first, rest
+    m = SENTENCE.match(first)
+    if m and len(m.group(1)) <= MAX_NEW_TITLE:
+        return m.group(1), (first[m.end():] + "\n" + rest).strip()
+    cut = first[:MAX_NEW_TITLE - 1]
+    cut = cut.rsplit(" ", 1)[0] if " " in cut[MAX_NEW_TITLE // 2:] else cut
+    return cut.rstrip(" ,;:-") + "…", text
 
 
 def said(it):
-    """What the owner wrote for an item of theirs: its context, else its title."""
-    return it.get("context") or it["title"]
+    """What the owner wrote for an item of theirs: the title, then the context.
+    An item whose title was cut short, or one added before the two were
+    split, holds the whole text in its context. Compare it with `even`: the
+    title and context may have been split after a sentence."""
+    title, context = it["title"].strip(), str(it.get("context") or "").strip()
+    if not context:
+        return title
+    if context == title or context.startswith(title + "\n") or (title.endswith("…") and context.startswith(title[:-1])):
+        return context
+    return f"{title}\n\n{context}"
+
+
+def even(text):
+    """Text with its spaces and line breaks evened out, for comparing."""
+    return " ".join(text.split())
 
 
 def needs_you(it):
@@ -557,7 +583,7 @@ def add_replies(t, replies, at=None):
     added, unknown = [], []
     for iid, text in replies:
         if iid == NEW:
-            if not any(said(i).strip() == text for i in t["items"] if i.get("fresh")):
+            if not any(even(said(i)) == even(text) for i in t["items"] if i.get("fresh")):
                 added.append((add(t, text)["id"], text))
             continue
         item = by_id.get(iid)

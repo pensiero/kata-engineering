@@ -43,6 +43,9 @@ details.item .detail textarea { background: var(--surface); }
   <p class="foot" id="foot"></p>
 </div>
 <script type="application/json" id="tracker-data">__TRACKER_DATA__</script>
+<script>
+/*__TRACKER_MARKDOWN__*/
+</script>
 
 <script>
 const STATUS = { draft: "Draft", todo: "To do", doing: "In progress", done: "Done", dropped: "Not doing" };
@@ -80,7 +83,15 @@ const el = (tag, attrs = {}, ...kids) => {
 };
 const when = (iso) => { const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }); };
 const items = () => (state && state.items) || [];
-const said = (it) => (it.context || it.title || "").trim();
+/* What the owner wrote for an item of theirs, as `tracker.py said` gives it:
+   the title, then the context. Compared with spaces evened out, as the title
+   and its context were split at a line break or after a sentence. */
+const said = (it) => { const t = (it.title || "").trim(), c = (it.context || "").trim();
+  return !c ? t : c === t || c.startsWith(t + "\n") || t.endsWith("…") && c.startsWith(t.slice(0, -1)) ? c : t + "\n\n" + c; };
+const even = (s) => s.replace(/\s+/g, " ").trim();
+/* An item's context without its title said again: items the owner added
+   before the two were split carry the first line in both. */
+const contextOf = (it) => { const t = (it.title || "").trim(), c = (it.context || "").trim(); return c === t ? "" : c.startsWith(t + "\n") ? c.slice(t.length).trim() : c; };
 const newParts = () => ((drafts[NEW] || {}).text || "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 const ownerSaid = (it, text) => (it.thread || []).some((m) => m.by === "owner" && m.text.trim() === text);
 
@@ -92,7 +103,7 @@ function forgetMerged() {
     const text = (d.text || "").trim();
     if (!byId[id] || !text || ownerSaid(byId[id], text)) delete drafts[id];
   }
-  const left = newParts().filter((p) => !items().some((i) => said(i) === p));
+  const left = newParts().filter((p) => !items().some((i) => even(said(i)) === even(p)));
   if (left.length) drafts[NEW] = { text: left.join("\n\n") }; else delete drafts[NEW];
   saveDrafts();
 }
@@ -123,7 +134,7 @@ function renderHead() {
 }
 
 function section(label, text, cls = "") {
-  return text ? el("div", { class: cls }, el("div", { class: "lbl" }, label), el("p", { class: "text" }, text)) : null;
+  return text ? el("div", { class: cls }, el("div", { class: "lbl" }, label), markdown(text, "text")) : null;
 }
 
 function replyBox(it) {
@@ -139,12 +150,12 @@ function replyBox(it) {
 
 function detail(it) {
   const thread = (it.thread || []).map((m) => el("div", { class: "msg " + m.by },
-    el("span", { class: "who" }, (m.by === "owner" ? "You" : "Agent") + ", " + when(m.at)), m.text));
+    el("span", { class: "who" }, (m.by === "owner" ? "You" : "Agent") + ", " + when(m.at)), markdown(m.text)));
   const table = it.table && it.table.length ? el("div", { class: "tw" }, el("table", { class: "mini" },
     el("tr", {}, ...it.table[0].map((c) => el("th", {}, String(c)))),
     ...it.table.slice(1).map((r) => el("tr", {}, ...r.map((c) => el("td", {}, String(c))))))) : null;
   return el("div", { class: "detail" },
-    section("Context", it.context), section("What was found", it.findings), table,
+    section("Context", contextOf(it)), section("What was found", it.findings), table,
     section(needsYou(it) ? "Question for you" : "You were asked", it.question, needsYou(it) ? "question" : ""),
     section("Plan", it.plan), section("Decided", it.decision),
     section(it.status === "dropped" ? "Why not" : it.status === "done" ? "What was done" : "Progress", it.outcome),

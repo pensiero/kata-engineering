@@ -76,7 +76,7 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 | `for` | | `agent` (default) or `me`: a to-do of the owner's own, which the agent never works and the owner archives when done. A reply on one the agent left them is `unread` like any other, and the agent decides from it whether the item comes back to it. |
 | `fresh` | | `true` on an item the owner added, until an agent first works on it. While fresh, the owner may still rewrite or delete it. |
 | `unread` | | `true` when the owner wrote something the agent has not processed: a new item, a promoted draft, a reply, a reopening. Never on a draft, nor on a `for: me` item still `fresh`. A reply on an item with a `question` answers it. The agent clears it once processed. For agents: no page shows it. |
-| `context` | | What is wrong or what is wanted, with the evidence. |
+| `context` | | What is wrong or what is wanted, with the evidence. On an item the owner added: what they wrote after its first line (or after its first sentence, when that line is too long for a title), so nothing is said in both. |
 | `findings` | | What the agent found out, when finding out was the work: the answer to the owner's question, what an exploration turned up. Shown as "What was found". |
 | `plan` | | How it will be done, and any assumption made. For a `decision`, the agent's recommendation and its reasons. |
 | `question` | | The single open question for the owner, in one line naming the choice; the reasons are in `plan`, never repeated here. The only thing that reaches the owner: on a `todo` or `doing` item it means "Needs you". It stays on an answered item until the agent has read the answer and clears it. |
@@ -89,6 +89,17 @@ Each tracker's page sits beside it with the same name and an `.html` suffix.
 | `spawned` | | The tracker this item grew into (`trackers/<name>.json`). The item stays `doing` until that tracker closes. |
 | `created`, `updated` | | ISO dates. |
 | `closed` | | When it closed: the archive's order, newest first. Written by the hub and by `build`; an item that reopens loses it. |
+
+### Text
+
+`context`, `findings`, `plan`, `question`, `decision`, `outcome` and every
+thread entry are Markdown, drawn as such on the page and in the hub
+(`assets/markdown.js`): paragraphs (a single line break stays one), lists,
+bulleted or numbered and nested by indenting, headings drawn at text size,
+quotes, fenced code, pipe tables, **bold**, *italic*, ~~struck~~, `code` and
+links to web pages or email addresses. Titles, the tracker's `title` and
+`summary`, and `refs` are plain text. Use what helps the owner read: a list
+for a list, bold for the one word that matters, `code` for a file or command.
 
 ## Status, and what moves it
 

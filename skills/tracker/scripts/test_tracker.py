@@ -115,7 +115,8 @@ class Replies(unittest.TestCase):
         item = t["items"][3]
         self.assertEqual((item["status"], item["title"]), ("todo", "Add a dark mode."))
         # The owner's words are the item itself, flagged unseen, so they can still edit it.
-        self.assertEqual((item["context"], item["fresh"]), (text, True))
+        self.assertEqual((item["context"], item["fresh"]), ("Only for the settings page.", True))
+        self.assertEqual(tracker.said(item), "Add a dark mode.\n\nOnly for the settings page.")
         self.assertEqual(tracker.problems(t), [])
         self.assertEqual(tracker.add_replies(t, [("new", text)]), ([], []))   # pasted twice
         self.assertEqual(len(t["items"]), 5)
@@ -231,6 +232,32 @@ class OwnerActions(unittest.TestCase):
             tracker.add(t, "x", status="doing")
         with self.assertRaises(tracker.Refused):
             tracker.add(t, "   ")
+
+    def test_the_owner_s_text_is_split_into_title_and_context_with_nothing_said_twice(self):
+        words = tracker.owner_words
+        self.assertEqual(words("Renew the domain"), ("Renew the domain", ""))
+        self.assertEqual(words("Try a sidebar\n\n- left\n- right"), ("Try a sidebar", "- left\n- right"))
+        long = "The export breaks on large files, e.g. the yearly one. It stops at 10 MB and the page shows nothing at all, not even an error."
+        self.assertEqual(words(long), ("The export breaks on large files, e.g. the yearly one.",
+                                       "It stops at 10 MB and the page shows nothing at all, not even an error."))
+        self.assertEqual(words(long + "\nSee the log."), ("The export breaks on large files, e.g. the yearly one.",
+                                                         "It stops at 10 MB and the page shows nothing at all, not even an error.\nSee the log."))
+        # No sentence short enough: the title is cut at a word, and the context keeps every word.
+        run_on = "When I open the reports page on my phone the table runs off the screen and I cannot scroll it sideways"
+        title, context = words(run_on)
+        self.assertTrue(title.endswith("…") and len(title) <= tracker.MAX_NEW_TITLE and run_on.startswith(title[:-1]))
+        self.assertEqual(context, run_on)
+        for text in ("Renew the domain", "Try a sidebar\n\n- left\n- right", long, long + "\nSee the log.", run_on):
+            t, c = words(text)
+            self.assertEqual(tracker.even(tracker.said({"title": t, "context": c})), tracker.even(text))
+        # Items added before the split hold the first line in their context too.
+        self.assertEqual(tracker.said({"title": "Fix it", "context": "Fix it\nSoon"}), "Fix it\nSoon")
+
+    def test_a_long_new_item_pasted_twice_is_added_once(self):
+        t = sample()
+        text = "The export breaks on large files. It stops at 10 MB and the page shows nothing at all, not even an error."
+        self.assertEqual(len(tracker.add_replies(t, [("new", text)])[0]), 1)
+        self.assertEqual(tracker.add_replies(t, [("new", text)]), ([], []))
 
     def test_once_an_agent_has_worked_on_it_an_edit_becomes_a_reply_and_delete_is_refused(self):
         t = sample()
@@ -510,6 +537,8 @@ class Page(unittest.TestCase):
         self.assertEqual(json.loads(data)["tracker"], t)
         self.assertEqual(page, tracker.build_page(t, "TRACKER.json"))
         self.assertNotIn("https://", page)     # nothing loads from the network
+        self.assertIn("window.markdown", page)  # its text is drawn as Markdown, with no file beside it
+        self.assertNotIn("__TRACKER_", page)
 
     def test_cli_round_trip(self):
         with tempfile.TemporaryDirectory() as d:
