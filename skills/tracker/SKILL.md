@@ -26,9 +26,10 @@ into the agent's global skills directory). Everything below is relative to it:
 - `scripts/tracker.py`: Python 3 standard library only. `new`, `check`,
   `build`, `brief`, `show`, `render`, `reply`. Run `build` after every hand
   edit: it checks the file, then rewrites its page.
-- `assets/page.html` and `assets/style.css`: the template every tracker's page
-  is built from, and the look it shares with the hub. Never edit a built page
-  or the template per project; everything a page shows comes from its tracker.
+- `assets/page.html`, `assets/style.css` and `assets/markdown.js`: the
+  template every tracker's page is built from, and the look and the Markdown
+  drawing it shares with the hub. Never edit a built page or the template per
+  project; everything a page shows comes from its tracker.
 
 ---
 
@@ -158,7 +159,10 @@ asked.
 - **It asks for something new.** Add a new item; reference it in a thread
   entry.
 - **It is a new item** (`new-<n>`). Give it a real title, its kind and its
-  place in the list, then work it as "An item the owner wrote" says.
+  place in the list, then work it as "An item the owner wrote" says. Its
+  title is the owner's first line (or first sentence) and is not repeated in
+  `context`: when you rewrite the title, put their line at the top of
+  `context`, so their words stay on the item.
 - **It drops the item.** Move it to `dropped` with the reason as `outcome`.
 - **It is on a `for: me` item you left them.** If they did it, remove `for`
   and carry on with the work it unblocks, or close the item `done`. If it is
@@ -271,6 +275,7 @@ Never in one step, never without the owner. First propose, then migrate.
    | Reasoning, design notes, hand-off instructions, snippets | Stays a document (`DECISIONS.md`, `ARCHITECTURE.md`, the existing doc) |
 
 2. Show the owner the mapping and what would remain of `PLAN.md`.
-3. On their yes: write the tracker, run `build`, and reduce `PLAN.md` to what
+3. On their yes: write the tracker, keeping the plan's lists, emphasis and
+   links as Markdown in the items' fields, run `build`, and reduce `PLAN.md` to what
    stays a document, or delete it if nothing does. Update any doc that points
    at it (the project's `CLAUDE.md`, `AGENTS.md`, `README`). One commit.

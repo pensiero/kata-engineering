@@ -100,6 +100,7 @@ kata-engineering/
 │       ├── reference/schema.md        # The file format and who moves each status
 │       ├── scripts/tracker.py         # new / check / build / brief / show / render / reply, owner actions (stdlib only) + tests
 │       ├── assets/page.html           # The template every tracker's page is built from
+│       ├── assets/markdown.js         # Draws the text fields as Markdown, on the page and in the hub
 │       └── assets/style.css           # The look shared by the pages and the Kata hub
 ```
 

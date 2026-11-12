@@ -526,6 +526,14 @@ class Brief(unittest.TestCase):
             tracker.show(sample(), "GONE")
 
 
+class RenderFields(unittest.TestCase):
+    def test_a_field_of_several_lines_stays_under_its_item(self):
+        t = sample()
+        t["items"][2]["outcome"] = "Not worth it:\n\n- nobody asked\n- it costs a day"
+        out = tracker.render(t)
+        self.assertIn("  - Not doing: Not worth it:\n\n    - nobody asked\n    - it costs a day\n", out)
+
+
 class Page(unittest.TestCase):
     def test_the_page_embeds_the_tracker_safely_and_deterministically(self):
         t = sample()

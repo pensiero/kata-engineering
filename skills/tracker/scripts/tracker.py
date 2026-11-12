@@ -197,6 +197,13 @@ def closed_at(it):
     return it.get("closed") or it.get("updated") or it.get("created") or ""
 
 
+def under(label, text):
+    """A field as a bullet under its item: its Markdown lines indented to stay
+    inside the bullet, so a list in it stays a list."""
+    first, *rest = str(text).strip().splitlines()
+    return [f"  - {label}: {first}"] + [f"    {line}" if line.strip() else "" for line in rest]
+
+
 def render(t, status=None):
     """Plain Markdown, for reading in a terminal or by an agent without a page."""
     items = t["items"]
@@ -217,11 +224,11 @@ def render(t, status=None):
         for i in rows:
             lines.append(f"- **{i['id']}** {i['title']}" + (" (needs you)" if needs_you(i) else ""))
             if needs_you(i) and i.get("question"):
-                lines.append(f"  - Question: {i['question']}")
+                lines += under("Question", i["question"])
             if i.get("decision"):
-                lines.append(f"  - Decided: {i['decision']}")
+                lines += under("Decided", i["decision"])
             if s in CLOSED:
-                lines.append(f"  - {STATUS_LABEL[s]}: {i['outcome']}")
+                lines += under(STATUS_LABEL[s], i["outcome"])
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
